@@ -1,0 +1,40 @@
+fail_fast: true
+repos:
+  - repo: git://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: fix-byte-order-marker
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.2.0
+    hooks:
+      - id: pyupgrade
+        args: [--py310-plus]
+  - repo: local
+    hooks:
+    - id: black
+      name: black-local
+      entry: black
+      language: python
+      types: [python]
+      exclude: .+/settings/.+
+      pass_filenames: true
+    - id: prospector
+      name: prospector-local
+      entry: prospector --messages-only
+      language: python
+      types: [python]
+      exclude: .+/settings/.+
+      pass_filenames: true
+
+  # Linting for Django templates
+  - repo: https://github.com/thibaudcolas/curlylint
+    rev: v0.13.0
+    hooks:
+      - id: curlylint
+        types: [ file ]
+        files: \.(html|sls)$
+        language_version: python3.10.5
+        additional_dependencies: ['click<8.1']
