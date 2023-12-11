@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% translate "Welcome to ODIN server" %}
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <h1>{% translate "Welcome to ODIN server" %}</h1>
+    <ul>
+      <li><a href="http://192.168.0.104:8000">Django server</a></li>
+      <li><a href="http://192.168.0.104:8025">Mail server</a></li>
+      <li><a href="http://192.168.0.104:9200">ES server</a></li>
+    </ul>
+  </div>
+{% endblock %}
