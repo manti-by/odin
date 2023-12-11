@@ -1,3 +1,4 @@
+.PHONY:deploy
 CURRENT_DIR = $(shell pwd)
 
 test:
@@ -16,3 +17,8 @@ pip:
 
 update-requirements:
 	pcu requirements.txt -u
+
+deploy:
+	scp -r [!.]* odin:/home/manti/www/odin/
+	ssh odin "sudo service nginx restart"
+	ssh odin "sudo service gunicorn restart"

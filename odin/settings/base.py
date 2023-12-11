@@ -152,6 +152,12 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "simple",
         },
+        "file": {
+            "level": "WARNING",
+            "class": "logging.FileHandler",
+            "filename": "/var/log/odin/django.log",
+            "formatter": "simple",
+        },
     },
     "loggers": {
         "": {"handlers": ["console"], "level": "INFO"},
