@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% load i18n %}
 
@@ -7,12 +8,29 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container">
+  <div class="container home">
     <h1>{% translate "Welcome to ODIN server" %}</h1>
+    <h2>{% translate "Local services" %}</h2>
     <ul>
-      <li><a href="https://www.odin.local">Django server</a></li>
-      <li><a href="https://mail.odin.local">Mail server</a></li>
-      <li><a href="https://es.odin.local">ES server</a></li>
+      <li>
+        <a href="https://www.odin.local">
+          <img src="{% static 'img/pinata.png' %}" alt="Pinata">
+        </a>
+      </li>
+      <li>
+        <a href="https://mail.odin.local">
+          <img src="{% static 'img/mailhog.png' %}" alt="Mailhog">
+        </a>
+      </li>
+      <li>
+        <a href="https://es.odin.local">
+          <img src="{% static 'img/elasticsearch.png' %}" alt="Elastic">
+        </a>
+      </li>
     </ul>
   </div>
+{% endblock %}
+
+{% block styles %}
+  <link href="{% static 'css/home.css' %}" rel="stylesheet">
 {% endblock %}

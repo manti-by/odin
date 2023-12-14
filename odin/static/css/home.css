@@ -1,0 +1,22 @@
+.home ul {
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+
+.home li {
+  list-style: none;
+  margin-right: 2rem;
+}
+
+.home ul a {
+  border-bottom: 3px solid transparent;
+}
+
+.home ul a:hover {
+  border-bottom-color: #495057;
+}
+
+.home ul img {
+  width: 150px;
+}
