@@ -7,7 +7,18 @@ User=manti
 Group=manti
 Restart=always
 WorkingDirectory=/home/manti/www/odin
-ExecStart=/home/manti/www/odin/.venv/bin/gunicorn --timeout 60 --max-requests 300 --max-requests-jitter 30 --log-level info  --access-logfile /var/log/odin/gunicorn-access.log --error-logfile /var/log/odin/gunicorn-error.log --pythonpath /home/manti/www/odin --bind 127.0.0.1:8000 --workers 4 odin.wsgi:application
+ExecStart=/home/manti/.pyenv/versions/odin/bin/gunicorn \
+    --timeout 60 \
+    --max-requests 300 \
+    --max-requests-jitter 30 \
+    --log-level info \
+    --access-logfile /var/log/odin/gunicorn-access.log \
+    --error-logfile /var/log/odin/gunicorn-error.log \
+    --pythonpath /home/manti/www/odin \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --workers 4 \
+    --bind 127.0.0.1:8000 \
+    odin.asgi:application
 
 [Install]
 WantedBy=multi-user.target

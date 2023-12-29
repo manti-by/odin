@@ -1,6 +1,13 @@
 import factory.fuzzy
+from django.contrib.auth.models import User
 
 from factory import DictFactory
+from factory.django import DjangoModelFactory
+from factory.fuzzy import FuzzyDecimal
+
+from odin.apps.sensors.models import Sensor
+
+DEFAULT_USER_PASSWORD = "pa55word"  # noqa
 
 
 class TestFactory(DictFactory):
@@ -10,3 +17,26 @@ class TestFactory(DictFactory):
     choice_field = factory.fuzzy.FuzzyChoice(("ONE", "TWO"))
     datetime_field_start = factory.Faker("past_date")
     datetime_field_stop = factory.Faker("past_date")
+
+
+class UserFactory(DjangoModelFactory):
+    email = factory.Faker("email")
+    password = factory.PostGenerationMethodCall("set_password", DEFAULT_USER_PASSWORD)
+
+    class Meta:
+        model = User
+
+
+class DjangoAdminUserFactory(UserFactory):
+    is_superuser = True
+
+
+class SensorFactory(DjangoModelFactory):
+    external_id = factory.Faker("pyint")
+    sensor_id = factory.Faker("word")
+    temp = FuzzyDecimal(low=-10, high=40, precision=2)
+    humidity = FuzzyDecimal(low=0, high=100, precision=2)
+    created_at = factory.Faker("date_time")
+
+    class Meta:
+        model = Sensor

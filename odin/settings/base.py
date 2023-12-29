@@ -25,7 +25,9 @@ SECRET_KEY = "django-insecure-key"  # noqa
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ("odin.local",)
+
+CSRF_TRUSTED_ORIGINS = ("https://odin.local/",)
 
 
 # Application definition
@@ -40,6 +42,7 @@ INSTALLED_APPS = [
     "odin.api",
     "odin.apps.core",
     "odin.apps.home",
+    "odin.apps.sensors",
 ]
 
 MIDDLEWARE = [
