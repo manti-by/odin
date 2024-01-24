@@ -2,9 +2,9 @@ import logging
 
 import requests
 from django.core.management import BaseCommand
-from django.utils import timezone
+from dateutil import parser
 
-from ...models import Sensor
+from odin.apps.sensors.models import Sensor
 
 logger = logging.getLogger(__name__)
 
@@ -17,12 +17,11 @@ class Command(BaseCommand):
         limit = 500
         offset = 0
         created_exists = True
-        current_tz = timezone.get_current_timezone()
         while created_exists:
             response = requests.get(f"{self.url}?limit={limit}&offset={offset}")
             if response.ok:
                 for sensor in response.json():
-                    sensor["created_at"] = current_tz.localize(sensor["created_at"])
+                    sensor["created_at"] = parser.parse(sensor["created_at"])
                     _, created = Sensor.objects.get_or_create(external_id=sensor.pop("id"), defaults=sensor)
                     created_exists = created or False
                 offset += limit
