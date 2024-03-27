@@ -1,7 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
-
-{% load i18n %}
+{% load static i18n %}
 
 {% block title %}
   {% translate "Welcome to ODIN server" %}
@@ -10,6 +8,15 @@
 {% block content %}
   <div class="container home">
     <h1>{% translate "Welcome to ODIN server" %}</h1>
+    <h2>{% translate "IoT Graphs" %}</h2>
+    <ul>
+      {% for name, sensor in sensors.items %}
+        <li>
+          {{ sensor.external_id }} - {{ name }}:
+          {{ sensor.temp }}<span>&#8451;</span> / {{ sensor.humidity }}%
+        </li>
+      {% endfor %}
+    </ul>
     <h2>{% translate "Local services" %}</h2>
     <ul>
       <li>

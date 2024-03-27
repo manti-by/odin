@@ -4,7 +4,7 @@ import requests
 from django.core.management import BaseCommand
 from dateutil import parser
 
-from odin.apps.sensors.models import Sensor
+from odin.apps.sensors.models import Sensor, SyncLog
 
 logger = logging.getLogger(__name__)
 
@@ -23,5 +23,6 @@ class Command(BaseCommand):
                 for sensor in response.json():
                     sensor["created_at"] = parser.parse(sensor["created_at"])
                     _, created = Sensor.objects.get_or_create(external_id=sensor.pop("id"), defaults=sensor)
+                    SyncLog.objects.create(type="IN", synced_count=created)
                     created_exists = created or False
                 offset += limit

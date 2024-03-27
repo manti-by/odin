@@ -1,8 +1,10 @@
+import pytest
 from django.urls import reverse
 from django.test import Client
 from rest_framework import status
 
 
+@pytest.mark.django_db
 class TestHome:
     def setup_method(self):
         self.client = Client()
