@@ -15,7 +15,7 @@ jobs:
     services:
 
       postgres:
-        image: postgres:14.10
+        image: postgres:16.2
         env:
           POSTGRES_USER: odin
           POSTGRES_PASSWORD: odin
@@ -31,7 +31,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Cache pip
         uses: actions/cache@v3
