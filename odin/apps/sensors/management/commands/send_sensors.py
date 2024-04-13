@@ -3,8 +3,8 @@ import os
 
 import requests
 from concurrent import futures
+from command_log.management.commands import LoggedCommand
 from django.conf import settings
-from django.core.management import BaseCommand
 from django.utils import timezone
 
 from odin.apps.core.services import get_data_hash
@@ -13,7 +13,7 @@ from odin.apps.sensors.models import Sensor, SyncLog
 logger = logging.getLogger(__name__)
 
 
-class Command(BaseCommand):
+class Command(LoggedCommand):
     help = description = "Upload the data to Amon-Ra server."
     threads_count = os.cpu_count() * 2
 

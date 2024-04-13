@@ -1,19 +1,16 @@
-# PyCharm files
+#.gitignore
+
 .idea/
 
-# Virtual environments
-.env
-.venv/
-venv/
-
-# Byte-compiled / optimized / DLL files
-__pycache__/
 .pytest_cache/
-*.py[cod]
-*$py.class
 
-# Pyenv
-.python-version
+odin/settings/local.py
+media/
+static/
+log/
 
-# Swap files
+*.pyc
 *~
+
+.python-version
+.env

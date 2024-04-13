@@ -1,0 +1,55 @@
+services:
+
+  redis:
+    container_name: odin-redis
+    image: redis:latest
+    restart: always
+
+  postgres:
+    container_name: odin-postgres
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_DB=odin
+      - POSTGRES_USER=odin
+      - POSTGRES_PASSWORD=odin
+
+  django: &base_container
+    container_name: odin-django
+    image: mantiby/odin:latest
+    restart: always
+    ports:
+      - 8080:8080
+    volumes:
+      - ./:/srv/app/src/
+      - /home/manti/www/odin/static/:/var/lib/app/static/
+      - /home/manti/www/odin/media/:/var/lib/app/media/
+      - /home/manti/www/odin/data/:/var/lib/app/data/
+      - /home/manti/www/odin/log/:/var/log/app/
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DJANGO_SETTINGS_MODULE=odin.settings.local
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
+    command: |
+      gunicorn odin.asgi:application 
+        --worker-class uvicorn.workers.UvicornWorker
+        --log-file /var/log/app/wsgi.log
+        --bind 0.0.0.0:8101
+        --workers 2
+
+  worker:
+    <<: *base_container
+    container_name: odin-worker
+    ports: []
+    command: |
+      python manage.py rqworker default
+
+  scheduler:
+    <<: *base_container
+    container_name: odin-scheduler
+    ports: []
+    command: |
+      python manage.py scheduler

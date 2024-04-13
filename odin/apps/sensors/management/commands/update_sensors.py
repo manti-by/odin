@@ -1,7 +1,7 @@
 import logging
 
 import requests
-from django.core.management import BaseCommand
+from command_log.management.commands import LoggedCommand
 from dateutil import parser
 
 from odin.apps.sensors.models import Sensor, SyncLog
@@ -9,7 +9,7 @@ from odin.apps.sensors.models import Sensor, SyncLog
 logger = logging.getLogger(__name__)
 
 
-class Command(BaseCommand):
+class Command(LoggedCommand):
     help = description = "Retrieve the data from Coruscant server."
     url = "http://coruscant.local/batch/"
 

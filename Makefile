@@ -1,5 +1,21 @@
-.PHONY:deploy
-CURRENT_DIR = $(shell pwd)
+.PHONY:build
+
+bash:
+	docker exec -it odin-django bash
+
+build:
+	docker build -t mantiby/odin:latest .
+
+migrate:
+	docker exec -it odin-django python manage.py migrate
+
+static:
+	docker exec -it odin-django python manage.py collectstatic --no-input
+
+deploy:
+	docker container stop odin-django odin-worker odin-scheduler
+	docker container rm odin-django odin-worker odin-scheduler
+	docker compose up -d
 
 test:
 	pytest --create-db --disable-warnings --ds=odin.settings.test odin/
@@ -18,11 +34,3 @@ pip:
 update:
 	pcu requirements.txt -u
 	pre-commit autoupdate
-
-deploy:
-	scp -r [!.]* odin:/home/manti/www/odin/
-	ssh odin "/home/manti/.pyenv/versions/odin/bin/pip install -q -r /home/manti/www/odin/requirements.txt"
-	ssh odin "/home/manti/.pyenv/versions/odin/bin/python /home/manti/www/odin/manage.py migrate"
-	ssh odin "sudo service nginx restart"
-	ssh odin "sudo systemctl daemon-reload"
-	ssh odin "sudo service gunicorn restart"

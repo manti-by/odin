@@ -24,6 +24,7 @@ from odin.apps.home.views import index
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("rq/", include("django_rq.urls")),
     path("api/", include("odin.api.urls", namespace="api")),
     path("", index, name="index"),
 ]

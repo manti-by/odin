@@ -39,6 +39,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "command_log",
+    "django_rq",
+    "django_apscheduler",
+    "rest_framework",
     "odin.api",
     "odin.apps.core",
     "odin.apps.home",
@@ -77,18 +81,45 @@ WSGI_APPLICATION = "odin.wsgi.application"
 
 
 # Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
+# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "odin",
-        "USER": "odin",
-        "PASSWORD": "odin",
-        "HOST": "localhost",
-        "PORT": 5432,
+        "NAME": os.getenv("POSTGRES_NAME", "odin"),
+        "USER": os.getenv("POSTGRES_USER", "odin"),
+        "PASSWORD": os.getenv("POSTGRES_PASS", "odin"),
+        "HOST": os.getenv("POSTGRES_HOST", "localhost"),
+        "PORT": os.getenv("POSTGRES_PORT", 5432),
     }
 }
+
+
+# Cache
+# https://docs.djangoproject.com/en/5.0/ref/settings/#caches
+
+redis_host = os.getenv("REDIS_HOST", "localhost")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{redis_host}:6379/0",
+        "OPTIONS": {
+            "MAX_ENTRIES": 5000,
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+        },
+    }
+}
+
+DEFAULT_RQ_TIMEOUT = os.getenv("DEFAULT_RQ_TIMEOUT", 600)
+
+RQ_QUEUES = {
+    "default": {"USE_REDIS_CACHE": "default", "DEFAULT_TIMEOUT": DEFAULT_RQ_TIMEOUT},
+}
+
+QUEUE_SCHEDULED_TASKS = True
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -143,6 +174,7 @@ MEDIA_URL = "media/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # https://docs.djangoproject.com/en/4.1/ref/logging/
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
