@@ -13,6 +13,8 @@ services:
       - POSTGRES_DB=odin
       - POSTGRES_USER=odin
       - POSTGRES_PASSWORD=odin
+    volumes:
+      - /home/manti/www/odin/data/postgres/:/data/
 
   django: &base_container
     container_name: odin-django
@@ -37,7 +39,7 @@ services:
       gunicorn odin.asgi:application 
         --worker-class uvicorn.workers.UvicornWorker
         --log-file /var/log/app/wsgi.log
-        --bind 0.0.0.0:8101
+        --bind 0.0.0.0:8080
         --workers 2
 
   worker:
