@@ -17,6 +17,7 @@ deploy:
 	docker container stop odin-django odin-next odin-worker odin-scheduler
 	docker container rm odin-django odin-next odin-worker odin-scheduler
 	docker compose up -d
+	sudo service nginx reload
 
 test:
 	pytest --create-db --disable-warnings --ds=odin.settings.test odin/

@@ -16,17 +16,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 
 """
+
 from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 
-from odin.apps.home.views import index
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("rq/", include("django_rq.urls")),
     path("api/", include("odin.api.urls", namespace="api")),
-    path("", index, name="index"),
+    path("", admin.site.urls),
 ]
 
 if settings.DEBUG:

@@ -15,7 +15,7 @@ class TestSensorsView:
         self.url = reverse("api:v1:sensors:list")
 
     @pytest.mark.parametrize("method", ["post", "put", "patch", "delete"])
-    def testt_sensors__not_allowed_methods(self, method):
+    def test_sensors__not_allowed_methods(self, method):
         test_client_callable = getattr(self.client, method)
         response = test_client_callable(self.url, format="json")
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
