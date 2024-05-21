@@ -199,6 +199,17 @@ LOGGING = {
     },
 }
 
+# Rest Framework
+# https://www.django-rest-framework.org/tutorial/quickstart/
+
+REST_FRAMEWORK = {
+    "PAGE_SIZE": 15,
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.TokenAuthentication",),
+}
+
+
 # Data sync app settings
 
 APP_KEY = os.getenv("APP_KEY", "app-key")
