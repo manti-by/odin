@@ -16,12 +16,21 @@ services:
     volumes:
       - /home/manti/www/odin/data/postgres/:/data/
 
+  next:
+    container_name: odin-next
+    image: mantiby/odin-next:latest
+    restart: always
+    ports:
+      - 3030:3000
+    environment:
+      - BACKEND_HOST=http://localhost:8080
+
   django: &base_container
     container_name: odin-django
     image: mantiby/odin:latest
     restart: always
     ports:
-      - 8080:8080
+      - 8080:8000
     volumes:
       - ./:/srv/app/src/
       - /home/manti/www/odin/static/:/var/lib/app/static/
@@ -36,10 +45,10 @@ services:
       - POSTGRES_HOST=postgres
       - REDIS_HOST=redis
     command: |
-      gunicorn odin.asgi:application 
+      gunicorn odin.asgi:application
         --worker-class uvicorn.workers.UvicornWorker
         --log-file /var/log/app/wsgi.log
-        --bind 0.0.0.0:8080
+        --bind 0.0.0.0:8000
         --workers 2
 
   worker:

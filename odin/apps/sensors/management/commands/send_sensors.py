@@ -16,17 +16,23 @@ logger = logging.getLogger(__name__)
 class Command(LoggedCommand):
     help = description = "Upload the data to Amon-Ra server."
     threads_count = os.cpu_count() * 2
+    timeout = 30
 
-    @staticmethod
-    def send_request(data_list: list[dict], thread_index: int):
+    def send_request(self, data_list: list[dict], thread_index: int):
         url = "https://amon-ra.manti.by/api/v1/sensors/create/"
         sensors_sent = []
         for index, data in enumerate(data_list):
-            response = requests.post(url, json=data, timeout=30)
+            try:
+                response = requests.post(url, json=data, timeout=self.timeout)
+            except ConnectionError as e:
+                logger.error(f"Error sending data to Amon-Ra server: {e}")
+                continue
+
             if response.ok:
                 sensors_sent.append(data["external_id"])
             else:
-                logger.error(f"Error while sending data to Amon-Ra server: {response.text}")
+                logger.error(f"Error sending data to Amon-Ra server: {response.text}")
+
             if index and index % 500 == 0:
                 logger.info(f"{index} sensors is sent to Amon-Ra server in thread {thread_index}")
                 Sensor.objects.filter(external_id__in=sensors_sent).update(synced_at=timezone.now())
