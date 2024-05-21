@@ -1,24 +1,26 @@
-django==5.0.4
+django==5.0.6
 djangorestframework==3.15.1
 django-apscheduler==0.6.2
 django-command-log==2.2
 django-redis==5.4.0
 django-rq==2.10.2
 psycopg2-binary==2.9.9
-requests==2.31.0
+requests==2.32.0
 python-dateutil==2.9.0.post0
-gunicorn==21.2.0
+gunicorn==22.0.0
 uvicorn[standard]==0.29.0
 
-ipython>=8.23.0
-pytest>=8.1.1
+pytest>=8.2.1
 pytest-django>=4.8.0
 factory-boy>=3.3.0
 pytest-factoryboy>=2.7.0
-faker>=24.9.0
 
-pre_commit>=3.7.0
-black>=24.4.0
+ipython>=8.24.0
+pre_commit>=3.7.1
+pip-check-updates>=0.27.0
+
+isort>=5.13.2
+bandit>=1.7.8
+black>=24.4.2
 prospector>=1.10.3
 pyupgrade>=3.15.2
-pip-check-updates>=0.26.1
