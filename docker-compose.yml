@@ -23,7 +23,7 @@ services:
     ports:
       - 3030:3000
     environment:
-      - BACKEND_HOST=http://localhost:8080
+      - BACKEND_HOST=http://odin.local:8080
 
   django: &base_container
     container_name: odin-django

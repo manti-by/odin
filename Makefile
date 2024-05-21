@@ -13,8 +13,9 @@ static:
 	docker exec -it odin-django python manage.py collectstatic --no-input
 
 deploy:
-	docker container stop odin-django odin-worker odin-scheduler
-	docker container rm odin-django odin-worker odin-scheduler
+	docker pull mantiby/odin-next:latest
+	docker container stop odin-django odin-next odin-worker odin-scheduler
+	docker container rm odin-django odin-next odin-worker odin-scheduler
 	docker compose up -d
 
 test:
