@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny
 
@@ -11,3 +12,7 @@ class SensorsView(ListAPIView):
 
     def get_queryset(self):
         return Sensor.objects.order_by("-created_at")
+
+    def filter_queryset(self, queryset):
+        items = (queryset.filter(sensor_id=item).last() for item in settings.SATELLITES)
+        return list(filter(lambda x: x, items))

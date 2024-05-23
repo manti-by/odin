@@ -216,3 +216,8 @@ REST_FRAMEWORK = {
 
 APP_KEY = os.getenv("APP_KEY", "app-key")
 HASH_KEY = os.getenv("HASH_KEY", "hash-key")
+
+
+# Apollo settings
+
+SATELLITES = {"CENTAX-1", "CENTAX-2", "CENTAX-3", "CENTAX-4"}

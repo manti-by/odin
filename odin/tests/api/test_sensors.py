@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
@@ -21,17 +22,23 @@ class TestSensorsView:
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     def test_sensors__list(self):
-        SensorFactory()
+        satellites = list(settings.SATELLITES)
+        SensorFactory(sensor_id=satellites[0])
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 1
 
-        SensorFactory()
+        SensorFactory(sensor_id=satellites[1])
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 2
 
-        SensorFactory()
+        SensorFactory(sensor_id=satellites[2])
+        response = self.client.get(self.url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 3
+
+        SensorFactory(sensor_id=satellites[0])
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 3
