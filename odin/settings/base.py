@@ -25,10 +25,11 @@ SECRET_KEY = "django-insecure-key"  # noqa
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ("odin.local", "127.0.0.1")
+ALLOWED_HOSTS = ("odin.local", "api.odin.local", "localhost")
 
-CSRF_TRUSTED_ORIGINS = ("https://odin.local/", "http://127.0.0.1/")
+CSRF_TRUSTED_ORIGINS = ("https://odin.local", "https://api.odin.local", "http://localhost")
 
+CORS_ALLOWED_ORIGINS = ("https://odin.local", "http://localhost:3000")
 
 # Application definition
 
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "command_log",
+    "corsheaders",
     "django_rq",
     "django_apscheduler",
     "rest_framework",
@@ -56,6 +58,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "odin.urls"
