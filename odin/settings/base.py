@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "odin.api",
     "odin.apps.core",
     "odin.apps.sensors",
+    "odin.apps.weather",
 ]
 
 MIDDLEWARE = [

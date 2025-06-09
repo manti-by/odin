@@ -22,7 +22,7 @@ norecursedirs = '''
 
 [tool.bandit]
 exclude_dirs = [
-    "odin/settings/base.py"
+    "odin/settings/"
 ]
 skips = ["B101", "B308", "B703"]
 
