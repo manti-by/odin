@@ -9,8 +9,10 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
+
 import os
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,10 +29,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ("odin.local", "api.odin.local", "localhost")
 
-CSRF_TRUSTED_ORIGINS = ("https://odin.local", "https://api.odin.local", "http://localhost")
-
-CORS_ALLOWED_ORIGINS = ("https://odin.local", "http://localhost:3000")
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -41,7 +39,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "command_log",
-    "corsheaders",
     "django_rq",
     "django_apscheduler",
     "rest_framework",

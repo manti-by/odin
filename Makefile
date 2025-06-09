@@ -31,7 +31,7 @@ django-checks:
 	python manage.py check --fail-level WARNING --settings=odin.settings.sqlite
 
 pip:
-	pip install -r requirements.txt
+	uv pip install -r requirements.txt
 
 update:
 	pcu requirements.txt -u
