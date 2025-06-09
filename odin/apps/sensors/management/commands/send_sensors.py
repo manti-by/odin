@@ -1,14 +1,15 @@
 import logging
 import os
-
-import requests
 from concurrent import futures
-from command_log.management.commands import LoggedCommand
+
 from django.conf import settings
 from django.utils import timezone
 
+import requests
+from command_log.management.commands import LoggedCommand
 from odin.apps.core.services import get_data_hash
 from odin.apps.sensors.models import Sensor, SyncLog
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class Command(LoggedCommand):
     def handle(self, *args, **options):
         data_to_send = []
         logger.info("Preparing sensors data")
-        for index, sensor in enumerate(Sensor.objects.filter(synced_at__isnull=True)):
+        for _, sensor in enumerate(Sensor.objects.filter(synced_at__isnull=True)):
             data = {"key": settings.APP_KEY, **sensor.serialize()}
             data["hash"] = get_data_hash(data, settings.HASH_KEY)
             data_to_send.append(data)

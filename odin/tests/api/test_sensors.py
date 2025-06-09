@@ -1,16 +1,14 @@
 from django.conf import settings
+
+import pytest
+from odin.tests.factories import SensorFactory
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
-import pytest
-
-from odin.tests.factories import SensorFactory
-
 
 @pytest.mark.django_db
 class TestSensorsView:
-
     def setup_method(self):
         self.client = APIClient()
         self.url = reverse("api:v1:sensors:list")

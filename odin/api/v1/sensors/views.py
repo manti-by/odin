@@ -1,8 +1,9 @@
 from django.conf import settings
+
+from odin.apps.sensors.models import Sensor
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny
 
-from odin.apps.sensors.models import Sensor
 from .serializers import SensorSerializer
 
 

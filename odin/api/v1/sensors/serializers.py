@@ -1,6 +1,5 @@
-from rest_framework import serializers
-
 from odin.api.utils.serializers import BaseSerializer
+from rest_framework import serializers
 
 
 class SensorSerializer(BaseSerializer):

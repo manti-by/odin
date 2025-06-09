@@ -14,12 +14,12 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "INFO",
+            "level": "ERROR",
             "class": "logging.StreamHandler",
             "formatter": "simple",
         },
     },
     "loggers": {
-        "": {"handlers": ["console"], "level": "INFO"},
+        "": {"handlers": ["console"], "level": "ERROR"},
     },
 }

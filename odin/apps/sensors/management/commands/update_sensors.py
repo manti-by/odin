@@ -3,8 +3,8 @@ import logging
 import requests
 from command_log.management.commands import LoggedCommand
 from dateutil import parser
-
 from odin.apps.sensors.models import Sensor, SyncLog
+
 
 logger = logging.getLogger(__name__)
 

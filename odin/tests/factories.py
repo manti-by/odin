@@ -1,11 +1,11 @@
-import factory.fuzzy
 from django.contrib.auth.models import User
 
+import factory.fuzzy
 from factory import DictFactory
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyDecimal
-
 from odin.apps.sensors.models import Sensor
+
 
 DEFAULT_USER_PASSWORD = "pa55word"  # noqa
 

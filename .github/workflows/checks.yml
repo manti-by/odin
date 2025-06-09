@@ -15,14 +15,13 @@ jobs:
     services:
 
       postgres:
-        image: postgres:16.2
+        image: postgres:17
         env:
           POSTGRES_USER: odin
           POSTGRES_PASSWORD: odin
           POSTGRES_DB: odin
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - name: Check out the repository
@@ -45,8 +44,10 @@ jobs:
       - name: Install dependencies
         shell: bash
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Run pre-commit hook
+        uses: pre-commit/action@v3.0.0
 
       - name: Check for missing migrations
         run: |
@@ -55,9 +56,6 @@ jobs:
       - name: Run Django system checks
         run: |
           python manage.py check --fail-level WARNING --settings=odin.settings.sqlite
-
-      - name: Run pre-commit hook
-        uses: pre-commit/action@v3.0.0
 
       - name: Run Pytest suite
         run: |
