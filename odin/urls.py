@@ -19,13 +19,16 @@ Including another URLconf
 
 from django.conf import settings
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
+
+from odin.apps.core.views import index_view
 
 
 urlpatterns = [
     path("rq/", include("django_rq.urls")),
     path("api/", include("odin.api.urls", namespace="api")),
-    path("", admin.site.urls),
+    path("admin/", admin.site.urls),
+    path("", index_view),
 ]
 
 if settings.DEBUG:
