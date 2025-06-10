@@ -13,10 +13,13 @@ static:
 	docker exec -it odin-django python manage.py collectstatic --no-input
 
 deploy:
-	docker pull mantiby/odin-next:latest
-	docker container stop odin-django odin-next odin-worker odin-scheduler
-	docker container rm odin-django odin-next odin-worker odin-scheduler
-	docker compose up -d
+	git pull
+	python manage.py migrate
+	python manage.py collectstatic --no-input
+	sudo systemctl daemon-reload
+	sudo systemctl restart worker.service
+	sudo systemctl restart gunicorn.service
+	sudo systemctl restart scheduler.service
 	sudo service nginx reload
 
 test:
