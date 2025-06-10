@@ -14,6 +14,7 @@ static:
 
 deploy:
 	git pull
+	uv pip install -r requirements.txt
 	python manage.py migrate
 	python manage.py collectstatic --no-input
 	sudo systemctl daemon-reload
