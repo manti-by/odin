@@ -1,16 +1,8 @@
-.PHONY:build
-
-bash:
-	docker exec -it odin-django bash
-
-build:
-	docker build -t mantiby/odin:latest .
-
 migrate:
-	docker exec -it odin-django python manage.py migrate
+	python manage.py migrate
 
 static:
-	docker exec -it odin-django python manage.py collectstatic --no-input
+	python manage.py collectstatic --no-input
 
 deploy:
 	git pull

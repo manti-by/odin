@@ -1,0 +1,270 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.3;
+  color: #bFbFbF;
+  background: #000000;
+}
+
+h1, h2, h3, h4, h5 {
+  margin: 0 0 1.25rem;
+  padding: 0;
+  font-weight: 400;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0 0 1.25rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+}
+
+h3, h4, h5 {
+  font-size: 1rem;
+}
+
+a {
+  color: #bf4b31;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+p {
+  margin: 0 0 1.25rem;
+  font-size: calc(18rem / 16);
+  line-height: 1.625;
+}
+
+table {
+  width: 100%;
+  margin-bottom: 3rem;
+  line-height: 1.5;
+}
+
+table tr {
+  border-bottom: 1px solid #efefef;
+}
+
+table tr:hover {
+  background: #83b881;
+}
+
+table th,
+table td {
+  padding: .25rem;
+  vertical-align: sub;
+}
+
+dl, ol, ul {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding: 0 0 0 1.5rem;
+}
+
+header {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  margin: 0 0 1.5rem 0;
+  padding: 1rem 1.5rem .75rem 1.5rem;
+  background: #1c1c1c;
+}
+
+header h1 {
+  margin: 0;
+  padding: 0;
+}
+
+header h1 span {
+  display: inline-block;
+  height: 2rem;
+  vertical-align: top;
+}
+
+header .logo {
+  margin: 0 .5rem 0 0;
+  max-width: 2rem;
+}
+
+header .time {
+  margin-top: .5rem;
+}
+
+.container {
+  width: 100%;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Buttons and forms */
+
+button, input, optgroup, select, textarea {
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button {
+  display: inline-block;
+  min-width: 7.5rem;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  color: #bf4b31;
+  border: 1px solid #bf4b31;
+  background-color: #ffffff;
+  padding: .375rem .75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: .25rem;
+  transition: color .15s ease-in-out,
+    background-color .15s ease-in-out,
+    border-color .15s ease-in-out,
+    box-shadow .15s ease-in-out;
+  cursor: pointer;
+}
+
+button.primary {
+  color: #ffffff;
+  background-color: #bf4b31;
+  border-color: #bf4b31;
+}
+
+button.secondary {
+  color: #6F6F6F;
+  border-color: #9F9F9F;
+}
+
+button.primary:hover {
+  color: #bf4b31;
+  background-color: #ffffff;
+  border-color: #bf4b31;
+}
+
+button.secondary:hover {
+  color: #ffffff;
+  background-color: #9F9F9F;
+}
+
+button.primary.focus,
+button.outline.primary:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 111, 97, .5);
+}
+
+button.primary:not(:disabled).active:focus,
+button.primary:not(:disabled):active:focus,
+.show > button.primary.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 111, 97, .5);
+}
+
+button.primary:not(:disabled).active,
+button.primary:not(:disabled):active,
+.show > button.primary.dropdown-toggle {
+  color: #bf4b31;
+  background-color: #ffffff;
+  border-color: #bf4b31;
+}
+
+button.outline.primary {
+  color: #bf4b31;
+  background-color: #ffffff;
+}
+
+button.outline.primary:hover {
+  color: #ffffff;
+  background-color: #bf4b31;
+  border-color: #bf4b31;
+}
+
+button.outline.primary.focus,
+button.outline.primary:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 111, 97, .5);
+}
+
+button.outline.primary:not(:disabled).active:focus,
+button.outline.primary:not(:disabled):active:focus,
+.show > button.outline.primary.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 111, 97, .5);
+}
+
+button.outline.primary:not(:disabled).active,
+button.outline.primary:not(:disabled):active,
+.show > button.outline.primary.dropdown-toggle {
+  background-color: #bf4b31;
+  border-color: #bf4b31;
+}
+
+input, select, textarea {
+  display: block;
+  width: 100%;
+  height: calc(2.25rem + 2px);
+  padding: .375rem .75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: .25rem;
+  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+input:focus, textarea:focus, select:focus {
+    color: #495057;
+    background-color: #fff;
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+textarea {
+  height: auto;
+}
+
+form .group {
+    margin-bottom: 1rem;
+}
+
+label {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.small {
+  font-size: .75rem;
+}
+
+.info {
+  color: #5C5C5C;
+}

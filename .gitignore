@@ -3,16 +3,14 @@
 .idea/
 
 .pytest_cache/
-
-odin/settings/local.py
-media/
-static/
-log/
-
-react/
-
-*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
 *~
+
+log/*
+static/*
+content/*
 
 .python-version
 .env

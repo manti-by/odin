@@ -47,6 +47,9 @@ html_has_lang = true
 line-length = 120
 indent-width = 4
 target-version = "py312"
+exclude = [
+    "odin/settings/"
+]
 
 [tool.ruff.lint]
 select = [

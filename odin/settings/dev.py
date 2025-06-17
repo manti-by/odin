@@ -1,5 +1,12 @@
 from .base import *  # noqa
 
+os.environ.setdefault("DJANGO_RUNSERVER_HIDE_WARNING", "true")
+
+from django.core.management.commands.runserver import Command
+Command.default_addr = '0.0.0.0'
+
+DJANGO_RUNSERVER_HIDE_WARNING = True
+
 ALLOWED_HOSTS = ("*",)
 
 LOGGING = {

@@ -5,39 +5,64 @@
   {% translate "Welcome to ODIN server" %}
 {% endblock %}
 
-{% block content %}
-  <div class="container home">
-    <h1>{% translate "Welcome to ODIN server" %}</h1>
-    <h2>{% translate "IoT Graphs" %}</h2>
-    <ul>
-      {% for name, sensor in sensors.items %}
-        <li>
-          {{ sensor.external_id }} - {{ name }}:
-          {{ sensor.temp }}<span>&#8451;</span> / {{ sensor.humidity }}%
-        </li>
-      {% endfor %}
-    </ul>
-    <h2>{% translate "Local services" %}</h2>
-    <ul>
-      <li>
-        <a href="https://deluge.odin.local">
-          <img src="{% static 'img/deluge.png' %}" alt="Deluge">
-        </a>
-      </li>
-      <li>
-        <a href="https://mail.odin.local">
-          <img src="{% static 'img/mailhog.png' %}" alt="Mailhog">
-        </a>
-      </li>
-      <li>
-        <a href="https://es.odin.local">
-          <img src="{% static 'img/elasticsearch.png' %}" alt="Elastic">
-        </a>
-      </li>
-    </ul>
-  </div>
+{% block styles %}
+  <link href="{% static 'css/index.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% block styles %}
-  <link href="{% static 'css/home.css' %}" rel="stylesheet">
+{% block content %}
+  <header>
+    <h1>
+      <img src="{% static 'img/logo.png' %}" class="logo" alt="O">
+      <span>{% translate "ODIN server" %}</span>
+    </h1>
+    <div class="time">{{ time }}</div>
+  </header>
+  <div class="container home">
+    <div class="grid">
+      <div class="tile">
+        <h2>{% translate "IoT Graphs" %}</h2>
+        <ul>
+          {% for name, sensor in sensors.items %}
+            <li>
+              {{ sensor.external_id }} - {{ name }}:
+              {{ sensor.temp }}<span>&#8451;</span> / {{ sensor.humidity }}%
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="tile">
+        <h2>{% translate "Weather" %}</h2>
+        <div class="map"><div class="wrapper"></div></div>
+        {% if weather %}
+          <div class="temp">
+            min: {{ weather.data.temp.min }}&#8451;<br>
+            avg: {{ weather.data.temp.avg }}&#8451;<br>
+            max: {{ weather.data.temp.max }}&#8451;<br>
+          </div>
+        {% else %}
+          <div>{% translate "No Data" %}</div>
+        {% endif %}
+      </div>
+      <div class="tile">
+        <h2>{% translate "Local services" %}</h2>
+        <ul>
+          <li>
+            <a href="https://deluge.odin.local">
+              <img src="{% static 'img/deluge.png' %}" class="icon" alt="Deluge">
+            </a>
+          </li>
+          <li>
+            <a href="https://es.odin.local">
+              <img src="{% static 'img/elasticsearch.png' %}" class="icon" alt="Elastic">
+            </a>
+          </li>
+          <li>
+            <a href="https://mail.odin.local">
+              <img src="{% static 'img/mailhog.png' %}" class="icon" alt="Mailhog">
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
 {% endblock %}

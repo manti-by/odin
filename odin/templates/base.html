@@ -6,7 +6,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{% block title %}{% endblock %}</title>
-    <link href="{% static 'css/index.css' %}" rel="stylesheet">
+
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="64x64" href="{% static 'favicon-64.png' %}">
+    <link rel="icon" type="image/png" sizes="128x128" href="{% static 'favicon-128.png' %}">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" type="image/png" sizes="32x32" href="{% static 'avicon-32.png' %}">
+    <link rel="apple-touch-icon" type="image/png" sizes="64x64" href="{% static 'avicon-64.png' %}">
+    <link rel="apple-touch-icon" type="image/png" sizes="128x128" href="{% static 'avicon-128.png' %}">
+
+    <link href="{% static 'css/fonts.css' %}" rel="stylesheet">
+    <link href="{% static 'css/base.css' %}" rel="stylesheet">
     {% block styles %}{% endblock %}
   </head>
   <body>
