@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "odin.api",
     "odin.apps.core",
+    "odin.apps.music",
     "odin.apps.sensors",
     "odin.apps.weather",
 ]
@@ -144,7 +145,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Europe/Minsk"
 
 USE_I18N = True
 
@@ -218,3 +219,8 @@ HASH_KEY = os.getenv("HASH_KEY", "hash-key")
 # Apollo settings
 
 SATELLITES = {"CENTAX-1", "CENTAX-2", "CENTAX-3", "CENTAX-4"}
+
+
+# Music library settings
+
+MUSIC_PATH = os.getenv("MUSIC_PATH", "/mnt/data/Music/Library")
