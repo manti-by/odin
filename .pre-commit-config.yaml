@@ -16,13 +16,12 @@ repos:
         args: [--py312-plus]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.13
+    rev: v0.12.5
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
-  # Search common security issues in Python code
   - repo: local
     hooks:
     - id: bandit
@@ -34,7 +33,6 @@ repos:
       args: [-c, pyproject.toml]
       additional_dependencies: ["bandit[toml]"]
 
-  # Linting for Django templates
   - repo: https://github.com/thibaudcolas/curlylint
     rev: v0.13.1
     hooks:
