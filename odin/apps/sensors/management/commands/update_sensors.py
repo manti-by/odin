@@ -1,35 +1,20 @@
 import logging
 
-import requests
 from command_log.management.commands import LoggedCommand
-from dateutil import parser
-from odin.apps.sensors.models import Sensor, SyncLog
+from odin.apps.sensors.models import RawSensor, Sensor
 
 
 logger = logging.getLogger(__name__)
 
 
 class Command(LoggedCommand):
-    help = description = "Retrieve the data from Coruscant server."
-    url = "http://coruscant.local/batch/"
-
-    offset = 0
-    limit = 500
-    timeout = 30
+    help = description = "Convert raw sensors data."
 
     def handle(self, *args, **options):
-        created_exists = True
-        while created_exists:
-            try:
-                response = requests.get(f"{self.url}?limit={self.limit}&offset={self.offset}", timeout=self.timeout)
-            except ConnectionError as e:
-                logger.error(f"Error retrieving data from Coruscant server: {e}")
-                break
-
-            if response.ok:
-                for sensor in response.json():
-                    sensor["created_at"] = parser.parse(sensor["created_at"])
-                    _, created = Sensor.objects.get_or_create(external_id=sensor.pop("id"), defaults=sensor)
-                    SyncLog.objects.create(type="IN", synced_count=created)
-                    created_exists = created or False
-                self.offset += self.limit
+        synced_count = 0
+        for raw_sensor in RawSensor.objects.filter(is_synced=False).order_by("created_at"):
+            Sensor.objects.create(external_id=raw_sensor.address, temp=raw_sensor.temp)
+            synced_count += 1
+            raw_sensor.is_synced = True
+            raw_sensor.save()
+        return synced_count
