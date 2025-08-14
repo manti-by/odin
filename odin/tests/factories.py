@@ -32,7 +32,6 @@ class DjangoAdminUserFactory(UserFactory):
 
 
 class SensorFactory(DjangoModelFactory):
-    external_id = factory.Faker("pyint")
     sensor_id = factory.Faker("word")
     temp = FuzzyDecimal(low=-10, high=40, precision=2)
     humidity = FuzzyDecimal(low=0, high=100, precision=2)
