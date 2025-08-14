@@ -14,19 +14,11 @@ scheduler = BlockingScheduler(timezone=settings.TIME_ZONE)
 scheduler.add_jobstore(DjangoJobStore(), "default")
 
 
-# # Every hour
-# @scheduler.scheduled_job("interval", minutes=1, id="update_sensors")
-# def update_sensors():
-#     call_command("update_sensors")
-#
-#
-# # Every day
-# @scheduler.scheduled_job("interval", minutes=30, id="send_sensors")
-# def send_sensors():
-#     call_command("send_sensors")
-
-
-# Every hour
 @scheduler.scheduled_job("interval", minutes=30, id="update_weather")
-def update_weather():
+def schedule_update_weather():
     call_command("update_weather")
+
+
+@scheduler.scheduled_job("interval", minutes=5, id="update_sensors")
+def schedule_update_sensors():
+    call_command("update_sensors")

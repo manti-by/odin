@@ -40,7 +40,7 @@ class Command(LoggedCommand):
                 SyncLog.objects.create(type="OUT", synced_count=len(sensors_sent))
                 sensors_sent = []
 
-    def handle(self, *args, **options):
+    def do_command(self, *args, **options):
         data_to_send = []
         logger.info("Preparing sensors data")
         for _, sensor in enumerate(Sensor.objects.filter(synced_at__isnull=True)):
@@ -59,4 +59,6 @@ class Command(LoggedCommand):
 
         for _ in futures.as_completed(threads):
             """Wait for all threads to finish."""
+
         logger.info(f"{len(data_to_send)} sensors is sent to Amon-Ra server")
+        return {"synced_count": len(data_to_send)}

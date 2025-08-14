@@ -47,18 +47,13 @@
         <h2>{% translate "Local services" %}</h2>
         <ul>
           <li>
+            <a href="{% url 'admin:index' %}">
+              <img src="{% static 'img/admin.png' %}" class="icon" alt="Admin">
+            </a>
+          </li>
+          <li>
             <a href="https://deluge.odin.local">
               <img src="{% static 'img/deluge.png' %}" class="icon" alt="Deluge">
-            </a>
-          </li>
-          <li>
-            <a href="https://es.odin.local">
-              <img src="{% static 'img/elasticsearch.png' %}" class="icon" alt="Elastic">
-            </a>
-          </li>
-          <li>
-            <a href="https://mail.odin.local">
-              <img src="{% static 'img/mailhog.png' %}" class="icon" alt="Mailhog">
             </a>
           </li>
         </ul>
