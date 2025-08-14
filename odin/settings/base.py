@@ -162,10 +162,10 @@ STATICFILES_FINDERS = [
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-STATIC_ROOT = BASE_DIR.parent / "static"
+STATIC_ROOT = os.getenv("STATIC_ROOT", BASE_DIR.parent / "static")
 STATIC_URL = "static/"
 
-MEDIA_ROOT = BASE_DIR.parent / "media"
+MEDIA_ROOT = os.getenv("MEDIA_ROOT", BASE_DIR.parent / "media")
 MEDIA_URL = "media/"
 
 # Default primary key field type

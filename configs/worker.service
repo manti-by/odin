@@ -7,6 +7,7 @@ User=manti
 Group=manti
 Restart=always
 WorkingDirectory=/home/manti/www/odin/src
+EnvironmentFile=/home/manti/www/odin/src/.env
 ExecStart=/home/manti/.pyenv/versions/odin/bin/python /home/manti/www/odin/src/manage.py rqworker default
 StandardOutput=file:/var/log/odin/worker-access.log
 StandardError=file:/var/log/odin/worker-error.log
