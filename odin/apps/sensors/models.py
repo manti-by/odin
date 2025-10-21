@@ -1,5 +1,23 @@
+from __future__ import annotations
+
+from django.conf import settings
 from django.db import models
+from django.db.models import query
 from django.utils.translation import gettext_lazy as _
+
+
+class SensorQuerySet(query.QuerySet):
+    pass
+
+
+class SensorManager(models.Manager):
+    def current(self) -> query.QuerySet:
+        return (
+            self.get_queryset()
+            .filter(sensor_id__in=settings.SENSORS)
+            .order_by("sensor_id", "-created_at")
+            .distinct("sensor_id")
+        )
 
 
 class Sensor(models.Model):
@@ -9,6 +27,8 @@ class Sensor(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = SensorManager.from_queryset(SensorQuerySet)()
 
     class Meta:
         verbose_name = _("sensor")

@@ -218,7 +218,7 @@ HASH_KEY = os.getenv("HASH_KEY", "hash-key")
 
 # Apollo settings
 
-SATELLITES = {"CENTAX-1", "CENTAX-2", "CENTAX-3", "CENTAX-4"}
+SENSORS = {"40214622700191", "401055323700217", "401051142370097", "40651102370043", "4022810223700162"}
 
 
 # Music library settings

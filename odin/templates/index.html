@@ -19,13 +19,15 @@
   </header>
   <div class="container home">
     <div class="grid">
-      <div class="tile">
-        <h2>{% translate "IoT Graphs" %}</h2>
+      <div class="tile sensors">
+        <h2>{% translate "Sensors" %}</h2>
         <ul>
-          {% for name, sensor in sensors.items %}
+          {% for sensor in sensors %}
             <li>
-              {{ sensor.external_id }} - {{ name }}:
-              {{ sensor.temp }}<span>&#8451;</span> / {{ sensor.humidity }}%
+              <div class="sensor">
+                <div class="temp">{{ sensor.temp }}<span>&#8451;</span></div>
+                <div class="name">{{ sensor.sensor_id }}</div>
+              </div>
             </li>
           {% endfor %}
         </ul>

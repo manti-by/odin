@@ -13,7 +13,7 @@ repos:
     rev: v3.21.0
     hooks:
       - id: pyupgrade
-        args: [--py312-plus]
+        args: [--py313-plus]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.1
@@ -26,12 +26,14 @@ repos:
     rev: 1.8.6
     hooks:
     - id: bandit
+      language: python
+      language_version: python3.13
+      types: [ python ]
+      args: [-c, pyproject.toml]
 
   - repo: https://github.com/thibaudcolas/curlylint
     rev: v0.13.1
     hooks:
       - id: curlylint
         types: [ file ]
-        files: \.(html|sls)$
-        language_version: python3.12
-        additional_dependencies: [click<8.1]
+        files: \.html$

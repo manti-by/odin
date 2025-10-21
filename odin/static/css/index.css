@@ -34,6 +34,16 @@
   width: 100px;
 }
 
+.home .sensors ul {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: start;
+}
+
+.home .sensor .name {
+  font-size: .75rem;
+}
+
 .home .map {
   position: relative;
 }

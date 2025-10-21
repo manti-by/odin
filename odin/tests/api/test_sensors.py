@@ -20,23 +20,23 @@ class TestSensorsView:
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     def test_sensors__list(self):
-        satellites = list(settings.SATELLITES)
-        SensorFactory(sensor_id=satellites[0])
+        sensors = list(settings.SENSORS)
+        SensorFactory(sensor_id=sensors[0])
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 1
 
-        SensorFactory(sensor_id=satellites[1])
+        SensorFactory(sensor_id=sensors[1])
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 2
 
-        SensorFactory(sensor_id=satellites[2])
+        SensorFactory(sensor_id=sensors[2])
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 3
 
-        SensorFactory(sensor_id=satellites[0])
+        SensorFactory(sensor_id=sensors[0])
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 3

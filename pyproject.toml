@@ -1,9 +1,9 @@
 [project]
 name = "odin"
-version = "v1.0.0a"
+version = "v1.0.0b"
 description = "Django based application that provides a local dashboard for the Apollo project."
 readme = "README.md"
-requires-python = ">=3.12.4"
+requires-python = ">=3.13.6"
 
 [tool.setuptools]
 py-modules = []
@@ -29,7 +29,7 @@ skips = ["B101", "B308", "B703"]
 
 [tool.black]
 line-length = 120
-target_version = ['py312']
+target_version = ['py313']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -46,7 +46,7 @@ html_has_lang = true
 [tool.ruff]
 line-length = 120
 indent-width = 4
-target-version = "py312"
+target-version = "py313"
 exclude = [
     "odin/settings/"
 ]
