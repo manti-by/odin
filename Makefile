@@ -1,14 +1,17 @@
+run:
+	uv run manage.py runserver
+
 migrate:
-	python manage.py migrate
+	uv run manage.py migrate
 
 static:
-	python manage.py collectstatic --no-input
+	uv run manage.py collectstatic --no-input
 
 deploy:
 	git pull
-	uv pip install -r requirements.txt
-	python manage.py migrate
-	python manage.py collectstatic --no-input
+	uv sync
+	uv run manage.py migrate
+	uv run manage.py collectstatic --no-input
 	sudo systemctl daemon-reload
 	sudo systemctl restart worker.service
 	sudo systemctl restart gunicorn.service
@@ -16,19 +19,19 @@ deploy:
 	sudo service nginx reload
 
 test:
-	pytest --create-db --disable-warnings --ds=odin.settings.test odin/
+	uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/
 
 check:
 	git add .
 	pre-commit run
 
 django-checks:
-	python manage.py makemigrations --dry-run --check --verbosity=3 --settings=odin.settings.sqlite
-	python manage.py check --fail-level WARNING --settings=odin.settings.sqlite
+	uv run manage.py makemigrations --dry-run --check --verbosity=3 --settings=odin.settings.sqlite
+	uv run manage.py check --fail-level WARNING --settings=odin.settings.sqlite
 
 pip:
-	uv pip install -r requirements.txt
+	uv sync
 
 update:
-	pcu requirements.txt -u
+	uv sync --upgrade
 	pre-commit autoupdate
