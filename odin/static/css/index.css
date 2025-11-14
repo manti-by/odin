@@ -70,6 +70,45 @@
   line-height: 1.5;
 }
 
+.home .attr span {
+  display: inline-block;
+}
+
+.home .attr img {
+  display: block;
+}
+
 .home .attr label {
+  margin: 0;
   font-weight: bold;
+  /* vertical-align: baseline; */
+}
+
+.home .flex-row {
+  display: flex;
+  flex-flow: row wrap;
+}
+
+.home .temp {
+  font-size: 3.75rem;
+  font-weight: bold;
+}
+
+.home .temp .meta {
+  margin-left: 1rem;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+.home .humidity,
+.home .pressure {
+  display: flex;
+  flex-flow: row wrap;
+  align-content: center;
+  margin-right: 2rem;
+}
+
+.home .humidity label,
+.home .pressure label {
+  align-content: center;
 }

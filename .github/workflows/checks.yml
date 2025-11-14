@@ -15,7 +15,7 @@ jobs:
     services:
 
       postgres:
-        image: postgres:17
+        image: postgres:18
         env:
           POSTGRES_USER: odin
           POSTGRES_PASSWORD: odin
@@ -25,12 +25,12 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Cache deps
         uses: actions/cache@v4
@@ -47,7 +47,6 @@ jobs:
         shell: bash
         run: |
           python -m pip install uv
-          export UV_PROJECT_ENVIRONMENT="${pythonLocation}"
           uv sync --frozen --no-install-project --no-editable
 
       - name: Run pre-commit hook

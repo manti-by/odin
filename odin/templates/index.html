@@ -34,18 +34,29 @@
       </div>
       <div class="tile">
         <h2>{% translate "Weather" %}</h2>
-        <div class="map"><div class="wrapper"></div></div>
         {% if weather %}
           <div class="temp attr">
-            <label>{% translate "Temp" %} - </label>
             <span>
-              {{ weather.data.temp.avg }}&deg;C
-              <span class="meta">({{ weather.data.temp.min }} - {{ weather.data.temp.max }}&deg;C)</span>
+              {{ weather.temp_display }}&deg;C
+            </span>
+            <span class="meta">
+              min {{ weather.temp_min_display }}&deg;C<br/>
+              max {{ weather.temp_max_display }}&deg;C
             </span>
           </div>
-          <div class="humidity attr">
-            <label>{% translate "Humidity" %} - </label>
-            <span>{{ weather.data.humidity }}%</span>
+          <div class="flex-row">
+            <div class="humidity attr">
+              <span class="humidity-chart">
+                <img src="/api/v1/core/chart/?value={{ weather.data.humidity }}&threshold=50">
+              </span>
+              <label>{% translate "Humidity" %}</label>
+            </div>
+            <div class="pressure attr">
+              <span class="pressure-chart">
+                <img src="/api/v1/core/chart/?value={{ weather.pressure }}&min_value=631&max_value=825&threshold=4">
+              </span>
+              <label>{% translate "Pressure" %}</label>
+            </div>
           </div>
           <div class="wind attr">
             <label>{% translate "Wind" %} - </label>
@@ -54,10 +65,6 @@
               <span class="meta">(gusts {{ weather.data.wind.gusts }}m/s)</span>
               {{ weather.data.wind.direction }}&deg;
             </span>
-          </div>
-          <div class="pressure attr">
-            <label>{% translate "Pressure" %} - </label>
-            <span>{{ weather.data.pressure }}hPa</span>
           </div>
           <div class="attributes attr">
             <label>{% translate "Attributes" %} - </label>
