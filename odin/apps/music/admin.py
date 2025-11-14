@@ -39,4 +39,4 @@ class AlbumListFilter(admin.SimpleListFilter):
 class MusicAdmin(admin.ModelAdmin):
     list_display = ("artist", "title", "album", "year")
     search_fields = ("artist", "album", "title")
-    list_filter = (ArtistListFilter, AlbumListFilter)
+    list_filter = (ArtistListFilter, AlbumListFilter, "has_cover")

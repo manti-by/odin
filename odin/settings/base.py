@@ -89,7 +89,7 @@ DATABASES = {
         "NAME": os.getenv("POSTGRES_NAME", "odin"),
         "USER": os.getenv("POSTGRES_USER", "odin"),
         "PASSWORD": os.getenv("POSTGRES_PASS", "odin"),
-        "HOST": os.getenv("POSTGRES_HOST", "localhost"),
+        "HOST": os.getenv("POSTGRES_HOST", "192.168.1.100"),
         "PORT": os.getenv("POSTGRES_PORT", 5432),
     }
 }
@@ -98,7 +98,7 @@ DATABASES = {
 # Cache
 # https://docs.djangoproject.com/en/5.0/ref/settings/#caches
 
-redis_host = os.getenv("REDIS_HOST", "localhost")
+redis_host = os.getenv("REDIS_HOST", "192.168.1.100")
 
 CACHES = {
     "default": {

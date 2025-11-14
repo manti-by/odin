@@ -38,3 +38,11 @@ class Weather(models.Model):
 
     def __str__(self):
         return f"Weather for {self.period}"
+
+    @property
+    def attrs(self) -> dict:
+        return self.data.get("attributes", {})
+
+    @property
+    def has_attrs(self) -> bool:
+        return any(self.attrs.values())
