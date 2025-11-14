@@ -32,19 +32,23 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Cache pip
-        uses: actions/cache@v3
+      - name: Cache deps
+        uses: actions/cache@v4
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
+            path: |
+              ~/.cache/pip
+              ~/.cache/uv
+            key: ${{ runner.os }}-deps-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+            restore-keys: |
+              ${{ runner.os }}-deps-
+              ${{ runner.os }}-
 
       - name: Install dependencies
         shell: bash
         run: |
-          pip install -r requirements.txt
+          python -m pip install uv
+          export UV_PROJECT_ENVIRONMENT="${pythonLocation}"
+          uv sync --frozen --no-install-project --no-editable
 
       - name: Run pre-commit hook
         uses: pre-commit/action@v3.0.0
