@@ -1,0 +1,24 @@
+<svg width="{{ size }}" height="{{ size }}" viewBox="{{ view_box }}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <style>
+            .gauge-text {
+                font-family: "Open Sans", sans-serif;
+                font-size: 12px;
+                font-weight: bold;
+                fill: {{ text_color }};
+                text-anchor: middle;
+            }
+            .gauge-label {
+                font-family: "Open Sans", sans-serif;
+                font-size: 12px;
+                fill: {{ text_color }};
+                text-anchor: middle;
+            }
+        </style>
+    </defs>
+    <path d="{{ start_arc }}" fill="none" stroke="{{ background_color }}" stroke-width="{{ stroke_width }}" stroke-linecap="round"/>
+    <path d="{{ end_arc }}" fill="none" stroke="{{ background_color }}" stroke-width="{{ stroke_width }}" stroke-linecap="round"/>
+    <path d="{{ filled_arc }}" fill="none" stroke="{{ fill_color }}" stroke-width="{{ stroke_width }}" stroke-linecap="round"/>
+    <circle cx="{{ value_x }}" cy="{{ value_y }}" r="{{ stroke_width }}" fill="{{ target_value_color }}" stroke="{{ target_value_color }}" stroke-width="{{ stroke_width }}" stroke-linecap="round"/>
+    <text x="{{ center_x }}" y="{{ center_y }}" class="gauge-text">{{ value }}</text>
+</svg>

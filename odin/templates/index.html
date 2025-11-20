@@ -47,13 +47,13 @@
           <div class="flex-row">
             <div class="humidity attr">
               <span class="humidity-chart">
-                <img src="/api/v1/core/chart/?value={{ weather.data.humidity }}&threshold=50">
+                <img src="/api/v1/core/chart/?value={{ weather.data.humidity }}&metric=humidity">
               </span>
               <label>{% translate "Humidity" %}</label>
             </div>
             <div class="pressure attr">
               <span class="pressure-chart">
-                <img src="/api/v1/core/chart/?value={{ weather.pressure }}&min_value=631&max_value=825&threshold=4">
+                <img src="/api/v1/core/chart/?value={{ weather.pressure }}&metric=pressure">
               </span>
               <label>{% translate "Pressure" %}</label>
             </div>

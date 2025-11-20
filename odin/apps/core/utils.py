@@ -1,19 +1,52 @@
 import math
 from decimal import Decimal
 
+from django.template.loader import render_to_string
+
+from odin.api.v1.core.serializers import MetricChoices
+
+
+GREEN_COLOR = "#87C540"
+YELLOW_COLOR = "#FFDD00"
+RED_COLOR = "#DA525D"
+
+LIGHT_GREY_COLOR = "#E9E9E9"
+DARK_GREY_COLOR = "#404040"
+
+
+def create_metric_gauge_chart(value: Decimal, metric: MetricChoices) -> str:
+    min_value, max_value, min_green_value, max_green_value = 631, 825, 740, 780
+    if metric == MetricChoices.HUMIDITY:
+        min_value, max_value, min_green_value, max_green_value = 0, 100, 35, 65
+
+    value_color = GREEN_COLOR
+    if value < min_green_value:
+        value_color = YELLOW_COLOR if metric == MetricChoices.PRESSURE else RED_COLOR
+    if value > max_green_value:
+        value_color = RED_COLOR if metric == MetricChoices.PRESSURE else YELLOW_COLOR
+
+    return create_gauge_chart(
+        value=value,
+        min_value=min_value, 
+        max_value=max_value,
+        min_green_value=min_green_value, 
+        max_green_value=max_green_value,
+        value_color=value_color,
+    )
+
 
 def create_gauge_chart(
     value: Decimal,
     min_value: Decimal = 0,
     max_value: Decimal = 100,
-    threshold: Decimal = 10,
+    min_green_value: Decimal = 35,
+    max_green_value: Decimal = 65,
     size: int = 70,
     stroke_width: int = 4,
-    background_color: str = "#404040",
-    fill_color: str = "#4dcb5d",
-    text_color: str = "#e9e9e9",
-    show_value: bool = True,
-    show_min_max: bool = False,
+    fill_color: str = GREEN_COLOR,
+    value_color: str = GREEN_COLOR,
+    text_color: str = LIGHT_GREY_COLOR,
+    background_color: str = DARK_GREY_COLOR,
     center_x: int | None = None,
     center_y: int | None = None,
     start_angle: Decimal = -200,
@@ -26,14 +59,14 @@ def create_gauge_chart(
         value: Current value to display on the gauge
         min_value: Minimum value for the gauge range
         max_value: Maximum value for the gauge range
-        threshold: Value threshold in percents
+        min_green_value: Minimum value for the gauge green range
+        max_green_value: Maximum value for the gauge green range
         size: Size of the SVG (width and height in pixels)
         stroke_width: Width of the gauge arc stroke
-        background_color: Color of the background arc
         fill_color: Color of the filled arc
+        value_color: Color of the value point
         text_color: Color of the text
-        show_value: Whether to display the current value
-        show_min_max: Whether to display min/max labels
+        background_color: Color of the background arc
         center_x: X coordinate of center (defaults to size/2)
         center_y: Y coordinate of center (defaults to size/2)
         start_angle: Starting angle in degrees (default -135 for bottom-left)
@@ -63,11 +96,11 @@ def create_gauge_chart(
     value_rad = math.radians(value_angle)
 
     # Calculate shifted borders
-    left_border = max(0, min(1, (value - (threshold * value / 100) - min_value) / (max_value - min_value)))
+    left_border = max(0, min(1, (min_green_value - min_value) / (max_value - min_value)))
     left_border_angle = start_angle + (end_angle - start_angle) * left_border
     left_border_rad = math.radians(left_border_angle)
 
-    right_border = max(0, min(1, (value + (threshold * value / 100) - min_value) / (max_value - min_value)))
+    right_border = max(0, min(1, (max_green_value - min_value) / (max_value - min_value)))
     right_border_angle = start_angle + (end_angle - start_angle) * right_border
     right_border_rad = math.radians(right_border_angle)
 
@@ -88,68 +121,24 @@ def create_gauge_chart(
 
     # Generate path elements for an SQV image
     start_arc = f"M {start_x} {start_y} A {radius} {radius} 0 0 1 {left_x} {left_y}"
-
     filled_arc = f"M {left_x} {left_y} A {radius} {radius} 0 0 1 {right_x} {right_y}"
-
     end_arc = f"M {right_x} {right_y} A {radius} {radius} 0 0 1 {end_x} {end_y}"
 
-    # Build SVG
-    svg_parts = [
-        f'<svg width="{size}" height="{size}" viewBox="0 0 {size} {size - 15}" xmlns="http://www.w3.org/2000/svg">',
-        "  <defs>",
-        "    <style>",
-        "      .gauge-text {",
-        '        font-family: "Open Sans", sans-serif;',
-        "        font-size: 12px;",
-        "        font-weight: bold;",
-        f"        fill: {text_color};",
-        "        text-anchor: middle;",
-        "      }",
-        "      .gauge-label {",
-        '        font-family: "Open Sans", sans-serif;',
-        "        font-size: 12px;",
-        f"        fill: {text_color};",
-        "        text-anchor: middle;",
-        "      }",
-        "    </style>",
-        "  </defs>",
-        f'  <path d="{start_arc}"',
-        '        fill="none"',
-        f'        stroke="{background_color}"',
-        f'        stroke-width="{stroke_width}"',
-        '        stroke-linecap="round"/>',
-        f'  <path d="{end_arc}"',
-        '        fill="none"',
-        f'        stroke="{background_color}"',
-        f'        stroke-width="{stroke_width}"',
-        '        stroke-linecap="round"/>',
-        f'  <path d="{filled_arc}"',
-        '        fill="none"',
-        f'        stroke="{fill_color}"',
-        f'        stroke-width="{stroke_width}"',
-        '        stroke-linecap="round"/>',
-        f'  <circle cx="{value_x}" cy="{value_y}" r="{stroke_width}"',
-        '        fill="none"',
-        f'        stroke="{fill_color}"',
-        f'        stroke-width="{stroke_width}"',
-        '        stroke-linecap="round"/>',
-    ]
-
-    # Add value text
-    if show_value:
-        svg_parts.append(f'  <text x="{center_x}" y="{center_y + size // 20}" class="gauge-text">{value:.0f}</text>')
-
-    # Add min/max labels if requested
-    if show_min_max:
-        min_x, min_y = point_on_circle(start_rad, radius + stroke_width // 2 + 10)
-        max_x, max_y = point_on_circle(end_rad, radius + stroke_width // 2 + 10)
-        svg_parts.extend(
-            [
-                f'  <text x="{min_x}" y="{min_y}" class="gauge-label">{min_value}</text>',
-                f'  <text x="{max_x}" y="{max_y}" class="gauge-label">{max_value}</text>',
-            ]
-        )
-
-    svg_parts.append("</svg>")
-
-    return "\n".join(svg_parts)
+    # Render using Django template engine
+    return render_to_string("chart.svg", {
+        "size": size,
+        "view_box": f"0 0 {size} {size - 15}",
+        "value": round(value, 0),
+        "start_arc": start_arc,
+        "end_arc": end_arc,
+        "value_x": value_x,
+        "value_y": value_y,
+        "center_x": center_x,
+        "center_y": center_y + size // 20,
+        "filled_arc": filled_arc,
+        "fill_color": fill_color,
+        "text_color": text_color,
+        "target_value_color": value_color,
+        "background_color": background_color,
+        "stroke_width": stroke_width,
+    })

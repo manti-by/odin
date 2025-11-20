@@ -3,11 +3,14 @@ from decimal import Decimal
 from django.http import HttpResponse
 from django.urls.exceptions import Http404
 
-from odin.apps.core.utils import create_gauge_chart
 from rest_framework import views
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
+
+
+from odin.api.v1.core.serializers import ChartTypeSerializer
+from odin.apps.core.utils import create_metric_gauge_chart
 
 
 class HealthCheckView(views.APIView):
@@ -21,13 +24,8 @@ class ChartView(views.APIView):
     permission_classes = (AllowAny,)
 
     def get(self, request: Request, *args: list, **kwargs: dict) -> HttpResponse:
-        try:
-            value = Decimal(request.query_params.get("value", 75))
-            min_value = Decimal(request.query_params.get("min_value", 0))
-            max_value = Decimal(request.query_params.get("max_value", 100))
-            threshold = Decimal(request.query_params.get("threshold", 10))
-        except TypeError as e:
-            raise Http404 from e
+        serialiser = ChartTypeSerializer(data=request.query_params)
+        serialiser.is_valid(raise_exception=True)
 
-        contents = create_gauge_chart(value=value, min_value=min_value, max_value=max_value, threshold=threshold)
+        contents = create_metric_gauge_chart(**serialiser.validated_data)
         return HttpResponse(contents, content_type="image/svg+xml")
