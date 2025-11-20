@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from django.db import models
 from django.db.models import JSONField, query
+from django.db.utils import cached_property
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -50,33 +51,44 @@ class Weather(models.Model):
         return any(self.attrs.values())
 
     @property
-    def temp(self) -> Decimal:
-        if temp := self.data.get("temp", {}).get("avg"):
+    def temp(self) -> Decimal | None:
+        if (temp := self.data.get("temp", {}).get("avg")) is not None:
             return Decimal(temp)
-        return Decimal(0)
+        return None
 
     @property
     def temp_display(self) -> str:
+        if self.temp is None:
+            return "--"
         return f"+{round(self.temp, 1)}" if self.temp > 0 else f"{round(self.temp, 1)}"
 
-    @property
-    def temp_min(self) -> Decimal:
-        if temp := self.data.get("temp", {}).get("min"):
-            return Decimal(temp)
-        return Decimal(0)
+    @cached_property
+    def current_weather_set(self) -> WeatherQuerySet:
+        start_range, end_date = self.period - timedelta(hours=12), self.period + timedelta(hours=12)
+        return Weather.objects.filter(period__range=(start_range, end_date)).order_by("data__temp")
+
+    @cached_property
+    def temp_min(self) -> Decimal | None:
+        if weather := self.current_weather_set.first():
+            return weather.temp
+        return None
 
     @property
     def temp_min_display(self) -> str:
+        if self.temp_min is None:
+            return "--"
         return f"+{round(self.temp_min, 1)}" if self.temp_min > 0 else f"{round(self.temp_min, 1)}"
 
-    @property
-    def temp_max(self) -> Decimal:
-        if temp := self.data.get("temp", {}).get("max"):
-            return Decimal(temp)
-        return Decimal(0)
+    @cached_property
+    def temp_max(self) -> Decimal | None:
+        if weather := self.current_weather_set.last():
+            return weather.temp
+        return None
 
     @property
     def temp_max_display(self) -> str:
+        if self.temp_max is None:
+            return "--"
         return f"+{round(self.temp_max, 1)}" if self.temp_max > 0 else f"{round(self.temp_max, 1)}"
 
     @property

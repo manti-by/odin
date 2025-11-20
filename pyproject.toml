@@ -1,6 +1,6 @@
 [project]
 name = "odin"
-version = "v1.0.0b"
+version = "v1.0.0rc1"
 description = "Django based application that provides a local dashboard for the Apollo project."
 readme = "README.md"
 requires-python = ">=3.13.6"
@@ -128,6 +128,7 @@ ignore-overlong-task-comments = true
 
 [tool.ruff.lint.isort]
 section-order = ["future", "standard-library", "django", "third-party", "first-party", "local-folder"]
+known-third-party = ["django", "odin"]
 lines-after-imports = 2
 
 [tool.ruff.lint.isort.sections]

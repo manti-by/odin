@@ -17,4 +17,6 @@ def index_view(request: HttpRequest) -> HttpResponse:
         "weather": Weather.objects.current(),
         "sensors": Sensor.objects.current(),
     }
+
+    logger.info(context["weather"].data)
     return render(request, "index.html", context=context)
