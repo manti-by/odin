@@ -1,16 +1,11 @@
-from decimal import Decimal
-
 from django.http import HttpResponse
-from django.urls.exceptions import Http404
 
+from odin.api.v1.core.serializers import ChartTypeSerializer
+from odin.apps.core.utils import create_metric_gauge_chart
 from rest_framework import views
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-
-from odin.api.v1.core.serializers import ChartTypeSerializer
-from odin.apps.core.utils import create_metric_gauge_chart
 
 
 class HealthCheckView(views.APIView):

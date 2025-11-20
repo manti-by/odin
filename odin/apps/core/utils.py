@@ -27,9 +27,9 @@ def create_metric_gauge_chart(value: Decimal, metric: MetricChoices) -> str:
 
     return create_gauge_chart(
         value=value,
-        min_value=min_value, 
+        min_value=min_value,
         max_value=max_value,
-        min_green_value=min_green_value, 
+        min_green_value=min_green_value,
         max_green_value=max_green_value,
         value_color=value_color,
     )
@@ -125,20 +125,23 @@ def create_gauge_chart(
     end_arc = f"M {right_x} {right_y} A {radius} {radius} 0 0 1 {end_x} {end_y}"
 
     # Render using Django template engine
-    return render_to_string("chart.svg", {
-        "size": size,
-        "view_box": f"0 0 {size} {size - 15}",
-        "value": round(value, 0),
-        "start_arc": start_arc,
-        "end_arc": end_arc,
-        "value_x": value_x,
-        "value_y": value_y,
-        "center_x": center_x,
-        "center_y": center_y + size // 20,
-        "filled_arc": filled_arc,
-        "fill_color": fill_color,
-        "text_color": text_color,
-        "target_value_color": value_color,
-        "background_color": background_color,
-        "stroke_width": stroke_width,
-    })
+    return render_to_string(
+        "chart.svg",
+        {
+            "size": size,
+            "view_box": f"0 0 {size} {size - 15}",
+            "value": round(value, 0),
+            "start_arc": start_arc,
+            "end_arc": end_arc,
+            "value_x": value_x,
+            "value_y": value_y,
+            "center_x": center_x,
+            "center_y": center_y + size // 20,
+            "filled_arc": filled_arc,
+            "fill_color": fill_color,
+            "text_color": text_color,
+            "target_value_color": value_color,
+            "background_color": background_color,
+            "stroke_width": stroke_width,
+        },
+    )
