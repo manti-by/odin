@@ -1,6 +1,7 @@
 import logging
 
 from command_log.management.commands import LoggedCommand
+
 from odin.apps.sensors.models import RawSensor, Sensor
 
 

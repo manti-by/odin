@@ -1,7 +1,6 @@
+from apscheduler.schedulers.blocking import BlockingScheduler
 from django.conf import settings
 from django.core.management import call_command
-
-from apscheduler.schedulers.blocking import BlockingScheduler
 from django_apscheduler.jobstores import DjangoJobStore
 from django_rq import get_queue
 

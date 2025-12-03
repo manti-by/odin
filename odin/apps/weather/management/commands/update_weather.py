@@ -2,7 +2,9 @@ import logging
 from datetime import datetime, timedelta
 
 import requests
+
 from command_log.management.commands import LoggedCommand
+
 from odin.apps.weather.models import Weather
 
 

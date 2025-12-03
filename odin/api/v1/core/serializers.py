@@ -1,5 +1,4 @@
 from django.db.models import TextChoices
-
 from rest_framework import serializers
 
 

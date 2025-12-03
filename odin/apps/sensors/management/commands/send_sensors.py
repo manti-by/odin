@@ -2,11 +2,12 @@ import logging
 import os
 from concurrent import futures
 
+import requests
+
+from command_log.management.commands import LoggedCommand
 from django.conf import settings
 from django.utils import timezone
 
-import requests
-from command_log.management.commands import LoggedCommand
 from odin.apps.core.services import get_data_hash
 from odin.apps.sensors.models import Sensor, SyncLog
 

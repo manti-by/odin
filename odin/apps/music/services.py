@@ -3,11 +3,12 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+import pytz
+from tinytag import TinyTag
+
 from django.conf import settings
 
-import pytz
 from odin.apps.music.models import Music
-from tinytag import TinyTag
 
 
 def update_or_create_music(file: str) -> tuple[Music, bool]:

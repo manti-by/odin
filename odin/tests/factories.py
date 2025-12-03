@@ -1,9 +1,10 @@
-from django.contrib.auth.models import User
-
 import factory.fuzzy
 from factory import DictFactory
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyDecimal
+
+from django.contrib.auth.models import User
+
 from odin.apps.sensors.models import Sensor
 
 

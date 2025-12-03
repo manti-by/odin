@@ -1,10 +1,11 @@
+import pytest
+
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.urls import reverse
+from rest_framework import status
 
-import pytest
 from odin.apps.sensors.models import Sensor
 from odin.tests.factories import DjangoAdminUserFactory, SensorFactory
-from rest_framework import status
 
 
 @pytest.mark.django_db

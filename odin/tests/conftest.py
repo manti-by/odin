@@ -1,6 +1,6 @@
-from django.test.client import Client
-
 import pytest
+
+from django.test.client import Client
 
 
 @pytest.fixture

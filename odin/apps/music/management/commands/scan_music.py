@@ -1,12 +1,13 @@
 import logging
 from collections.abc import Iterable
 
-from django.conf import settings
-
-from command_log.management.commands import LoggedCommand
-from odin.apps.music.services import update_or_create_music
 from setuptools import glob
 from tinytag import ParseError
+
+from command_log.management.commands import LoggedCommand
+from django.conf import settings
+
+from odin.apps.music.services import update_or_create_music
 
 
 logger = logging.getLogger(__name__)
