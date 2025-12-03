@@ -7,5 +7,5 @@ app_name = "sensors"
 
 
 urlpatterns = [
-    path("", SensorsView.as_view(), name="list"),
+    path("", SensorsView.as_view(), name="sensors"),
 ]
