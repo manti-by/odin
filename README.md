@@ -23,16 +23,16 @@ Requirements: Python 3.12, PostgreSQL, Redis.
 
 2. Clone sources and swith working directory:
 
-```shell
-git clone https://github.com/manti-by/odin.git
-cd odin/
-```
+    ```shell
+    git clone https://github.com/manti-by/odin.git
+    cd odin/
+    ```
 
 3. Create [a virtual environment](https://docs.astral.sh/uv/pip/environments/#creating-a-virtual-environment) 
 for the project:
 
 ```shell
-uv venv odin
+uv venv .venv --prompt odin
 ```
 
 4. Activate virtual environment and sync python packages:
