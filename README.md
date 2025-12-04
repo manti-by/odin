@@ -1,10 +1,10 @@
 # Odin server core application
 
-Local dashboard for [Apollo project](https://github.com/manti-by/apollo).
+Local dashboard for [Coruscant project](https://github.com/manti-by/coruscant).
 
 ## About
 
-Odin is a Django based application that provides a local dashboard for the Apollo project. 
+Odin is a Django based application that provides a local dashboard for the Coruscant project. 
 
 [![Python 3.12](https://img.shields.io/badge/python-3.12-green.svg)](https://www.python.org/downloads/release/python-3111/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
@@ -18,26 +18,40 @@ Requirements: Python 3.12, PostgreSQL, Redis.
 
 
 ## Setup
-1. Install [Python 3.12](https://www.python.org/downloads/release/python-3120/) and create [a virtual environment](https://docs.python.org/3/library/venv.html) for the project.
+1. Install [Python 3.12](https://www.python.org/downloads/release/python-3120/) and 
+[UV tool](https://docs.astral.sh/uv/getting-started/installation/)
 
-2. Clone sources and install pip packages:
+2. Clone sources and swith working directory:
 
-    ```shell
-    mkdir /home/ubuntu/app/
-    git clone https://github.com/manti-by/odin.git app/
-    pip install -r requirements.txt
-    ```
+```shell
+git clone https://github.com/manti-by/odin.git
+cd odin/
+```
 
-3. Collect static, run migrations and create superuser:
+3. Create [a virtual environment](https://docs.astral.sh/uv/pip/environments/#creating-a-virtual-environment) 
+for the project:
 
-    ```shell
-    python3 manage.py collectstatic --no-input
-    python3 manage.py createsuperuser
-    python3 manage.py migrate
-    ```
+```shell
+uv venv odin
+```
 
-4. Run development server:
+4. Activate virtual environment and sync python packages:
 
-    ```shell
-    python3 manage.py runserver
-    ```
+```shell
+source .venv/bin/activate/
+uv sync --all-extras
+```
+
+5. Collect static, run migrations and create superuser:
+
+```shell
+uv run python manage.py collectstatic --no-input
+uv run python manage.py createsuperuser
+uv run python manage.py migrate
+```
+
+6. Run development server:
+
+```shell
+uv run python manage.py runserver
+```
