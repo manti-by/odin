@@ -63,5 +63,5 @@ jobs:
         run: |
           uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/
         env:
-          POSTGRES_HOST: postgres
-          REDIS_HOST: redis
+          POSTGRES_HOST: localhost
+          REDIS_HOST: localhost
