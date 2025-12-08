@@ -23,6 +23,11 @@ jobs:
         ports:
           - 5432:5432
 
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -57,3 +62,6 @@ jobs:
       - name: Run Pytest suite
         run: |
           uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/
+        env:
+          POSTGRES_HOST: postgres
+          REDIS_HOST: redis
