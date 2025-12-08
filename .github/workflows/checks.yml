@@ -42,7 +42,6 @@ jobs:
 
       - name: Run pre-commit hooks
         run: |
-          uv pip install pre-commit
           pre-commit run --all-files
 
       - name: Check for missing migrations
