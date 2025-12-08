@@ -1,11 +1,21 @@
 from django.http import HttpResponse
 from rest_framework import views
+from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from odin.api.v1.core.serializers import ChartTypeSerializer
+from odin.api.v1.core.serializers import ChartTypeSerializer, LogSerializer
+from odin.apps.core.models import Log
 from odin.apps.core.utils import create_metric_gauge_chart
+
+
+class LogsView(CreateAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = LogSerializer
+
+    def perform_create(self, serializer: LogSerializer):
+        Log.objects.create(**serializer.validated_data)
 
 
 class HealthCheckView(views.APIView):

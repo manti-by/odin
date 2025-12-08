@@ -4,6 +4,8 @@ DEBUG = False
 
 ALLOWED_HOSTS = ("odin.local", "192.168.1.100")
 
+
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

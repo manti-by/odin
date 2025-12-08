@@ -32,6 +32,14 @@ class DjangoAdminUserFactory(UserFactory):
     is_superuser = True
 
 
+class LogDataFactory(DictFactory):
+    name = factory.Faker("name")
+    msg = factory.Faker("sentence")
+    filename = factory.Faker("word")
+    levelname = factory.Faker("word")
+    asctime = factory.Faker("date_time")
+
+
 class SensorFactory(DjangoModelFactory):
     sensor_id = factory.Faker("word")
     type = SensorType.ESP8266
