@@ -34,6 +34,8 @@ jobs:
 
       - name: Setup UV
         uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Install dependencies
         shell: bash
@@ -42,7 +44,7 @@ jobs:
 
       - name: Run pre-commit hooks
         run: |
-          pre-commit run --all-files
+          uv run pre-commit run --all-files
 
       - name: Check for missing migrations
         run: |

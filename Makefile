@@ -23,7 +23,7 @@ test:
 
 check:
 	git add .
-	pre-commit run
+	uv run pre-commit run
 
 django-checks:
 	uv run manage.py makemigrations --dry-run --check --verbosity=3 --settings=odin.settings.sqlite
