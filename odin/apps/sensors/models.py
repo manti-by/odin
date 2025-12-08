@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from django.conf import settings
 from django.db import models
 from django.db.models import query
 from django.utils.translation import gettext_lazy as _
+
+
+class SensorType(models.TextChoices):
+    DS18B20 = "DS18B20"
+    ESP8266 = "ESP8266"
 
 
 class SensorQuerySet(query.QuerySet):
@@ -11,19 +15,16 @@ class SensorQuerySet(query.QuerySet):
 
 
 class SensorManager(models.Manager):
-    def current(self) -> query.QuerySet:
-        return (
-            self.get_queryset()
-            .filter(sensor_id__in=settings.SENSORS)
-            .order_by("sensor_id", "-created_at")
-            .distinct("sensor_id")
-        )
+    def active(self) -> query.QuerySet:
+        return self.get_queryset().filter(is_active=True).distinct("sensor_id")
 
 
 class Sensor(models.Model):
     sensor_id = models.CharField(max_length=32)
-    temp = models.DecimalField(max_digits=7, decimal_places=2)
-    humidity = models.DecimalField(max_digits=7, decimal_places=2, null=True)
+    name = models.CharField(max_length=32)
+    type = models.CharField(max_length=32, choices=SensorType.choices)
+    is_active = models.BooleanField(default=True)
+    context = models.JSONField(default=dict)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -35,42 +36,37 @@ class Sensor(models.Model):
         verbose_name_plural = _("sensors")
 
     def __str__(self):
-        return f"Sensor {self.sensor_id} data for {self.created_at}"
-
-    def serialize(self):
-        return {
-            "sensor_id": self.sensor_id,
-            "temp": str(self.temp),
-            "humidity": str(self.humidity),
-            "created_at": str(self.created_at),
-        }
+        return f"Sensor {self.sensor_id}"
 
 
-class RawSensor(models.Model):
-    address = models.CharField(max_length=32)
+class SensorLogQuerySet(query.QuerySet):
+    pass
+
+
+class SensorLogManager(models.Manager):
+    def current(self) -> query.QuerySet:
+        sensor_ids = Sensor.objects.filter(is_active=True).values_list("sensor_id", flat=True)
+        return (
+            self.get_queryset()
+            .filter(sensor_id__in=sensor_ids)
+            .order_by("sensor_id", "-created_at")
+            .distinct("sensor_id")
+        )
+
+
+class SensorLog(models.Model):
+    sensor_id = models.CharField(max_length=32)
     temp = models.DecimalField(max_digits=7, decimal_places=2)
-    is_synced = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now=True)
+    humidity = models.DecimalField(max_digits=7, decimal_places=2, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = SensorLogManager.from_queryset(SensorLogQuerySet)()
 
     class Meta:
-        verbose_name = _("raw sensor")
-        verbose_name_plural = _("raw sensors")
-
-        managed = False
-        db_table = "sensors_raw_data"
+        verbose_name = _("sensor log")
+        verbose_name_plural = _("sensor logs")
 
     def __str__(self):
-        return f"Raw Sensor {self.address} data for {self.created_at}"
-
-
-class SyncLog(models.Model):
-    type = models.CharField(max_length=32, choices=[("IN", _("Incoming")), ("OUT", _("Outgoing"))])
-    synced_at = models.DateTimeField(auto_now_add=True)
-    synced_count = models.IntegerField()
-
-    class Meta:
-        verbose_name = _("sync log")
-        verbose_name_plural = _("sync logs")
-
-    def __str__(self):
-        return f"Sync log at {self.synced_at}"
+        return f"Sensor {self.sensor_id} data at {self.created_at}"

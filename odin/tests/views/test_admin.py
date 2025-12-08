@@ -5,14 +5,14 @@ from django.urls import reverse
 from rest_framework import status
 
 from odin.apps.sensors.models import Sensor
-from odin.tests.factories import DjangoAdminUserFactory, SensorFactory
+from odin.tests.factories import DjangoAdminUserFactory, SensorLogFactory
 
 
 @pytest.mark.django_db
 class TestSensorAdmin:
     def setup_method(self):
         self.user = DjangoAdminUserFactory()
-        self.sensor = SensorFactory()
+        self.sensor = SensorLogFactory()
 
     def test_sensor_changelist(self, client):
         client.force_login(self.user)

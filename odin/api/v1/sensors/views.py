@@ -1,16 +1,24 @@
 from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.permissions import AllowAny
 
-from odin.api.v1.sensors.serializers import SensorSerializer
-from odin.apps.sensors.models import Sensor, SensorQuerySet
+from odin.api.v1.sensors.serializers import SensorLogSerializer, SensorSerializer
+from odin.apps.sensors.models import Sensor, SensorLog, SensorLogQuerySet
 
 
-class SensorsView(CreateAPIView, ListAPIView):
+class SensorsView(ListAPIView):
     permission_classes = (AllowAny,)
     serializer_class = SensorSerializer
 
-    def get_queryset(self) -> SensorQuerySet:
-        return Sensor.objects.current()
+    def get_queryset(self) -> SensorLogQuerySet:
+        return Sensor.objects.active()
 
-    def perform_create(self, serializer: SensorSerializer):
-        Sensor.objects.create(**serializer.validated_data)
+
+class SensorsLogView(CreateAPIView, ListAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = SensorLogSerializer
+
+    def get_queryset(self) -> SensorLogQuerySet:
+        return SensorLog.objects.current()
+
+    def perform_create(self, serializer: SensorLogSerializer):
+        SensorLog.objects.create(**serializer.validated_data)
