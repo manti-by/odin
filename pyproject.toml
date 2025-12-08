@@ -1,9 +1,9 @@
 [project]
 name = "odin"
-version = "v1.0.0rc1"
-description = "Django based application that provides a local dashboard for the Apollo project."
+version = "v1.0.0rc2"
+description = "Django based application that provides a local dashboard for the Coruscant project."
 readme = "README.md"
-requires-python = ">=3.13.6"
+requires-python = ">=3.13.6,<3.14.0"
 dependencies = [
     "bandit>=1.8.6",
     "django==5.2.7",
