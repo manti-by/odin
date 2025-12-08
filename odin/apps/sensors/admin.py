@@ -11,6 +11,6 @@ class SensorAdmin(admin.ModelAdmin):
 
 @admin.register(SensorLog)
 class SensorLogAdmin(admin.ModelAdmin):
-    list_display = ("sensor_id", "temp", "humidity", "updated_at", "created_at")
+    list_display = ("sensor_id", "temp", "humidity", "synced_at", "created_at")
     search_fields = ("sensor_id",)
-    list_filter = ("sensor_id", "updated_at")
+    list_filter = ("sensor_id", "synced_at")

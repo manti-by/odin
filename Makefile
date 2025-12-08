@@ -4,6 +4,9 @@ run:
 migrate:
 	uv run manage.py migrate
 
+migrations:
+	uv run manage.py makemigrations
+
 static:
 	uv run manage.py collectstatic --no-input
 
@@ -35,3 +38,5 @@ pip:
 update:
 	uv sync --upgrade
 	pre-commit autoupdate
+
+ci: pip check django-checks test

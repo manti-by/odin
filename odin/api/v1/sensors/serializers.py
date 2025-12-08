@@ -14,5 +14,5 @@ class SensorSerializer(BaseSerializer):
 class SensorLogSerializer(BaseSerializer):
     sensor_id = serializers.CharField(max_length=32)
     temp = serializers.DecimalField(max_digits=5, decimal_places=2)
-    humidity = serializers.DecimalField(max_digits=5, decimal_places=2)
-    created_at = serializers.DateTimeField(read_only=True)
+    humidity = serializers.DecimalField(max_digits=5, decimal_places=2, required=False)
+    created_at = serializers.DateTimeField()

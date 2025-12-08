@@ -59,8 +59,8 @@ class SensorLog(models.Model):
     temp = models.DecimalField(max_digits=7, decimal_places=2)
     humidity = models.DecimalField(max_digits=7, decimal_places=2, null=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    synced_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(null=True, default=None)
 
     objects = SensorLogManager.from_queryset(SensorLogQuerySet)()
 
@@ -69,4 +69,4 @@ class SensorLog(models.Model):
         verbose_name_plural = _("sensor logs")
 
     def __str__(self):
-        return f"Sensor {self.sensor_id} data at {self.created_at}"
+        return f"Sensor {self.sensor_id} data at {self.synced_at}"
