@@ -11,19 +11,16 @@ from django.utils.translation import gettext_lazy as _
 
 
 class WeatherProvider(models.TextChoices):
-    POGODA_BY = "POGODA_BY", _("Pogoda.by")
-
-
-class WeatherQuerySet(query.QuerySet):
-    def current_day(self) -> Weather:
-        start_range = timezone.now().replace(minute=0, second=0)
-        end_date = start_range + timedelta(minutes=60)
-        return self.filter(period__range=(start_range, end_date))
+    POGODA_BY = "POGODA_BY", "Pogoda.by"
 
 
 class WeatherManager(models.Manager):
     def current(self) -> Weather:
-        return self.get_queryset().current_day().last()
+        start_range = timezone.now().replace(minute=0, second=0)
+        end_date = start_range + timedelta(minutes=60)
+
+        queryset = self.get_queryset().filter(period__range=(start_range, end_date)).order_by("-period")
+        return queryset.last() if queryset.exists() else self.get_queryset().last()
 
 
 class Weather(models.Model):
@@ -33,7 +30,7 @@ class Weather(models.Model):
     period = models.DateTimeField(db_index=True)
     synced_at = models.DateTimeField(db_index=True, auto_now=True)
 
-    objects = WeatherManager.from_queryset(WeatherQuerySet)()
+    objects = WeatherManager()
 
     class Meta:
         verbose_name = _("weather")
@@ -63,7 +60,7 @@ class Weather(models.Model):
         return f"+{round(self.temp, 1)}" if self.temp > 0 else f"{round(self.temp, 1)}"
 
     @cached_property
-    def current_weather_set(self) -> WeatherQuerySet:
+    def current_weather_set(self) -> query.QuerySet[Weather]:
         start_range, end_date = self.period - timedelta(hours=12), self.period + timedelta(hours=12)
         return Weather.objects.filter(period__range=(start_range, end_date)).order_by("data__temp")
 

@@ -1,22 +1,35 @@
 from __future__ import annotations
 
+from decimal import Decimal
+
 from django.db import models
 from django.db.models import query
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 
 class SensorType(models.TextChoices):
-    DS18B20 = "DS18B20"
-    ESP8266 = "ESP8266"
+    DS18B20 = "DS18B20", "DS18B20"
+    ESP8266 = "ESP8266", "ESP8266"
 
 
 class SensorQuerySet(query.QuerySet):
-    pass
+    def active(self) -> query.QuerySet:
+        return self.filter(is_active=True)
+
+    def ds18b20(self) -> query.QuerySet:
+        return self.filter(type=SensorType.DS18B20)
+
+    def esp8266(self) -> query.QuerySet:
+        return self.filter(type=SensorType.ESP8266)
 
 
 class SensorManager(models.Manager):
+    def get_queryset(self) -> SensorQuerySet:
+        return SensorQuerySet(self.model, using=self._db)
+
     def active(self) -> query.QuerySet:
-        return self.get_queryset().filter(is_active=True).distinct("sensor_id")
+        return self.get_queryset().active()
 
 
 class Sensor(models.Model):
@@ -29,7 +42,7 @@ class Sensor(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    objects = SensorManager.from_queryset(SensorQuerySet)()
+    objects = SensorManager()
 
     class Meta:
         verbose_name = _("sensor")
@@ -38,14 +51,20 @@ class Sensor(models.Model):
     def __str__(self):
         return f"Sensor {self.sensor_id}"
 
+    @cached_property
+    def latest_log(self) -> SensorLog:
+        return SensorLog.objects.filter(sensor_id=self.sensor_id).order_by("-created_at").last()
 
-class SensorLogQuerySet(query.QuerySet):
-    pass
+    @property
+    def temp(self) -> Decimal | None:
+        if self.latest_log:
+            return self.latest_log.temp
+        return None
 
 
 class SensorLogManager(models.Manager):
     def current(self) -> query.QuerySet:
-        sensor_ids = Sensor.objects.filter(is_active=True).values_list("sensor_id", flat=True)
+        sensor_ids = Sensor.objects.active().values_list("sensor_id", flat=True)
         return (
             self.get_queryset()
             .filter(sensor_id__in=sensor_ids)
@@ -62,7 +81,7 @@ class SensorLog(models.Model):
     synced_at = models.DateTimeField(auto_now_add=True)
     created_at = models.DateTimeField(null=True, default=None)
 
-    objects = SensorLogManager.from_queryset(SensorLogQuerySet)()
+    objects = SensorLogManager()
 
     class Meta:
         verbose_name = _("sensor log")

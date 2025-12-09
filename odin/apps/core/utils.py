@@ -15,9 +15,11 @@ DARK_GREY_COLOR = "#404040"
 
 
 def create_metric_gauge_chart(value: Decimal, metric: MetricChoices) -> str:
-    min_value, max_value, min_green_value, max_green_value = 631, 825, 740, 780
+    min_value, max_value, min_green_value, max_green_value = 6, 35, 18, 27
     if metric == MetricChoices.HUMIDITY:
         min_value, max_value, min_green_value, max_green_value = 0, 100, 35, 65
+    if metric == MetricChoices.PRESSURE:
+        min_value, max_value, min_green_value, max_green_value = 631, 825, 740, 780
 
     value_color = GREEN_COLOR
     if value < min_green_value:
@@ -37,10 +39,10 @@ def create_metric_gauge_chart(value: Decimal, metric: MetricChoices) -> str:
 
 def create_gauge_chart(
     value: Decimal,
-    min_value: Decimal = 0,
-    max_value: Decimal = 100,
-    min_green_value: Decimal = 35,
-    max_green_value: Decimal = 65,
+    min_value: int = 0,
+    max_value: int = 100,
+    min_green_value: int = 35,
+    max_green_value: int = 65,
     size: int = 70,
     stroke_width: int = 4,
     fill_color: str = GREEN_COLOR,

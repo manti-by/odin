@@ -25,10 +25,10 @@ from odin.apps.core.views import index_view
 
 
 urlpatterns = [
-    path("rq/", include("django_rq.urls")),
     path("api/", include("odin.api.urls", namespace="api")),
+    path("admin/rq/", include("django_rq.urls")),
     path("admin/", admin.site.urls),
-    path("", index_view),
+    path("", index_view, name="index"),
 ]
 
 if settings.DEBUG:

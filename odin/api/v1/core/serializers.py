@@ -1,4 +1,5 @@
 from django.db.models import TextChoices
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 
@@ -11,8 +12,9 @@ class LogSerializer(serializers.Serializer):
 
 
 class MetricChoices(TextChoices):
-    HUMIDITY = "humidity", "Humidity"
-    PRESSURE = "pressure", "Pressure"
+    TEMP = "temp", _("Temp")
+    HUMIDITY = "humidity", _("Humidity")
+    PRESSURE = "pressure", _("Pressure")
 
 
 class ChartTypeSerializer(serializers.Serializer):

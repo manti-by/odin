@@ -1,3 +1,9 @@
+.menu a {
+  display: inline-block;
+  padding: .5rem 0;
+  color: #bFbFbF;
+}
+
 .home .grid {
   display: grid;
   grid-template-columns: repeat(3, 33%);
@@ -100,6 +106,7 @@
   font-weight: normal;
 }
 
+.home .temp,
 .home .humidity,
 .home .pressure {
   display: flex;
@@ -108,6 +115,7 @@
   margin-right: 2rem;
 }
 
+.home .temp label,
 .home .humidity label,
 .home .pressure label {
   align-content: center;

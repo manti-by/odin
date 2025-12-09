@@ -15,18 +15,36 @@
       <img src="{% static 'img/logo.png' %}" class="logo" alt="O">
       <span>{% translate "ODIN server" %}</span>
     </h1>
-    <div class="time">{{ time }}</div>
+    <div class="menu">
+      <a href="{% url 'admin:index' %}" target="_blank">Admin</a>
+    </div>
   </header>
   <div class="container home">
     <div class="grid">
-      <div class="tile sensors">
-        <h2>{% translate "Sensors" %}</h2>
+      <div class="tile sensors esp8266">
+        <h2>{% translate "Home Sensors" %}</h2>
         <ul>
-          {% for sensor in sensors %}
+          {% for sensor in sensors.esp8266 %}
             <li>
-              <div class="sensor">
+              <div class="sensor {{ sensor.type }}">
                 <div class="temp">{{ sensor.temp }}<span>&deg;C</span></div>
-                <div class="name">{{ sensor.sensor_id }}</div>
+                <div class="name">{{ sensor.name }}</div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="tile sensors ds18b20">
+        <h2>{% translate "Boiler Room" %}</h2>
+        <ul>
+          {% for sensor in sensors.ds18b20 %}
+            <li>
+              <div class="sensor {{ sensor.type }}">
+                <div class="temp attr">
+                  <span><img src="/api/v1/core/chart/?value={{ sensor.temp }}&metric=temp"></span>
+                  <label>{{ sensor.temp }} &deg;C</label>
+                </div>
+                <div class="name">{{ sensor.name }}</div>
               </div>
             </li>
           {% endfor %}
@@ -90,21 +108,6 @@
         {% else %}
           <div>{% translate "No Data" %}</div>
         {% endif %}
-      </div>
-      <div class="tile">
-        <h2>{% translate "Local services" %}</h2>
-        <ul>
-          <li>
-            <a href="{% url 'admin:index' %}">
-              <img src="{% static 'img/admin.png' %}" class="icon" alt="Admin">
-            </a>
-          </li>
-          <li>
-            <a href="https://deluge.odin.local">
-              <img src="{% static 'img/deluge.png' %}" class="icon" alt="Deluge">
-            </a>
-          </li>
-        </ul>
       </div>
     </div>
   </div>

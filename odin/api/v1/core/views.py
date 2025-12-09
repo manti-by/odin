@@ -1,7 +1,5 @@
 from django.http import HttpResponse
-from rest_framework import views
-from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.generics import CreateAPIView, RetrieveAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -11,26 +9,23 @@ from odin.apps.core.utils import create_metric_gauge_chart
 
 
 class LogsView(CreateAPIView):
-    permission_classes = (AllowAny,)
     serializer_class = LogSerializer
 
     def perform_create(self, serializer: LogSerializer):
         Log.objects.create(**serializer.validated_data)
 
 
-class HealthCheckView(views.APIView):
-    permission_classes = (AllowAny,)
-
+class HealthCheckView(RetrieveAPIView):
     def get(self, request: Request, *args: list, **kwargs: dict) -> HttpResponse:
         return Response()
 
 
-class ChartView(views.APIView):
-    permission_classes = (AllowAny,)
+class ChartView(RetrieveAPIView):
+    serializer_class = ChartTypeSerializer
 
     def get(self, request: Request, *args: list, **kwargs: dict) -> HttpResponse:
-        serialiser = ChartTypeSerializer(data=request.query_params)
-        serialiser.is_valid(raise_exception=True)
+        serializer = self.get_serializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
 
-        contents = create_metric_gauge_chart(**serialiser.validated_data)
+        contents = create_metric_gauge_chart(**serializer.validated_data)
         return HttpResponse(contents, content_type="image/svg+xml")
