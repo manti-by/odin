@@ -53,7 +53,7 @@ class Sensor(models.Model):
 
     @cached_property
     def latest_log(self) -> SensorLog:
-        return SensorLog.objects.filter(sensor_id=self.sensor_id).order_by("-created_at").last()
+        return SensorLog.objects.filter(sensor_id=self.sensor_id).order_by("created_at").last()
 
     @property
     def temp(self) -> Decimal | None:

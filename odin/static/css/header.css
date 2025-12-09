@@ -1,0 +1,9 @@
+.menu a {
+  display: inline-block;
+  margin: .5rem 0;
+  border-bottom: 3px solid transparent;
+}
+
+.menu a:hover {
+  border-bottom-color: #495057;
+}

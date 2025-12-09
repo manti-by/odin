@@ -40,3 +40,11 @@ update:
 	pre-commit autoupdate
 
 ci: pip check django-checks test
+
+dump:
+	pg_dump -h localhost -U odin -d odin > odin.sql
+
+restore:
+	psql -h localhost -U odin -d postgres -c "DROP DATABASE odin;"
+	psql -h localhost -U odin -d postgres -c "CREATE DATABASE odin;"
+	psql -h localhost -U odin -d odin < odin.sql

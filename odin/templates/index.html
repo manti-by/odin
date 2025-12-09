@@ -6,7 +6,10 @@
 {% endblock %}
 
 {% block styles %}
-  <link href="{% static 'css/index.css' %}" rel="stylesheet">
+  <link href="{% static 'css/index/base.css' %}" rel="stylesheet">
+  <link href="{% static 'css/index/boiler-room.css' %}" rel="stylesheet">
+  <link href="{% static 'css/index/sensors.css' %}" rel="stylesheet">
+  <link href="{% static 'css/index/weather.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -25,10 +28,13 @@
         <h2>{% translate "Home Sensors" %}</h2>
         <ul>
           {% for sensor in sensors.esp8266 %}
-            <li>
-              <div class="sensor {{ sensor.type }}">
-                <div class="temp">{{ sensor.temp }}<span>&deg;C</span></div>
-                <div class="name">{{ sensor.name }}</div>
+            <li class="sensor row">
+              <div class="name">{{ sensor.name }}</div>
+              <div class="temp">{{ sensor.temp }}<span>&deg;C</span></div>
+              <div class="edit">
+                <a href="#edit">
+                  <img src="{% static 'img/settings.svg' %}" alt="settings" width="20">
+                </a>
               </div>
             </li>
           {% endfor %}
@@ -36,21 +42,16 @@
       </div>
       <div class="tile sensors ds18b20">
         <h2>{% translate "Boiler Room" %}</h2>
-        <ul>
+        <ul class="row">
           {% for sensor in sensors.ds18b20 %}
-            <li>
-              <div class="sensor {{ sensor.type }}">
-                <div class="temp attr">
-                  <span><img src="/api/v1/core/chart/?value={{ sensor.temp }}&metric=temp"></span>
-                  <label>{{ sensor.temp }} &deg;C</label>
-                </div>
-                <div class="name">{{ sensor.name }}</div>
-              </div>
+            <li class="sensor">
+              <span><img src="/api/v1/core/chart/?value={{ sensor.temp }}&metric=temp"></span>
+              <label>{{ sensor.name }}</label>
             </li>
           {% endfor %}
         </ul>
       </div>
-      <div class="tile">
+      <div class="tile weather">
         <h2>{% translate "Weather" %}</h2>
         {% if weather %}
           <div class="temp attr">
@@ -62,14 +63,14 @@
               max {{ weather.temp_max_display }}&deg;C
             </span>
           </div>
-          <div class="flex-row">
-            <div class="humidity attr">
+          <div class="row attr">
+            <div class="humidity">
               <span class="humidity-chart">
                 <img src="/api/v1/core/chart/?value={{ weather.data.humidity }}&metric=humidity">
               </span>
               <label>{% translate "Humidity" %}</label>
             </div>
-            <div class="pressure attr">
+            <div class="pressure">
               <span class="pressure-chart">
                 <img src="/api/v1/core/chart/?value={{ weather.pressure }}&metric=pressure">
               </span>

@@ -1,0 +1,50 @@
+.home .weather .attr {
+  margin-left: 17.5%;
+  padding: .25rem;
+  line-height: 1.5;
+}
+
+.home .weather .attr span {
+  display: inline-block;
+}
+
+.home .weather .attr img {
+  display: block;
+}
+
+.home .weather .attr label {
+  margin: 0;
+  font-weight: bold;
+  vertical-align: baseline;
+}
+
+.home .weather .temp {
+  font-size: 3.75rem;
+  font-weight: bold;
+}
+
+.home .weather .temp span,
+.home .weather .temp label {
+  display: block;
+  text-align: center;
+}
+
+.home .weather .temp .meta {
+  margin: 1.5rem 2rem;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+.home .weather .temp,
+.home .weather .humidity,
+.home .weather .pressure {
+  display: flex;
+  flex-flow: row wrap;
+  align-content: center;
+  margin-right: 2rem;
+}
+
+.home .weather .humidity label,
+.home .weather .pressure label {
+  align-content: center;
+}
