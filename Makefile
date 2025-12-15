@@ -43,7 +43,7 @@ pip:
 
 update:
 	uv sync --upgrade
-	pre-commit autoupdate
+	uv run pre-commit autoupdate
 
 ci: pip check django-checks test
 

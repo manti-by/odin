@@ -16,6 +16,12 @@
 
 {% block content %}
   <div id="content-main">
+    <div class="module" id="shortcuts-module">
+      <h2>{% translate 'Shortcuts' %}</h2>
+      <ul class="actionlist">
+        <li><a href="{% url 'rq_home' %}">{% translate 'Django RQ' %}</a></li>
+      </ul>
+    </div>
     {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
   </div>
 {% endblock %}
@@ -24,10 +30,6 @@
   <div id="content-related">
     <div class="module" id="recent-actions-module">
       <h2>{% translate 'Recent actions' %}</h2>
-      <h3>{% translate 'Admin' %}</h3>
-      <ul>
-        <li><a href="{% url 'rq_home' %}">{% translate 'RQ Queues' %}</a></li>
-      </ul>
       <h3>{% translate 'My actions' %}</h3>
       {% load log %}
       {% get_admin_log 10 as admin_log for_user user %}
