@@ -11,6 +11,7 @@
   <link href="{% static 'css/index/sensors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/weather.css' %}" rel="stylesheet">
   <link href="{% static 'css/responsive/index.css' %}" rel="stylesheet">
+  <link href="{% static 'css/modal.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -29,7 +30,12 @@
         <h2>{% translate "Home Sensors" %}</h2>
         <ul>
           {% for sensor in sensors.esp8266 %}
-            <li class="sensor row">
+            <li
+              class="sensor row"
+              data-sensor-id="{{ sensor.sensor_id }}"
+              data-sensor-name="{{ sensor.name }}"
+              data-target-temp="{{ sensor.context.target_temp|default_if_none:'' }}"
+            >
               <div class="name">{{ sensor.name }}</div>
               <div class="temp">{{ sensor.temp }}<span>&deg;C</span></div>
               <div class="edit">
@@ -113,4 +119,5 @@
       </div>
     </div>
   </div>
+  {% include "modal.html" %}
 {% endblock %}
