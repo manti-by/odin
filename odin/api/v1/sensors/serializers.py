@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from odin.api.utils.serializers import BaseSerializer
@@ -28,4 +29,9 @@ class SensorLogSerializer(BaseSerializer):
     sensor_id = serializers.CharField(max_length=32)
     temp = serializers.DecimalField(max_digits=5, decimal_places=2)
     humidity = serializers.DecimalField(max_digits=5, decimal_places=2, required=False)
-    created_at = serializers.DateTimeField()
+    created_at = serializers.DateTimeField(allow_null=True, required=False)
+
+    def validate(self, data: dict) -> dict:
+        if not data.get("created_at"):
+            data["created_at"] = timezone.now()
+        return data

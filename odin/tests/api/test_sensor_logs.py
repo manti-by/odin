@@ -35,6 +35,15 @@ class TestSensorsView:
         response = self.client.get(self.url, format="json")
         assert response.data["count"] == 1
 
+        sensor_02 = SensorFactory()
+        data = SensorLogDataFactory(sensor_id=sensor_02.sensor_id, created_at=None)
+        response = self.client.post(self.url, data=data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+
+        response = self.client.get(self.url, format="json")
+        assert response.data["count"] == 2
+        assert response.data["results"][-1]["created_at"]
+
     def test_sensors__list(self):
         sensor_01 = SensorFactory()
 
