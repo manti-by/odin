@@ -7,6 +7,12 @@ migrate:
 migrations:
 	uv run manage.py makemigrations
 
+messages:
+	uv run manage.py makemessages -l be
+
+locale:
+	uv run manage.py compilemessages -l be
+
 static:
 	uv run manage.py collectstatic --no-input
 

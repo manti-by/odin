@@ -8,6 +8,10 @@
   font-weight: bold;
 }
 
+.home .ds18b20 .sensor span {
+  min-height: 175px;
+}
+
 .home .ds18b20 .sensor span,
 .home .ds18b20 .sensor label {
   display: block;

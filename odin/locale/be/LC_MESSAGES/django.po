@@ -1,0 +1,170 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-10 01:09+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
+"(n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: odin/api/v1/core/serializers.py:15
+msgid "Temp"
+msgstr "Температура"
+
+#: odin/api/v1/core/serializers.py:16 odin/templates/index.html:71
+msgid "Humidity"
+msgstr "Влажность"
+
+#: odin/api/v1/core/serializers.py:17 odin/templates/index.html:77
+msgid "Pressure"
+msgstr "Давление"
+
+#: odin/apps/core/models.py:15
+msgid "log"
+msgstr "лог"
+
+#: odin/apps/core/models.py:16
+msgid "logs"
+msgstr "логи"
+
+#: odin/apps/music/admin.py:8
+msgid "Artist"
+msgstr "Артист"
+
+#: odin/apps/music/admin.py:22
+msgid "Album"
+msgstr "Альбом"
+
+#: odin/apps/music/models.py:31 odin/apps/music/models.py:32
+msgid "music"
+msgstr "музыка"
+
+#: odin/apps/sensors/models.py:48
+msgid "sensor"
+msgstr "датчик"
+
+#: odin/apps/sensors/models.py:49
+msgid "sensors"
+msgstr "датчики"
+
+#: odin/apps/sensors/models.py:87
+msgid "sensor log"
+msgstr ""
+
+#: odin/apps/sensors/models.py:88
+msgid "sensor logs"
+msgstr ""
+
+#: odin/apps/weather/models.py:36 odin/apps/weather/models.py:37
+msgid "weather"
+msgstr "погода"
+
+#: odin/settings/base.py:153
+msgid "Belarussian"
+msgstr "Белорусский"
+
+#: odin/templates/admin/index.html:26
+msgid "Recent actions"
+msgstr ""
+
+#: odin/templates/admin/index.html:27
+msgid "Admin"
+msgstr ""
+
+#: odin/templates/admin/index.html:29
+msgid "RQ Queues"
+msgstr ""
+
+#: odin/templates/admin/index.html:31
+msgid "My actions"
+msgstr ""
+
+#: odin/templates/admin/index.html:35
+msgid "None available"
+msgstr ""
+
+#: odin/templates/admin/index.html:40
+msgid "Added:"
+msgstr ""
+
+#: odin/templates/admin/index.html:40
+msgid "Changed:"
+msgstr ""
+
+#: odin/templates/admin/index.html:40
+msgid "Deleted:"
+msgstr ""
+
+#: odin/templates/admin/index.html:50
+msgid "Unknown content"
+msgstr ""
+
+#: odin/templates/admin/select_filter.html:5
+#, python-format
+msgid " By %(filter_title)s "
+msgstr ""
+
+#: odin/templates/index.html:5
+msgid "Welcome to ODIN server"
+msgstr ""
+
+#: odin/templates/index.html:19
+msgid "ODIN server"
+msgstr ""
+
+#: odin/templates/index.html:28
+msgid "Home Sensors"
+msgstr "Датчики"
+
+#: odin/templates/index.html:44
+msgid "Boiler Room"
+msgstr ""
+
+#: odin/templates/index.html:55
+msgid "Weather"
+msgstr "Погода"
+
+#: odin/templates/index.html:81
+msgid "Wind"
+msgstr "Ветер"
+
+#: odin/templates/index.html:89
+msgid "Attributes"
+msgstr "Атрибуты"
+
+#: odin/templates/index.html:93
+msgid "Fog"
+msgstr "Туман"
+
+#: odin/templates/index.html:96
+msgid "Snow"
+msgstr "Снег"
+
+#: odin/templates/index.html:99
+msgid "Thunderstorm"
+msgstr "Гроза"
+
+#: odin/templates/index.html:102
+msgid "Black Ice"
+msgstr "Гололед"
+
+#: odin/templates/index.html:105
+msgid "n/a"
+msgstr "н/а"
+
+#: odin/templates/index.html:110
+msgid "No Data"
+msgstr "Нет данных"

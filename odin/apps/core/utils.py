@@ -1,6 +1,7 @@
 import math
 from decimal import Decimal
 
+from django.core.cache import cache
 from django.template.loader import render_to_string
 
 from odin.api.v1.core.serializers import MetricChoices
@@ -15,11 +16,15 @@ DARK_GREY_COLOR = "#404040"
 
 
 def create_metric_gauge_chart(value: Decimal, metric: MetricChoices) -> str:
-    min_value, max_value, min_green_value, max_green_value = 6, 35, 18, 27
+    cache_key = f"gauge-chart-{round(value, 2)}-{metric}"
+    if cached_data := cache.get(cache_key):
+        return cached_data
+
+    min_value, max_value, min_green_value, max_green_value = 15, 45, 24, 36
     if metric == MetricChoices.HUMIDITY:
-        min_value, max_value, min_green_value, max_green_value = 0, 100, 35, 65
+        min_value, max_value, min_green_value, max_green_value = 0, 100, 45, 75
     if metric == MetricChoices.PRESSURE:
-        min_value, max_value, min_green_value, max_green_value = 631, 825, 740, 780
+        min_value, max_value, min_green_value, max_green_value = 670, 810, 740, 780
 
     value_color = GREEN_COLOR
     if value < min_green_value:
@@ -27,7 +32,7 @@ def create_metric_gauge_chart(value: Decimal, metric: MetricChoices) -> str:
     if value > max_green_value:
         value_color = RED_COLOR if metric == MetricChoices.PRESSURE else YELLOW_COLOR
 
-    return create_gauge_chart(
+    data = create_gauge_chart(
         value=value,
         min_value=min_value,
         max_value=max_value,
@@ -35,6 +40,8 @@ def create_metric_gauge_chart(value: Decimal, metric: MetricChoices) -> str:
         max_green_value=max_green_value,
         value_color=value_color,
     )
+    cache.set(cache_key, data)
+    return data
 
 
 def create_gauge_chart(
