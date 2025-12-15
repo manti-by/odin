@@ -51,6 +51,10 @@
   font-size: 1rem;
 }
 
+.modal form label {
+  margin-bottom: .5rem;
+}
+
 .modal input[type="number"],
 .modal input[type="text"] {
   width: 100%;

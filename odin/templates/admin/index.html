@@ -30,6 +30,7 @@
   <div id="content-related">
     <div class="module" id="recent-actions-module">
       <h2>{% translate 'Recent actions' %}</h2>
+      <h3>{% translate 'Admin' %}</h3>
       <h3>{% translate 'My actions' %}</h3>
       {% load log %}
       {% get_admin_log 10 as admin_log for_user user %}
@@ -49,7 +50,7 @@
               {% if entry.content_type %}
                 <span class="mini quiet">{% filter capfirst %}{{ entry.content_type.name }}{% endfilter %}</span>
               {% else %}
-                <span class="mini quiet">{% translate 'Unknown content' %}</span>
+                <span class="mini quiet">{% translate 'n/a' %}</span>
               {% endif %}
             </li>
           {% endfor %}
