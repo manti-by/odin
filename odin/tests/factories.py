@@ -5,6 +5,7 @@ from factory.fuzzy import FuzzyDecimal
 
 from django.contrib.auth.models import User
 
+from odin.apps.relays.models import Relay
 from odin.apps.sensors.models import Sensor, SensorLog, SensorType
 
 
@@ -38,6 +39,16 @@ class LogDataFactory(DictFactory):
     filename = factory.Faker("word")
     levelname = factory.Faker("word")
     asctime = factory.Faker("date_time")
+
+
+class RelayFactory(DjangoModelFactory):
+    relay_id = factory.Faker("word")
+    type = SensorType.ESP8266
+    name = factory.Faker("name")
+    is_active = True
+
+    class Meta:
+        model = Relay
 
 
 class SensorFactory(DjangoModelFactory):

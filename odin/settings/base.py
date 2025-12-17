@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "odin.api",
     "odin.apps.core",
     "odin.apps.music",
+    "odin.apps.relays",
     "odin.apps.sensors",
     "odin.apps.weather",
 ]
