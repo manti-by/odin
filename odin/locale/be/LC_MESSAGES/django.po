@@ -1,18 +1,18 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# ODIN translation files.
+# Copyright (C) 2005 Alexander Chaika
+# This file is distributed under the same license as the ODIN package.
+# Alexander Chaika <manti.by@gmail.com>, 2005.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-15 14:34+0300\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"POT-Creation-Date: 2025-12-16 12:24+0300\n"
+"PO-Revision-Date: 2025-12-15 14:34+0300\n"
+"Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: Belarussian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -32,6 +32,10 @@ msgstr "Влажность"
 msgid "Pressure"
 msgstr "Давление"
 
+#: odin/apps/core/apps.py:7
+msgid "core"
+msgstr "ядро"
+
 #: odin/apps/core/models.py:15
 msgid "log"
 msgstr "лог"
@@ -48,31 +52,33 @@ msgstr "Артист"
 msgid "Album"
 msgstr "Альбом"
 
-#: odin/apps/music/models.py:31 odin/apps/music/models.py:32
+#: odin/apps/music/apps.py:7 odin/apps/music/models.py:31
+#: odin/apps/music/models.py:32
 msgid "music"
 msgstr "музыка"
+
+#: odin/apps/sensors/apps.py:7 odin/apps/sensors/models.py:49
+msgid "sensors"
+msgstr "датчики"
 
 #: odin/apps/sensors/models.py:48
 msgid "sensor"
 msgstr "датчик"
 
-#: odin/apps/sensors/models.py:49
-msgid "sensors"
-msgstr "датчики"
-
 #: odin/apps/sensors/models.py:87
 msgid "sensor log"
-msgstr "лог сенсора"
+msgstr "лог датчика"
 
 #: odin/apps/sensors/models.py:88
 msgid "sensor logs"
-msgstr "логи сенсора"
+msgstr "логи датчиков"
 
-#: odin/apps/weather/models.py:36 odin/apps/weather/models.py:37
+#: odin/apps/weather/apps.py:7 odin/apps/weather/models.py:36
+#: odin/apps/weather/models.py:37
 msgid "weather"
 msgstr "погода"
 
-#: odin/settings/base.py:153
+#: odin/settings/base.py:151
 msgid "Belarussian"
 msgstr "Белорусский"
 
@@ -106,13 +112,13 @@ msgstr "Добавлено"
 
 #: odin/templates/admin/index.html:43
 msgid "Changed:"
-msgstr "Изменено"
+msgstr "Изменено:"
 
 #: odin/templates/admin/index.html:43
 msgid "Deleted:"
-msgstr "Удалено"
+msgstr "Удалено:"
 
-#: odin/templates/admin/index.html:53 odin/templates/index.html:112
+#: odin/templates/admin/index.html:53
 msgid "n/a"
 msgstr "н/а"
 
@@ -145,7 +151,7 @@ msgstr "Погода"
 msgid "Wind"
 msgstr "Ветер"
 
-#: odin/templates/index.html:96
+#: odin/templates/index.html:97
 msgid "Attributes"
 msgstr "Атрибуты"
 
@@ -165,7 +171,7 @@ msgstr "Гроза"
 msgid "Black Ice"
 msgstr "Гололед"
 
-#: odin/templates/index.html:117
+#: odin/templates/index.html:115
 msgid "No Data"
 msgstr "Нет данных"
 

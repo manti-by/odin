@@ -92,10 +92,10 @@
               {{ weather.data.wind.direction }}&deg;
             </span>
           </div>
-          <div class="attributes attr">
-            <label>{% translate "Attributes" %} - </label>
-            <span>
-              {% if weather.has_attrs %}
+          {% if weather.has_attrs %}
+            <div class="attributes attr">
+              <label>{% translate "Attributes" %} - </label>
+              <span>
                 {% if weather.data.attributes.fog %}
                   {% translate "Fog" %},
                 {% endif %}
@@ -108,11 +108,9 @@
                 {% if weather.data.attributes.black_ice %}
                   {% translate "Black Ice" %}
                 {% endif %}
-              {% else %}
-                {% translate "n/a" %}
-              {% endif %}
-            </span>
-          </div>
+              </span>
+            </div>
+          {% endif %}
         {% else %}
           <div>{% translate "No Data" %}</div>
         {% endif %}
