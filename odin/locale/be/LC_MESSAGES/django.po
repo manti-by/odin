@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-16 12:24+0300\n"
+"POT-Creation-Date: 2025-12-19 20:54+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -44,6 +44,14 @@ msgstr "лог"
 msgid "logs"
 msgstr "логи"
 
+#: odin/apps/core/translations.py:4
+msgid "Management command audit log"
+msgstr "Журнал аудита команд управления"
+
+#: odin/apps/core/translations.py:5
+msgid "Management command logs"
+msgstr "Журналы команд управления"
+
 #: odin/apps/music/admin.py:8
 msgid "Artist"
 msgstr "Артист"
@@ -57,9 +65,69 @@ msgstr "Альбом"
 msgid "music"
 msgstr "музыка"
 
+#: odin/apps/relays/admin.py:25
+msgid "schedule"
+msgstr "расписание"
+
+#: odin/apps/relays/admin.py:30
+msgid "state"
+msgstr "состояние"
+
+#: odin/apps/relays/apps.py:7 odin/apps/relays/models.py:41
+msgid "relays"
+msgstr "реле"
+
+#: odin/apps/relays/models.py:9
+msgid "Pump"
+msgstr "Насос"
+
+#: odin/apps/relays/models.py:10
+msgid "Servo"
+msgstr "Сервопривод"
+
+#: odin/apps/relays/models.py:11
+msgid "Valve"
+msgstr "Клапан"
+
+#: odin/apps/relays/models.py:28
+msgid "Relay ID"
+msgstr "Реле #"
+
+#: odin/apps/relays/models.py:29 odin/apps/sensors/models.py:37
+msgid "Name"
+msgstr "Имя"
+
+#: odin/apps/relays/models.py:30 odin/apps/sensors/models.py:38
+msgid "Type"
+msgstr "Тип"
+
+#: odin/apps/relays/models.py:31 odin/apps/sensors/models.py:39
+msgid "Is active"
+msgstr "Активный"
+
+#: odin/apps/relays/models.py:32 odin/apps/sensors/models.py:40
+msgid "Context"
+msgstr "Контекст"
+
+#: odin/apps/relays/models.py:34 odin/apps/sensors/models.py:42
+msgid "Created at"
+msgstr "Создан"
+
+#: odin/apps/relays/models.py:35 odin/apps/sensors/models.py:43
+msgid "Updated at"
+msgstr "Обновлен"
+
+#: odin/apps/relays/models.py:40
+msgid "relay"
+msgstr "реле"
+
 #: odin/apps/sensors/apps.py:7 odin/apps/sensors/models.py:49
 msgid "sensors"
 msgstr "датчики"
+
+#: odin/apps/sensors/models.py:36
+msgid "Sensor ID"
+msgstr "Датчик #"
 
 #: odin/apps/sensors/models.py:48
 msgid "sensor"
@@ -78,7 +146,7 @@ msgstr "логи датчиков"
 msgid "weather"
 msgstr "погода"
 
-#: odin/settings/base.py:151
+#: odin/settings/base.py:152
 msgid "Belarussian"
 msgstr "Белорусский"
 
@@ -121,6 +189,10 @@ msgstr "Удалено:"
 #: odin/templates/admin/index.html:53
 msgid "n/a"
 msgstr "н/а"
+
+#: odin/templates/admin/schedule.html:6
+msgid "Day \\ Hour"
+msgstr "День \\ Час"
 
 #: odin/templates/admin/select_filter.html:5
 #, python-format

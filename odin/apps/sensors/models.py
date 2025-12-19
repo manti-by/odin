@@ -33,14 +33,14 @@ class SensorManager(models.Manager):
 
 
 class Sensor(models.Model):
-    sensor_id = models.CharField(max_length=32)
-    name = models.CharField(max_length=32)
-    type = models.CharField(max_length=32, choices=SensorType.choices)
-    is_active = models.BooleanField(default=True)
-    context = models.JSONField(default=dict)
+    sensor_id = models.CharField(max_length=32, verbose_name=_("Sensor ID"))
+    name = models.CharField(max_length=32, verbose_name=_("Name"))
+    type = models.CharField(max_length=32, choices=SensorType.choices, verbose_name=_("Type"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Is active"))
+    context = models.JSONField(default=dict, verbose_name=_("Context"))
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
 
     objects = SensorManager()
 
