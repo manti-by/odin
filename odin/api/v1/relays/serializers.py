@@ -9,3 +9,16 @@ class RelaySerializer(BaseSerializer):
     type = serializers.CharField()
     context = serializers.JSONField()
     created_at = serializers.DateTimeField(read_only=True)
+
+
+class RelayUpdateContextSerializer(BaseSerializer):
+    state = serializers.CharField()
+
+
+class RelayUpdateSerializer(BaseSerializer):
+    context = RelayUpdateContextSerializer()
+
+    @property
+    def data(self) -> dict:
+        """Ad-hoc solution to prevent response rendering errors."""
+        return self.validated_data

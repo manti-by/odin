@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
+from odin.apps.relays.models import Relay
 from odin.tests.factories import RelayFactory
 
 
@@ -33,3 +34,16 @@ class TestRelaysView:
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 2
+
+    def test_relays__update(self):
+        relay: Relay = RelayFactory()  # noqa
+        response = self.client.get(self.url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+
+        url = reverse("api:v1:relays:update", args=(relay.relay_id,))
+        response = self.client.patch(url, data={"context": {"state": "ON"}}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        relay.refresh_from_db()
+        assert relay.context["state"] == "ON"
