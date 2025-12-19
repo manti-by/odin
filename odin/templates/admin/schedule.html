@@ -1,0 +1,33 @@
+{% load i18n %}
+
+<table>
+  <thead>
+    <tr>
+      <th>{% translate 'Day \ Hour' %}</th>
+      {% with schedule as days %}
+        {% with days.0 as hours %}
+          {% for hour in hours %}
+            <th>{{ hour }}</th>
+          {% endfor %}
+        {% endwith %}
+      {% endwith %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for day, hours in schedule.items %}
+      <tr>
+        <th>{{ day }}</th>
+        {% for hour, enabled in hours.items %}
+          <td>
+            <input
+              type="checkbox"
+              name="schedule-{{ day }}-{{ hour }}"
+              value="True"
+              {% if enabled %}checked{% endif %}
+            >
+          </td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
