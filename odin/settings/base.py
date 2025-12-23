@@ -146,10 +146,10 @@ AUTH_PASSWORD_VALIDATORS = [
 def _(x):
     return x
 
-LANGUAGE_CODE = "be"
+LANGUAGE_CODE = "ru"
 
 LANGUAGES = (
-    ("be", _("Belarussian")),
+    ("ru", _("Russian")),
 )
 
 LOCALE_PATHS = (BASE_DIR / "locale",)
