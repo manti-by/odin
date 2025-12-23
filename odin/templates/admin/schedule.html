@@ -1,10 +1,10 @@
-{% load i18n %}
+{% load i18n relay_tags %}
 
 <table>
   <thead>
     <tr>
       <th>{% translate 'Day \ Hour' %}</th>
-      {% for hour in headers %}
+      {% for hour in schedule.0  %}
         <th>{{ hour }}</th>
       {% endfor %}
     </tr>
@@ -12,7 +12,7 @@
   <tbody>
     {% for day, hours in schedule.items %}
       <tr>
-        <th>{{ day }}</th>
+        <th>{{ day|day_name }}</th>
         {% for hour, enabled in hours.items %}
           <td>
             <input

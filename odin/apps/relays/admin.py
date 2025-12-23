@@ -1,5 +1,3 @@
-import calendar
-
 from django.contrib import admin
 from django.forms import ModelForm
 from django.http import HttpRequest
@@ -21,12 +19,7 @@ class RelayAdmin(admin.ModelAdmin):
         if not (schedule := obj.context.get("schedule")):
             return "-"
 
-        localized = {}
-        for day, hours in schedule.items():
-            day = _(calendar.day_name[int(day)])
-            localized[day] = hours
-
-        html = render_to_string("admin/schedule.html", {"schedule": localized, "headers": schedule["0"]})
+        html = render_to_string("admin/schedule.html", {"schedule": schedule})
         return format_html(html)
 
     schedule.short_description = _("schedule")
