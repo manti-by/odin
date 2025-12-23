@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.core.cache import cache
 from django.template.loader import render_to_string
+from django.templatetags.l10n import unlocalize
 
 from odin.api.v1.core.serializers import MetricChoices
 
@@ -113,11 +114,11 @@ def create_gauge_chart(
     right_border_angle = start_angle + (end_angle - start_angle) * right_border
     right_border_rad = math.radians(right_border_angle)
 
-    # Helper function to calculate point on circle
+    # Helper function to calculate point on circle and make locale unaware
     def point_on_circle(angle_rad, r):
         x = center_x + r * math.cos(angle_rad)
         y = center_y + r * math.sin(angle_rad)
-        return x, y
+        return unlocalize(x), unlocalize(y)
 
     # Calculate arc endpoints
     start_x, start_y = point_on_circle(start_rad, radius)

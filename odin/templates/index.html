@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n %}
+{% load static i18n l10n %}
 
 {% block title %}
   {% translate "Welcome to ODIN server" %}
@@ -52,7 +52,7 @@
         <ul class="row">
           {% for sensor in sensors.ds18b20 %}
             <li class="sensor">
-              <span><img src="/api/v1/core/chart/?value={{ sensor.temp }}&metric=temp"></span>
+              <span><img src="/api/v1/core/chart/?value={{ sensor.temp|unlocalize }}&metric=temp"></span>
               <label>{{ sensor.name }}</label>
             </li>
           {% endfor %}
