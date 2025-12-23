@@ -1,3 +1,5 @@
+import calendar
+
 from django.contrib import admin
 from django.forms import ModelForm
 from django.http import HttpRequest
@@ -19,7 +21,12 @@ class RelayAdmin(admin.ModelAdmin):
         if not (schedule := obj.context.get("schedule")):
             return "-"
 
-        html = render_to_string("admin/schedule.html", {"schedule": schedule})
+        localized = {}
+        for day, hours in schedule.items():
+            day = _(calendar.day_name[int(day)])
+            localized[day] = hours
+
+        html = render_to_string("admin/schedule.html", {"schedule": localized, "headers": schedule["0"]})
         return format_html(html)
 
     schedule.short_description = _("schedule")
@@ -30,7 +37,7 @@ class RelayAdmin(admin.ModelAdmin):
     state.short_description = _("state")
 
     def save_model(self, request: HttpRequest, obj: Relay, form: ModelForm, change: bool):
-        schedule = {str(d): {str(h): False for h in range(24)} for d in range(7)}
+        schedule = {str(d): {str(h).zfill(2): False for h in range(24)} for d in range(7)}
         for field in form.data:
             if field.startswith("schedule"):
                 _, day, hour = field.split("-")

@@ -4,13 +4,9 @@
   <thead>
     <tr>
       <th>{% translate 'Day \ Hour' %}</th>
-      {% with schedule as days %}
-        {% with days.0 as hours %}
-          {% for hour in hours %}
-            <th>{{ hour }}</th>
-          {% endfor %}
-        {% endwith %}
-      {% endwith %}
+      {% for hour in headers %}
+        <th>{{ hour }}</th>
+      {% endfor %}
     </tr>
   </thead>
   <tbody>
