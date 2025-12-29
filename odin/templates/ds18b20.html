@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}
+  {% translate "Temperatures" %}
+{% endblock %}
+
+{% block styles %}
+  <link href="{% static 'css/ds18b20.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+  {% include "header.html" %}
+  <div class="container ds18b20">
+    <h2>{% translate "Temperatures" %}</h2>
+    <canvas id="temperatureChart"></canvas>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@^3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment@^2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>
+  <script src="{% static 'js/ds18b20.js' %}"></script>
+  <script>
+    // Fetch chart data from API and initialize chart
+    fetch("{% url 'api:v1:sensors:ds18b20' %}")
+      .then(response => response.json())
+      .then(data => {
+        initTemperatureChart(data);
+      })
+      .catch(error => {
+        console.error('Error loading chart data:', error);
+      });
+  </script>
+{% endblock %}

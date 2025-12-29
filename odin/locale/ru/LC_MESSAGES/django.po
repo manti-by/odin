@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-19 20:54+0300\n"
+"POT-Creation-Date: 2025-12-29 19:31+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,11 +24,11 @@ msgstr ""
 msgid "Temp"
 msgstr "Температура"
 
-#: odin/api/v1/core/serializers.py:16 odin/templates/index.html:78
+#: odin/api/v1/core/serializers.py:16 odin/templates/index.html:70
 msgid "Humidity"
 msgstr "Влажность"
 
-#: odin/api/v1/core/serializers.py:17 odin/templates/index.html:84
+#: odin/api/v1/core/serializers.py:17 odin/templates/index.html:76
 msgid "Pressure"
 msgstr "Давление"
 
@@ -44,11 +44,11 @@ msgstr "лог"
 msgid "logs"
 msgstr "логи"
 
-#: odin/apps/core/translations.py:4
+#: odin/apps/core/translations.py:5
 msgid "Management command audit log"
 msgstr "Журнал аудита команд управления"
 
-#: odin/apps/core/translations.py:5
+#: odin/apps/core/translations.py:6
 msgid "Management command logs"
 msgstr "Журналы команд управления"
 
@@ -147,8 +147,8 @@ msgid "weather"
 msgstr "погода"
 
 #: odin/settings/base.py:152
-msgid "Belarussian"
-msgstr "Белорусский"
+msgid "Russian"
+msgstr "Русский"
 
 #: odin/templates/admin/index.html:20
 msgid "Shortcuts"
@@ -162,7 +162,7 @@ msgstr "Очереди"
 msgid "Recent actions"
 msgstr "Последние действия"
 
-#: odin/templates/admin/index.html:33
+#: odin/templates/admin/index.html:33 odin/templates/header.html:11
 msgid "Admin"
 msgstr "Админка"
 
@@ -199,51 +199,59 @@ msgstr "День \\ Час"
 msgid " By %(filter_title)s "
 msgstr ""
 
-#: odin/templates/index.html:5
-msgid "Welcome to ODIN server"
+#: odin/templates/ds18b20.html:5 odin/templates/ds18b20.html:15
+msgid "Temperatures"
+msgstr "Температуры"
+
+#: odin/templates/header.html:6
+msgid "ODIN"
 msgstr ""
 
-#: odin/templates/index.html:21
-msgid "ODIN server"
-msgstr ""
+#: odin/templates/header.html:9
+msgid "Main"
+msgstr "Главная"
 
-#: odin/templates/index.html:30
-msgid "Home Sensors"
+#: odin/templates/header.html:10 odin/templates/index.html:22
+msgid "Sensors"
 msgstr "Датчики"
 
-#: odin/templates/index.html:51
+#: odin/templates/index.html:5
+msgid "Welcome to ODIN server"
+msgstr "Добро пожаловать на сервер ODIN"
+
+#: odin/templates/index.html:43
 msgid "Boiler Room"
 msgstr ""
 
-#: odin/templates/index.html:62
+#: odin/templates/index.html:54
 msgid "Weather"
 msgstr "Погода"
 
-#: odin/templates/index.html:88
+#: odin/templates/index.html:80
 msgid "Wind"
 msgstr "Ветер"
 
-#: odin/templates/index.html:97
+#: odin/templates/index.html:89
 msgid "Attributes"
 msgstr "Атрибуты"
 
-#: odin/templates/index.html:100
+#: odin/templates/index.html:92
 msgid "Fog"
 msgstr "Туман"
 
-#: odin/templates/index.html:103
+#: odin/templates/index.html:95
 msgid "Snow"
 msgstr "Снег"
 
-#: odin/templates/index.html:106
+#: odin/templates/index.html:98
 msgid "Thunderstorm"
 msgstr "Гроза"
 
-#: odin/templates/index.html:109
+#: odin/templates/index.html:101
 msgid "Black Ice"
 msgstr "Гололед"
 
-#: odin/templates/index.html:115
+#: odin/templates/index.html:107
 msgid "No Data"
 msgstr "Нет данных"
 
@@ -262,3 +270,9 @@ msgstr "Температура (°C)"
 #: odin/templates/modal.html:16
 msgid "Send"
 msgstr "Отправить"
+
+#~ msgid "Home"
+#~ msgstr "Домой"
+
+#~ msgid "Home Sensors"
+#~ msgstr "Датчики"

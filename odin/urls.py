@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/", include("odin.api.urls", namespace="api")),
     path("admin/rq/", include("django_rq.urls")),
     path("admin/", admin.site.urls),
+    path("sensors/", include("odin.apps.sensors.urls", namespace="sensors")),
     path("", index_view, name="index"),
 ]
 

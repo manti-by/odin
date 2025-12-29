@@ -8,10 +8,10 @@ migrations:
 	uv run manage.py makemigrations
 
 messages:
-	uv run manage.py makemessages -l be
+	uv run manage.py makemessages -l ru
 
 locale:
-	uv run manage.py compilemessages -l be
+	uv run manage.py compilemessages -l ru
 
 static:
 	uv run manage.py collectstatic --no-input

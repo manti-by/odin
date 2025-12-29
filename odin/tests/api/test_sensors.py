@@ -9,7 +9,7 @@ from odin.tests.factories import SensorFactory
 
 
 @pytest.mark.django_db
-class TestSensorsView:
+class TestSensorsAPI:
     def setup_method(self):
         self.client = APIClient()
         self.url = reverse("api:v1:sensors:list")
