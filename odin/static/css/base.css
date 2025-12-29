@@ -39,7 +39,7 @@ h3, h4, h5 {
 }
 
 a {
-  color: #bf4b31;
+  color: #bFbFbF;
   text-decoration: none;
 }
 
@@ -266,5 +266,6 @@ label {
 }
 
 .info {
-  color: #5C5C5C;
+  font-size: .85rem;
+  color: #666;
 }

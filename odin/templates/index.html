@@ -61,9 +61,9 @@
             <span>
               {{ weather.temp_display }}&deg;C
             </span>
-            <span class="meta">
-              {% translate "max" %} {{ weather.temp_max_display }}&deg;C<br/>
-              {% translate "min" %} {{ weather.temp_min_display }}&deg;C
+            <span class="meta info">
+              <span>{% translate "max" %}</span> {{ weather.temp_max_display }}&deg;C<br/>
+              <span>{% translate "min" %}</span> {{ weather.temp_min_display }}&deg;C
             </span>
           </div>
           <div class="row attr">
@@ -85,10 +85,14 @@
               <span style="transform: rotate({{ weather.data.wind.direction }}deg);">↓</span>
             </div>
             <div>
-              <label>{% translate "Wind" %} {{ weather.data.wind.direction|wind_direction_abbr }}</label>
-              <br>
-              <span class="speed">{{ weather.data.wind.speed }}{% translate "m/s" %},</span>
-              <span class="gusts">{% translate "gusts" %} {{ weather.data.wind.gusts }}{% translate "m/s" %}</span>
+              <div class="label">
+                {% translate "Wind" %}
+                {{ weather.data.wind.direction|wind_direction_abbr }} -
+                {{ weather.data.wind.speed }}{% translate "m/s" %}
+              </div>
+              <div class="gusts info">
+                {% translate "Gusts" %} - {{ weather.data.wind.gusts }}{% translate "m/s" %}
+              </div>
             </div>
           </div>
           {% if weather.has_attrs %}

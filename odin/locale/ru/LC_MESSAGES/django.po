@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-29 23:10+0300\n"
+"POT-Creation-Date: 2025-12-30 00:28+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -146,35 +146,35 @@ msgstr "логи датчиков"
 msgid "weather"
 msgstr "погода"
 
-#: odin/apps/weather/templatetags/weather_tags.py:19
+#: odin/apps/weather/templatetags/weather_tags.py:20
 msgid "N"
 msgstr "С"
 
-#: odin/apps/weather/templatetags/weather_tags.py:19
+#: odin/apps/weather/templatetags/weather_tags.py:20
 msgid "NE"
 msgstr "СВ"
 
-#: odin/apps/weather/templatetags/weather_tags.py:19
+#: odin/apps/weather/templatetags/weather_tags.py:20
 msgid "E"
 msgstr "В"
 
-#: odin/apps/weather/templatetags/weather_tags.py:19
+#: odin/apps/weather/templatetags/weather_tags.py:20
 msgid "SE"
 msgstr "ЮВ"
 
-#: odin/apps/weather/templatetags/weather_tags.py:19
+#: odin/apps/weather/templatetags/weather_tags.py:20
 msgid "S"
 msgstr "Ю"
 
-#: odin/apps/weather/templatetags/weather_tags.py:19
+#: odin/apps/weather/templatetags/weather_tags.py:20
 msgid "SW"
 msgstr "СЗ"
 
-#: odin/apps/weather/templatetags/weather_tags.py:19
+#: odin/apps/weather/templatetags/weather_tags.py:20
 msgid "W"
 msgstr "З"
 
-#: odin/apps/weather/templatetags/weather_tags.py:19
+#: odin/apps/weather/templatetags/weather_tags.py:20
 msgid "NW"
 msgstr "СЗ"
 
@@ -231,7 +231,7 @@ msgstr "День \\ Час"
 msgid " By %(filter_title)s "
 msgstr ""
 
-#: odin/templates/ds18b20.html:5 odin/templates/ds18b20.html:15
+#: odin/templates/chart.html:5 odin/templates/chart.html:15
 msgid "Temperatures"
 msgstr "Температуры"
 
@@ -260,46 +260,46 @@ msgid "Weather"
 msgstr "Погода"
 
 #: odin/templates/index.html:65
-msgid "min"
-msgstr "мин"
-
-#: odin/templates/index.html:66
 msgid "max"
 msgstr "макс"
 
-#: odin/templates/index.html:84
+#: odin/templates/index.html:66
+msgid "min"
+msgstr "мин"
+
+#: odin/templates/index.html:89
 msgid "Wind"
 msgstr "Ветер"
 
-#: odin/templates/index.html:87 odin/templates/index.html:89
+#: odin/templates/index.html:91 odin/templates/index.html:94
 msgid "m/s"
 msgstr "м/с"
 
-#: odin/templates/index.html:89
-msgid "gusts"
-msgstr "порывы"
-
 #: odin/templates/index.html:94
+msgid "Gusts"
+msgstr "Порывы"
+
+#: odin/templates/index.html:100
 msgid "Attributes"
 msgstr "Атрибуты"
 
-#: odin/templates/index.html:97
+#: odin/templates/index.html:103
 msgid "Fog"
 msgstr "Туман"
 
-#: odin/templates/index.html:100
+#: odin/templates/index.html:106
 msgid "Snow"
 msgstr "Снег"
 
-#: odin/templates/index.html:103
+#: odin/templates/index.html:109
 msgid "Thunderstorm"
 msgstr "Гроза"
 
-#: odin/templates/index.html:106
+#: odin/templates/index.html:112
 msgid "Black Ice"
 msgstr "Гололед"
 
-#: odin/templates/index.html:112
+#: odin/templates/index.html:118
 msgid "No Data"
 msgstr "Нет данных"
 

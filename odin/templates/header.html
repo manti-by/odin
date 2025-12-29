@@ -3,10 +3,11 @@
 <header>
   <h1>
     <img src="{% static 'img/logo.png' %}" class="logo" alt="O">
-    <span>{% translate "ODIN" %}</span>
+    <span>
+      <a href="{% url 'index' %}">{% translate "ODIN" %}</a>
+    </span>
   </h1>
   <div class="menu">
-    <a href="{% url 'index' %}">{% translate "Main" %}</a>
     <a href="{% url 'sensors' %}">{% translate "Sensors" %}</a>
     <a href="{% url 'admin:index' %}" target="_blank">{% translate "Admin" %}</a>
   </div>

@@ -23,10 +23,8 @@
   font-weight: bold;
 }
 
-.home .weather .temp span,
-.home .weather .temp label {
-  display: block;
-  text-align: center;
+.home .weather .temp span {
+  min-width: 5rem;
 }
 
 .home .weather .temp .meta {
@@ -60,5 +58,9 @@
   top: -.75rem;
   display: inline-block;
   font-size: 2.75rem;
+  font-weight: bold;
+}
+
+.home .weather .wind .label {
   font-weight: bold;
 }
