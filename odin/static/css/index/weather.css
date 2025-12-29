@@ -48,3 +48,17 @@
 .home .weather .pressure label {
   align-content: center;
 }
+
+.home .weather .wind .direction {
+  position: relative;
+  height: 3rem;
+  padding: 0 1.5rem;
+}
+
+.home .weather .wind .direction span {
+  position: relative;
+  top: -.75rem;
+  display: inline-block;
+  font-size: 2.75rem;
+  font-weight: bold;
+}

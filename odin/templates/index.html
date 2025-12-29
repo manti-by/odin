@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n l10n %}
+{% load static i18n l10n weather_tags %}
 
 {% block title %}
   {% translate "Welcome to ODIN server" %}
@@ -12,6 +12,10 @@
   <link href="{% static 'css/index/weather.css' %}" rel="stylesheet">
   <link href="{% static 'css/responsive/index.css' %}" rel="stylesheet">
   <link href="{% static 'css/modal.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block scripts %}
+  <script type="text/javascript" src="{% static 'js/index.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -58,8 +62,8 @@
               {{ weather.temp_display }}&deg;C
             </span>
             <span class="meta">
-              min {{ weather.temp_min_display }}&deg;C<br/>
-              max {{ weather.temp_max_display }}&deg;C
+              {% translate "max" %} {{ weather.temp_max_display }}&deg;C<br/>
+              {% translate "min" %} {{ weather.temp_min_display }}&deg;C
             </span>
           </div>
           <div class="row attr">
@@ -76,13 +80,16 @@
               <label>{% translate "Pressure" %}</label>
             </div>
           </div>
-          <div class="wind attr">
-            <label>{% translate "Wind" %} - </label>
-            <span>
-              {{ weather.data.wind.speed }}m/s
-              <span class="meta">(gusts {{ weather.data.wind.gusts }}m/s)</span>
-              {{ weather.data.wind.direction }}&deg;
-            </span>
+          <div class="wind attr row">
+            <div class="direction">
+              <span style="transform: rotate({{ weather.data.wind.direction }}deg);">↑</span>
+            </div>
+            <div>
+              <label>{% translate "Wind" %} {{ weather.data.wind.direction|wind_direction_abbr }}</label>
+              <br>
+              <span class="speed">{{ weather.data.wind.speed }}{% translate "m/s" %},</span>
+              <span class="gusts">{% translate "gusts" %} {{ weather.data.wind.gusts }}{% translate "m/s" %}</span>
+            </div>
           </div>
           {% if weather.has_attrs %}
             <div class="attributes attr">

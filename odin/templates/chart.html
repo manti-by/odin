@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block styles %}
-  <link href="{% static 'css/ds18b20.css' %}" rel="stylesheet">
+  <link href="{% static 'css/chart.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -21,7 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@^3"></script>
   <script src="https://cdn.jsdelivr.net/npm/moment@^2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>
-  <script src="{% static 'js/ds18b20.js' %}"></script>
+  <script src="{% static 'js/chart.js' %}"></script>
   <script>
     // Fetch chart data from API and initialize chart
     fetch("{% url 'api:v1:sensors:ds18b20' %}")
