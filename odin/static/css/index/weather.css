@@ -24,7 +24,7 @@
 }
 
 .home .weather .temp span {
-  min-width: 5rem;
+  min-width: 2.25rem;
 }
 
 .home .weather .temp .meta {
