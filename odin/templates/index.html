@@ -106,7 +106,7 @@
             <div>
               <div class="label">
                 {% translate "Wind" %}
-                &laquo;{{ weather.data.wind.direction|wind_direction_abbr }}&raquo; -
+                {{ weather.data.wind.direction|wind_direction_abbr }} -
                 {{ weather.data.wind.speed }}{% translate "m/s" %}
               </div>
               <div class="gusts info">

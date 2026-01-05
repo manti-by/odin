@@ -7,7 +7,7 @@ register = template.Library()
 
 @register.filter
 def wind_direction_abbr(degrees):
-    """Convert a wind direction in degrees to abbreviation (N, NE, E, SE, S, SW, W, NW)."""
+    """Convert a wind direction in degrees to a `name`."""
     if degrees is None:
         return ""
 
@@ -17,6 +17,15 @@ def wind_direction_abbr(degrees):
     # Convert to 8-point compass (each direction is 45 degrees)
     # N=0, NE=45, E=90, SE=135, S=180, SW=225, W=270, NW=315
     # Add 22.5 to center each direction
-    directions = [_("N"), _("NE"), _("E"), _("SE"), _("S"), _("SW"), _("W"), _("NW")]
+    directions = [
+        _("North"),
+        _("North-East"),
+        _("East"),
+        _("South-East"),
+        _("South"),
+        _("South-West"),
+        _("West"),
+        _("North-West"),
+    ]
     index = int((degrees + 22.5) / 45) % 8
     return directions[index]

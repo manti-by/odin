@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-05 17:51+0300\n"
+"POT-Creation-Date: 2026-01-05 23:10+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -61,7 +61,7 @@ msgid "Voltage"
 msgstr "Напряжение"
 
 #: odin/apps/electricity/models.py:9 odin/apps/relays/models.py:34
-#: odin/apps/sensors/models.py:58
+#: odin/apps/sensors/models.py:59
 msgid "Created at"
 msgstr "Создан"
 
@@ -110,27 +110,27 @@ msgstr "Сервопривод"
 msgid "Valve"
 msgstr "Клапан"
 
-#: odin/apps/relays/models.py:28 odin/apps/sensors/models.py:50
+#: odin/apps/relays/models.py:28 odin/apps/sensors/models.py:51
 msgid "Relay ID"
 msgstr "Реле #"
 
-#: odin/apps/relays/models.py:29 odin/apps/sensors/models.py:52
+#: odin/apps/relays/models.py:29 odin/apps/sensors/models.py:53
 msgid "Name"
 msgstr "Имя"
 
-#: odin/apps/relays/models.py:30 odin/apps/sensors/models.py:53
+#: odin/apps/relays/models.py:30 odin/apps/sensors/models.py:54
 msgid "Type"
 msgstr "Тип"
 
-#: odin/apps/relays/models.py:31 odin/apps/sensors/models.py:54
+#: odin/apps/relays/models.py:31 odin/apps/sensors/models.py:55
 msgid "Is active"
 msgstr "Активный"
 
-#: odin/apps/relays/models.py:32 odin/apps/sensors/models.py:56
+#: odin/apps/relays/models.py:32 odin/apps/sensors/models.py:57
 msgid "Context"
 msgstr "Контекст"
 
-#: odin/apps/relays/models.py:35 odin/apps/sensors/models.py:59
+#: odin/apps/relays/models.py:35 odin/apps/sensors/models.py:60
 msgid "Updated at"
 msgstr "Обновлен"
 
@@ -138,33 +138,31 @@ msgstr "Обновлен"
 msgid "relay"
 msgstr "реле"
 
-#: odin/apps/sensors/apps.py:7 odin/apps/sensors/models.py:65
+#: odin/apps/sensors/apps.py:7 odin/apps/sensors/models.py:66
 msgid "sensors"
 msgstr "датчики"
 
-#: odin/apps/sensors/models.py:46
+#: odin/apps/sensors/models.py:47
 msgid "Sensor ID"
 msgstr "Датчик #"
 
-#: odin/apps/sensors/models.py:48
-#, fuzzy
-#| msgid "Sensor ID"
+#: odin/apps/sensors/models.py:49
 msgid "Linked sensor ID"
-msgstr "Датчик #"
+msgstr "Связанный датчик #"
 
-#: odin/apps/sensors/models.py:55
+#: odin/apps/sensors/models.py:56
 msgid "Is visible"
-msgstr ""
+msgstr "Видимый"
 
-#: odin/apps/sensors/models.py:64
+#: odin/apps/sensors/models.py:65
 msgid "sensor"
 msgstr "датчик"
 
-#: odin/apps/sensors/models.py:119
+#: odin/apps/sensors/models.py:120
 msgid "sensor log"
 msgstr "лог датчика"
 
-#: odin/apps/sensors/models.py:120
+#: odin/apps/sensors/models.py:121
 msgid "sensor logs"
 msgstr "логи датчиков"
 
@@ -173,37 +171,37 @@ msgstr "логи датчиков"
 msgid "weather"
 msgstr "погода"
 
-#: odin/apps/weather/templatetags/weather_tags.py:20
-msgid "N"
-msgstr "С"
+#: odin/apps/weather/templatetags/weather_tags.py:21
+msgid "North"
+msgstr "Северный"
 
-#: odin/apps/weather/templatetags/weather_tags.py:20
-msgid "NE"
-msgstr "СВ"
+#: odin/apps/weather/templatetags/weather_tags.py:22
+msgid "North-East"
+msgstr "Северо-Восточный"
 
-#: odin/apps/weather/templatetags/weather_tags.py:20
-msgid "E"
-msgstr "В"
+#: odin/apps/weather/templatetags/weather_tags.py:23
+msgid "East"
+msgstr "Восточный"
 
-#: odin/apps/weather/templatetags/weather_tags.py:20
-msgid "SE"
-msgstr "ЮВ"
+#: odin/apps/weather/templatetags/weather_tags.py:24
+msgid "South-East"
+msgstr "Юго-Восточный"
 
-#: odin/apps/weather/templatetags/weather_tags.py:20
-msgid "S"
-msgstr "Ю"
+#: odin/apps/weather/templatetags/weather_tags.py:25
+msgid "South"
+msgstr "Южный"
 
-#: odin/apps/weather/templatetags/weather_tags.py:20
-msgid "SW"
-msgstr "СЗ"
+#: odin/apps/weather/templatetags/weather_tags.py:26
+msgid "South-West"
+msgstr "Юго-Западный"
 
-#: odin/apps/weather/templatetags/weather_tags.py:20
-msgid "W"
-msgstr "З"
+#: odin/apps/weather/templatetags/weather_tags.py:27
+msgid "West"
+msgstr "Западный"
 
-#: odin/apps/weather/templatetags/weather_tags.py:20
-msgid "NW"
-msgstr "СЗ"
+#: odin/apps/weather/templatetags/weather_tags.py:28
+msgid "North-West"
+msgstr "Северо-Западный"
 
 #: odin/settings/base.py:153
 msgid "Russian"

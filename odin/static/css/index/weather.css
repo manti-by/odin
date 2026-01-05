@@ -10,6 +10,7 @@
 
 .home .weather .attr img {
   display: block;
+  margin-right: .5rem;
 }
 
 .home .weather .attr label {
@@ -50,7 +51,7 @@
 .home .weather .wind .direction {
   position: relative;
   height: 3rem;
-  padding: 0 1.5rem;
+  padding: 0 1.5rem 0 2rem;
 }
 
 .home .weather .wind .direction span {
