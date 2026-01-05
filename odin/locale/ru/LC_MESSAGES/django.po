@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-05 13:49+0300\n"
+"POT-Creation-Date: 2026-01-05 14:14+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,11 +36,11 @@ msgstr "Давление"
 msgid "core"
 msgstr "ядро"
 
-#: odin/apps/core/models.py:15
+#: odin/apps/core/models.py:35
 msgid "log"
 msgstr "лог"
 
-#: odin/apps/core/models.py:16
+#: odin/apps/core/models.py:36
 msgid "logs"
 msgstr "логи"
 
@@ -315,6 +315,14 @@ msgstr "Гололед"
 #: odin/templates/index.html:122
 msgid "No Data"
 msgstr "Нет данных"
+
+#: odin/templates/index.html:126
+msgid "Errors"
+msgstr "Ошибки"
+
+#: odin/templates/index.html:137
+msgid "No errors for the last 24 hours"
+msgstr "За последние 24 часа ошибок не обнаружено."
 
 #: odin/templates/modal.html:6
 msgid "Set temp"

@@ -11,17 +11,17 @@ Odin is a Django-based IoT dashboard for sensor management, weather monitoring, 
 ### Package Management
 ```bash
 uv sync                    # Install dependencies
-uv sync --upgrade         # Upgrade dependencies
+uv sync --upgrade          # Upgrade dependencies
 ```
 
 ### Django Management
 ```bash
-uv run manage.py runserver           # Start development server
-uv run manage.py migrate             # Run database migrations
-uv run manage.py makemigrations       # Create new migrations
-uv run manage.py collectstatic --no-input  # Collect static files
-uv run manage.py makemessages -l ru   # Create translation files
-uv run manage.py compilemessages -l ru # Compile translation files
+uv run manage.py runserver                  # Start development server
+uv run manage.py migrate                    # Run database migrations
+uv run manage.py makemigrations             # Create new migrations
+uv run manage.py collectstatic --no-input   # Collect static files
+uv run manage.py makemessages -l ru         # Create translation files
+uv run manage.py compilemessages -l ru      # Compile translation files
 ```
 
 ### Testing
@@ -45,10 +45,10 @@ uv run pytest --cov=odin --cov-report=term-missing odin/
 uv run pre-commit run
 
 # Individual tools
-uv run ruff check .           # Lint
-uv run ruff format .          # Format
-uv run black .                # Alternative formatter
-uv run bandit -c pyproject.toml .  # Security analysis
+uv run ruff check .                 # Lint
+uv run ruff format .                # Format
+uv run black .                      # Alternative formatter
+uv run bandit -c pyproject.toml .   # Security analysis
 ```
 
 ### Database Operations
@@ -103,10 +103,9 @@ from .utils import helper_function
 ### Type Hints
 Use type hints for function signatures and complex variables:
 ```python
-from typing import Dict, List, Optional
 from decimal import Decimal
 
-def get_sensor_data(sensor_id: str) -> Optional[Dict[str, Decimal]]:
+def get_sensor_data(sensor_id: str) -> dict[str, Decimal] | None:
     return None
 
 temp: Decimal | None = sensor.temp
@@ -122,6 +121,10 @@ temp: Decimal | None = sensor.temp
 - Use `TextChoices` for enum fields
 
 ```python
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+
 class Sensor(models.Model):
     sensor_id = models.CharField(max_length=32, verbose_name=_("Sensor ID"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))

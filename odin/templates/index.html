@@ -122,6 +122,21 @@
           <div>{% translate "No Data" %}</div>
         {% endif %}
       </div>
+      <div class="tile errors">
+        <h2>{% translate "Errors" %}</h2>
+        {% if error_logs %}
+          <ul>
+            {% for log in error_logs %}
+              <li class="log row">
+                <div class="time">{{ log.asctime|date:"d.m H:i" }}</div>
+                <div class="msg">{{ log.msg }}</div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="success">{% translate "No errors for the last 24 hours" %}</div>
+        {% endif %}
+      </div>
     </div>
   </div>
   {% include "modal.html" %}
