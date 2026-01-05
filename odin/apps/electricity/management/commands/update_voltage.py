@@ -17,7 +17,7 @@ class Command(LoggedCommand):
         try:
             # Run the upsc command to get voltage
             command = ["/usr/bin/upsc", "exegate@localhost", "input.voltage"]
-            result = subprocess.run(command, shell=False, text=True, check=True, timeout=10)  # nosec B603
+            result = subprocess.run(command, capture_output=True, shell=False, text=True, check=True, timeout=10)  # nosec B603
 
             # Parse the voltage value (remove any whitespace/newlines)
             # and convert to Decimal for storage
