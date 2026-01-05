@@ -16,3 +16,8 @@ scheduler.add_jobstore(DjangoJobStore(), "default")
 @scheduler.scheduled_job("interval", minutes=30, id="update_weather")
 def schedule_update_weather():
     call_command("update_weather")
+
+
+@scheduler.scheduled_job("interval", minutes=5, id="update_voltage")
+def schedule_update_voltage():
+    call_command("update_voltage")

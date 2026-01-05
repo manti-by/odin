@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "odin.api",
     "odin.apps.core",
+    "odin.apps.electricity",
     "odin.apps.music",
     "odin.apps.relays",
     "odin.apps.sensors",
