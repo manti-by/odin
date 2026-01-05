@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-30 00:28+0300\n"
+"POT-Creation-Date: 2026-01-05 13:49+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,11 +24,11 @@ msgstr ""
 msgid "Temp"
 msgstr "Температура"
 
-#: odin/api/v1/core/serializers.py:16 odin/templates/index.html:74
+#: odin/api/v1/core/serializers.py:16 odin/templates/index.html:78
 msgid "Humidity"
 msgstr "Влажность"
 
-#: odin/api/v1/core/serializers.py:17 odin/templates/index.html:80
+#: odin/api/v1/core/serializers.py:17 odin/templates/index.html:84
 msgid "Pressure"
 msgstr "Давление"
 
@@ -51,6 +51,27 @@ msgstr "Журнал аудита команд управления"
 #: odin/apps/core/translations.py:6
 msgid "Management command logs"
 msgstr "Журналы команд управления"
+
+#: odin/apps/electricity/apps.py:7
+msgid "electricity"
+msgstr "электричество"
+
+#: odin/apps/electricity/models.py:8
+msgid "Voltage"
+msgstr "Напряжение"
+
+#: odin/apps/electricity/models.py:9 odin/apps/relays/models.py:34
+#: odin/apps/sensors/models.py:42
+msgid "Created at"
+msgstr "Создан"
+
+#: odin/apps/electricity/models.py:12
+msgid "voltage log"
+msgstr "лог напряжения"
+
+#: odin/apps/electricity/models.py:13
+msgid "voltage logs"
+msgstr "логи напряжения"
 
 #: odin/apps/music/admin.py:8
 msgid "Artist"
@@ -108,10 +129,6 @@ msgstr "Активный"
 #: odin/apps/relays/models.py:32 odin/apps/sensors/models.py:40
 msgid "Context"
 msgstr "Контекст"
-
-#: odin/apps/relays/models.py:34 odin/apps/sensors/models.py:42
-msgid "Created at"
-msgstr "Создан"
 
 #: odin/apps/relays/models.py:35 odin/apps/sensors/models.py:43
 msgid "Updated at"
@@ -178,7 +195,7 @@ msgstr "З"
 msgid "NW"
 msgstr "СЗ"
 
-#: odin/settings/base.py:152
+#: odin/settings/base.py:153
 msgid "Russian"
 msgstr "Русский"
 
@@ -194,7 +211,7 @@ msgstr "Очереди"
 msgid "Recent actions"
 msgstr "Последние действия"
 
-#: odin/templates/admin/index.html:33 odin/templates/header.html:11
+#: odin/templates/admin/index.html:33 odin/templates/header.html:12
 msgid "Admin"
 msgstr "Админка"
 
@@ -235,15 +252,11 @@ msgstr ""
 msgid "Temperatures"
 msgstr "Температуры"
 
-#: odin/templates/header.html:6
+#: odin/templates/header.html:7
 msgid "ODIN"
 msgstr ""
 
-#: odin/templates/header.html:9
-msgid "Main"
-msgstr "Главная"
-
-#: odin/templates/header.html:10 odin/templates/index.html:26
+#: odin/templates/header.html:11 odin/templates/index.html:30
 msgid "Sensors"
 msgstr "Датчики"
 
@@ -251,55 +264,55 @@ msgstr "Датчики"
 msgid "Welcome to ODIN server"
 msgstr "Добро пожаловать на сервер ODIN"
 
-#: odin/templates/index.html:47
+#: odin/templates/index.html:51
 msgid "Boiler Room"
 msgstr ""
 
-#: odin/templates/index.html:58
+#: odin/templates/index.html:62
 msgid "Weather"
 msgstr "Погода"
 
-#: odin/templates/index.html:65
+#: odin/templates/index.html:69
 msgid "max"
 msgstr "макс"
 
-#: odin/templates/index.html:66
+#: odin/templates/index.html:70
 msgid "min"
 msgstr "мин"
 
-#: odin/templates/index.html:89
+#: odin/templates/index.html:93
 msgid "Wind"
 msgstr "Ветер"
 
-#: odin/templates/index.html:91 odin/templates/index.html:94
+#: odin/templates/index.html:95 odin/templates/index.html:98
 msgid "m/s"
 msgstr "м/с"
 
-#: odin/templates/index.html:94
+#: odin/templates/index.html:98
 msgid "Gusts"
 msgstr "Порывы"
 
-#: odin/templates/index.html:100
+#: odin/templates/index.html:104
 msgid "Attributes"
 msgstr "Атрибуты"
 
-#: odin/templates/index.html:103
+#: odin/templates/index.html:107
 msgid "Fog"
 msgstr "Туман"
 
-#: odin/templates/index.html:106
+#: odin/templates/index.html:110
 msgid "Snow"
 msgstr "Снег"
 
-#: odin/templates/index.html:109
+#: odin/templates/index.html:113
 msgid "Thunderstorm"
 msgstr "Гроза"
 
-#: odin/templates/index.html:112
+#: odin/templates/index.html:116
 msgid "Black Ice"
 msgstr "Гололед"
 
-#: odin/templates/index.html:118
+#: odin/templates/index.html:122
 msgid "No Data"
 msgstr "Нет данных"
 

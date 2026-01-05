@@ -52,8 +52,10 @@ function initTemperatureChart(chartData) {
                 y: {
                     title: {
                         display: true,
-                        text: 'Температура (°C)'
-                    }
+                        text: 'Температура (°C)',
+                    },
+                    min: 20,
+                    max: 45
                 }
             }
         }

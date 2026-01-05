@@ -8,7 +8,7 @@ from odin.apps.sensors.models import Sensor, SensorLog
 def get_temp_sensors_chart_data() -> dict:
     # Calculate time range (last 12 hours)
     now = timezone.now()
-    twelve_hours_ago = now - timedelta(hours=24)
+    two_days_ago = now - timedelta(hours=48)
 
     # Get all active DS18B20 sensors
     sensors = Sensor.objects.active().ds18b20().order_by("sensor_id")
@@ -19,7 +19,7 @@ def get_temp_sensors_chart_data() -> dict:
 
     # Get all logs from last 12 hours for these sensors
     # Use created_at if available, otherwise use synced_at
-    logs = SensorLog.objects.filter(sensor_id__in=sensor_ids, created_at__range=(twelve_hours_ago, now)).order_by(
+    logs = SensorLog.objects.filter(sensor_id__in=sensor_ids, created_at__range=(two_days_ago, now)).order_by(
         "created_at"
     )
 

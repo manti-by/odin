@@ -16,6 +16,10 @@
 
 {% block scripts %}
   <script type="text/javascript" src="{% static 'js/index.js' %}"></script>
+  <script type="text/javascript">
+    // Reload page every minute
+    setTimeout(function() { location.reload(); }, 60 * 1000);
+  </script>
 {% endblock %}
 
 {% block content %}
@@ -87,7 +91,7 @@
             <div>
               <div class="label">
                 {% translate "Wind" %}
-                {{ weather.data.wind.direction|wind_direction_abbr }} -
+                &laquo;{{ weather.data.wind.direction|wind_direction_abbr }}&raquo; -
                 {{ weather.data.wind.speed }}{% translate "m/s" %}
               </div>
               <div class="gusts info">
