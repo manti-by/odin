@@ -39,10 +39,11 @@ django-checks:
 	uv run manage.py check --fail-level WARNING --settings=odin.settings.sqlite
 
 pip:
-	uv sync
+	uv sync --all-extras --dev
 
 update:
-	uv sync --upgrade
+	uv run uv-bump
+	uv sync --all-extras --dev
 	uv run pre-commit autoupdate
 
 ci: pip check django-checks test
