@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-05 14:14+0300\n"
+"POT-Creation-Date: 2026-01-05 17:51+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,11 +24,11 @@ msgstr ""
 msgid "Temp"
 msgstr "Температура"
 
-#: odin/api/v1/core/serializers.py:16 odin/templates/index.html:78
+#: odin/api/v1/core/serializers.py:16 odin/templates/index.html:93
 msgid "Humidity"
 msgstr "Влажность"
 
-#: odin/api/v1/core/serializers.py:17 odin/templates/index.html:84
+#: odin/api/v1/core/serializers.py:17 odin/templates/index.html:99
 msgid "Pressure"
 msgstr "Давление"
 
@@ -61,7 +61,7 @@ msgid "Voltage"
 msgstr "Напряжение"
 
 #: odin/apps/electricity/models.py:9 odin/apps/relays/models.py:34
-#: odin/apps/sensors/models.py:42
+#: odin/apps/sensors/models.py:58
 msgid "Created at"
 msgstr "Создан"
 
@@ -110,27 +110,27 @@ msgstr "Сервопривод"
 msgid "Valve"
 msgstr "Клапан"
 
-#: odin/apps/relays/models.py:28
+#: odin/apps/relays/models.py:28 odin/apps/sensors/models.py:50
 msgid "Relay ID"
 msgstr "Реле #"
 
-#: odin/apps/relays/models.py:29 odin/apps/sensors/models.py:37
+#: odin/apps/relays/models.py:29 odin/apps/sensors/models.py:52
 msgid "Name"
 msgstr "Имя"
 
-#: odin/apps/relays/models.py:30 odin/apps/sensors/models.py:38
+#: odin/apps/relays/models.py:30 odin/apps/sensors/models.py:53
 msgid "Type"
 msgstr "Тип"
 
-#: odin/apps/relays/models.py:31 odin/apps/sensors/models.py:39
+#: odin/apps/relays/models.py:31 odin/apps/sensors/models.py:54
 msgid "Is active"
 msgstr "Активный"
 
-#: odin/apps/relays/models.py:32 odin/apps/sensors/models.py:40
+#: odin/apps/relays/models.py:32 odin/apps/sensors/models.py:56
 msgid "Context"
 msgstr "Контекст"
 
-#: odin/apps/relays/models.py:35 odin/apps/sensors/models.py:43
+#: odin/apps/relays/models.py:35 odin/apps/sensors/models.py:59
 msgid "Updated at"
 msgstr "Обновлен"
 
@@ -138,23 +138,33 @@ msgstr "Обновлен"
 msgid "relay"
 msgstr "реле"
 
-#: odin/apps/sensors/apps.py:7 odin/apps/sensors/models.py:49
+#: odin/apps/sensors/apps.py:7 odin/apps/sensors/models.py:65
 msgid "sensors"
 msgstr "датчики"
 
-#: odin/apps/sensors/models.py:36
+#: odin/apps/sensors/models.py:46
 msgid "Sensor ID"
 msgstr "Датчик #"
 
 #: odin/apps/sensors/models.py:48
+#, fuzzy
+#| msgid "Sensor ID"
+msgid "Linked sensor ID"
+msgstr "Датчик #"
+
+#: odin/apps/sensors/models.py:55
+msgid "Is visible"
+msgstr ""
+
+#: odin/apps/sensors/models.py:64
 msgid "sensor"
 msgstr "датчик"
 
-#: odin/apps/sensors/models.py:87
+#: odin/apps/sensors/models.py:119
 msgid "sensor log"
 msgstr "лог датчика"
 
-#: odin/apps/sensors/models.py:88
+#: odin/apps/sensors/models.py:120
 msgid "sensor logs"
 msgstr "логи датчиков"
 
@@ -266,61 +276,61 @@ msgstr "Добро пожаловать на сервер ODIN"
 
 #: odin/templates/index.html:51
 msgid "Boiler Room"
-msgstr ""
+msgstr "Бойлерная"
 
-#: odin/templates/index.html:62
+#: odin/templates/index.html:77
 msgid "Weather"
 msgstr "Погода"
 
-#: odin/templates/index.html:69
+#: odin/templates/index.html:84
 msgid "max"
 msgstr "макс"
 
-#: odin/templates/index.html:70
+#: odin/templates/index.html:85
 msgid "min"
 msgstr "мин"
 
-#: odin/templates/index.html:93
+#: odin/templates/index.html:108
 msgid "Wind"
 msgstr "Ветер"
 
-#: odin/templates/index.html:95 odin/templates/index.html:98
+#: odin/templates/index.html:110 odin/templates/index.html:113
 msgid "m/s"
 msgstr "м/с"
 
-#: odin/templates/index.html:98
+#: odin/templates/index.html:113
 msgid "Gusts"
 msgstr "Порывы"
 
-#: odin/templates/index.html:104
+#: odin/templates/index.html:119
 msgid "Attributes"
 msgstr "Атрибуты"
 
-#: odin/templates/index.html:107
+#: odin/templates/index.html:122
 msgid "Fog"
 msgstr "Туман"
 
-#: odin/templates/index.html:110
+#: odin/templates/index.html:125
 msgid "Snow"
 msgstr "Снег"
 
-#: odin/templates/index.html:113
+#: odin/templates/index.html:128
 msgid "Thunderstorm"
 msgstr "Гроза"
 
-#: odin/templates/index.html:116
+#: odin/templates/index.html:131
 msgid "Black Ice"
 msgstr "Гололед"
 
-#: odin/templates/index.html:122
+#: odin/templates/index.html:137
 msgid "No Data"
 msgstr "Нет данных"
 
-#: odin/templates/index.html:126
+#: odin/templates/index.html:141
 msgid "Errors"
 msgstr "Ошибки"
 
-#: odin/templates/index.html:137
+#: odin/templates/index.html:152
 msgid "No errors for the last 24 hours"
 msgstr "За последние 24 часа ошибок не обнаружено."
 

@@ -5,7 +5,17 @@ from .models import Sensor, SensorLog
 
 @admin.register(Sensor)
 class SensorAdmin(admin.ModelAdmin):
-    list_display = ("sensor_id", "name", "type", "is_active", "updated_at", "created_at")
+    list_display = (
+        "sensor_id",
+        "linked_sensor_id",
+        "relay_id",
+        "name",
+        "type",
+        "is_active",
+        "is_visible",
+        "updated_at",
+        "created_at",
+    )
     list_filter = ("type",)
 
 

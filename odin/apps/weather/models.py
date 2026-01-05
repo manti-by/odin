@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.db import models
 from django.db.models import JSONField, query
 from django.db.utils import cached_property
-from django.utils import timezone
+from django.utils import formats, timezone
 from django.utils.translation import gettext_lazy as _
 
 
@@ -47,6 +47,13 @@ class Weather(models.Model):
     def has_attrs(self) -> bool:
         return any(self.attrs.values())
 
+    @staticmethod
+    def temp_display_localized(temp: Decimal | None) -> str:
+        if temp is None:
+            return "--"
+        temp_display = formats.localize(round(temp, 1), use_l10n=False)
+        return f"+{temp_display}" if temp > 0 else f"{temp_display}"
+
     @property
     def temp(self) -> Decimal | None:
         if (temp := self.data.get("temp", {}).get("avg")) is not None:
@@ -55,9 +62,7 @@ class Weather(models.Model):
 
     @property
     def temp_display(self) -> str:
-        if self.temp is None:
-            return "--"
-        return f"+{round(self.temp, 1)}" if self.temp > 0 else f"{round(self.temp, 1)}"
+        return self.temp_display_localized(self.temp)
 
     @cached_property
     def current_weather_set(self) -> query.QuerySet[Weather]:
@@ -72,9 +77,7 @@ class Weather(models.Model):
 
     @property
     def temp_min_display(self) -> str:
-        if self.temp_min is None:
-            return "--"
-        return f"+{round(self.temp_min, 1)}" if self.temp_min > 0 else f"{round(self.temp_min, 1)}"
+        return self.temp_display_localized(self.temp_min)
 
     @cached_property
     def temp_max(self) -> Decimal | None:
@@ -84,9 +87,7 @@ class Weather(models.Model):
 
     @property
     def temp_max_display(self) -> str:
-        if self.temp_max is None:
-            return "--"
-        return f"+{round(self.temp_max, 1)}" if self.temp_max > 0 else f"{round(self.temp_max, 1)}"
+        return self.temp_display_localized(self.temp_max)
 
     @property
     def pressure(self) -> int | None:

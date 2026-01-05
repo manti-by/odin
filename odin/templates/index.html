@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n l10n weather_tags %}
+{% load static i18n l10n core_tags weather_tags relay_tags %}
 
 {% block title %}
   {% translate "Welcome to ODIN server" %}
@@ -37,7 +37,7 @@
               data-target-temp="{{ sensor.context.target_temp|default_if_none:'' }}"
             >
               <div class="name">{{ sensor.name }}</div>
-              <div class="temp">{{ sensor.temp }}<span>&deg;C</span></div>
+              <div class="temp">{{ sensor.temp|format_decimal }}<span>&deg;C</span></div>
               <div class="edit">
                 <a href="#edit">
                   <img src="{% static 'img/settings.svg' %}" alt="settings" width="20">
@@ -52,8 +52,23 @@
         <ul class="row">
           {% for sensor in sensors.ds18b20 %}
             <li class="sensor">
-              <span><img src="/api/v1/core/chart/?value={{ sensor.temp|unlocalize }}&metric=temp"></span>
-              <label>{{ sensor.name }}</label>
+              <div class="value">
+                <img src="/api/v1/core/chart/?value={{ sensor.temp|unlocalize }}&metric=temp">
+              </div>
+              <div class="name">{{ sensor.name }}</div>
+              <div class="attrs">
+                {% if sensor.relay %}
+                  <span class="relay info">
+                    {% relay_state_image sensor.relay.state %}
+                  </span>
+                {% endif %}
+                {% if sensor.linked_sensor %}
+                  <span class="linked-sensor info">
+                    <span class="arrow">&uarr;</span>
+                    {{ sensor.linked_sensor.temp|format_decimal }}&deg;C
+                  </span>
+                {% endif %}
+              </div>
             </li>
           {% endfor %}
         </ul>

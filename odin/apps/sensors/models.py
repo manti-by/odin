@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models import query
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+
+
+if TYPE_CHECKING:
+    from odin.apps.relays.models import Relay
 
 
 class SensorType(models.TextChoices):
@@ -16,6 +21,9 @@ class SensorType(models.TextChoices):
 class SensorQuerySet(query.QuerySet):
     def active(self) -> query.QuerySet:
         return self.filter(is_active=True)
+
+    def visible(self) -> query.QuerySet:
+        return self.filter(is_visible=True)
 
     def ds18b20(self) -> query.QuerySet:
         return self.filter(type=SensorType.DS18B20)
@@ -31,12 +39,21 @@ class SensorManager(models.Manager):
     def active(self) -> query.QuerySet:
         return self.get_queryset().active()
 
+    def visible(self) -> query.QuerySet:
+        return self.get_queryset().visible()
+
 
 class Sensor(models.Model):
-    sensor_id = models.CharField(max_length=32, verbose_name=_("Sensor ID"))
+    sensor_id = models.CharField(max_length=32, db_index=True, verbose_name=_("Sensor ID"))
+    linked_sensor_id = models.CharField(
+        max_length=32, db_index=True, null=True, blank=True, verbose_name=_("Linked sensor ID")
+    )
+    relay_id = models.CharField(max_length=32, db_index=True, null=True, blank=True, verbose_name=_("Relay ID"))
+
     name = models.CharField(max_length=32, verbose_name=_("Name"))
     type = models.CharField(max_length=32, choices=SensorType.choices, verbose_name=_("Type"))
     is_active = models.BooleanField(default=True, verbose_name=_("Is active"))
+    is_visible = models.BooleanField(default=True, verbose_name=_("Is visible"))
     context = models.JSONField(default=dict, verbose_name=_("Context"))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
@@ -54,6 +71,22 @@ class Sensor(models.Model):
     @cached_property
     def latest_log(self) -> SensorLog:
         return SensorLog.objects.filter(sensor_id=self.sensor_id).order_by("created_at").last()
+
+    @cached_property
+    def linked_sensor(self) -> Sensor | None:
+        if not self.linked_sensor_id:
+            return None
+
+        return Sensor.objects.filter(sensor_id=self.linked_sensor_id).order_by("created_at").last()
+
+    @cached_property
+    def relay(self) -> Relay | None:
+        from odin.apps.relays.models import Relay
+
+        if not self.relay_id:
+            return None
+
+        return Relay.objects.filter(relay_id=self.relay_id).order_by("created_at").last()
 
     @property
     def temp(self) -> Decimal | None:

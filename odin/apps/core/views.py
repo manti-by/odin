@@ -18,7 +18,7 @@ def index_view(request: HttpRequest) -> HttpResponse:
     context = {
         "time": timezone.now().strftime("%d %b %Y %H:%m"),
         "weather": Weather.objects.current(),
-        "sensors": Sensor.objects.active().order_by("name"),
+        "sensors": Sensor.objects.active().visible().order_by("name"),
         "error_logs": Log.objects.errors_last_day(),
     }
     return render(request, "index.html", context=context)
