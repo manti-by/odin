@@ -20,7 +20,7 @@ class WeatherManager(models.Manager):
         end_date = start_range + timedelta(minutes=60)
 
         queryset = self.get_queryset().filter(period__range=(start_range, end_date)).order_by("-period")
-        return queryset.last() if queryset.exists() else self.get_queryset().last()
+        return queryset.last() or self.get_queryset().last()
 
 
 class Weather(models.Model):

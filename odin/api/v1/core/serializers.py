@@ -21,6 +21,8 @@ class ChartTypeSerializer(serializers.Serializer):
     value = serializers.DecimalField(
         max_digits=5,
         decimal_places=2,
+        max_value=1000,
+        min_value=-50,
         allow_null=False,
     )
     metric = serializers.ChoiceField(choices=MetricChoices.choices)

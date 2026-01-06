@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-05 23:10+0300\n"
+"POT-Creation-Date: 2026-01-06 21:28+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -172,38 +172,38 @@ msgid "weather"
 msgstr "погода"
 
 #: odin/apps/weather/templatetags/weather_tags.py:21
-msgid "North"
-msgstr "Северный"
+msgid "north"
+msgstr "северный"
 
 #: odin/apps/weather/templatetags/weather_tags.py:22
-msgid "North-East"
-msgstr "Северо-Восточный"
+msgid "north-east"
+msgstr "северо-восточный"
 
 #: odin/apps/weather/templatetags/weather_tags.py:23
-msgid "East"
-msgstr "Восточный"
+msgid "east"
+msgstr "восточный"
 
 #: odin/apps/weather/templatetags/weather_tags.py:24
-msgid "South-East"
-msgstr "Юго-Восточный"
+msgid "south-east"
+msgstr "юго-восточный"
 
 #: odin/apps/weather/templatetags/weather_tags.py:25
-msgid "South"
-msgstr "Южный"
+msgid "south"
+msgstr "южный"
 
 #: odin/apps/weather/templatetags/weather_tags.py:26
-msgid "South-West"
-msgstr "Юго-Западный"
+msgid "south-west"
+msgstr "юго-западный"
 
 #: odin/apps/weather/templatetags/weather_tags.py:27
-msgid "West"
-msgstr "Западный"
+msgid "west"
+msgstr "западный"
 
 #: odin/apps/weather/templatetags/weather_tags.py:28
-msgid "North-West"
-msgstr "Северо-Западный"
+msgid "north-west"
+msgstr "северо-западный"
 
-#: odin/settings/base.py:153
+#: odin/settings/base.py:154
 msgid "Russian"
 msgstr "Русский"
 
@@ -268,7 +268,7 @@ msgstr ""
 msgid "Sensors"
 msgstr "Датчики"
 
-#: odin/templates/index.html:5
+#: odin/templates/index.html:9
 msgid "Welcome to ODIN server"
 msgstr "Добро пожаловать на сервер ODIN"
 
@@ -297,8 +297,8 @@ msgid "m/s"
 msgstr "м/с"
 
 #: odin/templates/index.html:113
-msgid "Gusts"
-msgstr "Порывы"
+msgid "Gusts up to"
+msgstr "Порывы до"
 
 #: odin/templates/index.html:119
 msgid "Attributes"

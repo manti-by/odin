@@ -18,14 +18,14 @@ def wind_direction_abbr(degrees):
     # N=0, NE=45, E=90, SE=135, S=180, SW=225, W=270, NW=315
     # Add 22.5 to center each direction
     directions = [
-        _("North"),
-        _("North-East"),
-        _("East"),
-        _("South-East"),
-        _("South"),
-        _("South-West"),
-        _("West"),
-        _("North-West"),
+        _("north"),
+        _("north-east"),
+        _("east"),
+        _("south-east"),
+        _("south"),
+        _("south-west"),
+        _("west"),
+        _("north-west"),
     ]
     index = int((degrees + 22.5) / 45) % 8
     return directions[index]

@@ -25,7 +25,7 @@ class RelayManager(models.Manager):
 
 
 class Relay(models.Model):
-    relay_id = models.CharField(max_length=32, verbose_name=_("Relay ID"))
+    relay_id = models.CharField(max_length=32, db_index=True, verbose_name=_("Relay ID"))
     name = models.CharField(max_length=32, verbose_name=_("Name"))
     type = models.CharField(max_length=32, choices=RelayType.choices, verbose_name=_("Type"))
     is_active = models.BooleanField(default=True, verbose_name=_("Is active"))

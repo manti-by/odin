@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load static i18n l10n core_tags weather_tags relay_tags %}
 
+{% block meta %}
+  <meta http-equiv="Refresh" content="300" />
+{% endblock %}
+
 {% block title %}
   {% translate "Welcome to ODIN server" %}
 {% endblock %}
@@ -16,10 +20,6 @@
 
 {% block scripts %}
   <script type="text/javascript" src="{% static 'js/index.js' %}"></script>
-  <script type="text/javascript">
-    // Reload page every minute
-    setTimeout(function() { location.reload(); }, 60 * 1000);
-  </script>
 {% endblock %}
 
 {% block content %}
@@ -64,7 +64,7 @@
                 {% endif %}
                 {% if sensor.linked_sensor %}
                   <span class="linked-sensor info">
-                    <span class="arrow">&uarr;</span>
+                    <span class="arrow">&odot;</span>
                     {{ sensor.linked_sensor.temp|format_decimal }}&deg;C
                   </span>
                 {% endif %}
@@ -106,11 +106,11 @@
             <div>
               <div class="label">
                 {% translate "Wind" %}
-                {{ weather.data.wind.direction|wind_direction_abbr }} -
+                {{ weather.data.wind.direction|wind_direction_abbr }}
                 {{ weather.data.wind.speed }}{% translate "m/s" %}
               </div>
               <div class="gusts info">
-                {% translate "Gusts" %} - {{ weather.data.wind.gusts }}{% translate "m/s" %}
+                {% translate "Gusts up to" %} {{ weather.data.wind.gusts }}{% translate "m/s" %}
               </div>
             </div>
           </div>
