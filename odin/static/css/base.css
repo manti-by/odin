@@ -12,30 +12,20 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Roboto", sans-serif;
   font-size: 16px;
-  line-height: 1.3;
+  font-weight: 400;
+  line-height: 1.2;
   color: #bFbFbF;
-  background: #000000;
+  background: #161614;
 }
 
 h1, h2, h3, h4, h5 {
   margin: 0 0 1.25rem;
   padding: 0;
   font-weight: 400;
-}
-
-h1 {
-  font-size: 1.5rem;
-  margin: 0 0 1.25rem;
-}
-
-h2 {
-  font-size: 1.25rem;
-}
-
-h3, h4, h5 {
   font-size: 1rem;
+  text-transform: uppercase;
 }
 
 a {
@@ -79,40 +69,11 @@ dl, ol, ul {
   padding: 0 0 0 1.5rem;
 }
 
-header {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-between;
-  margin: 0 0 1.5rem 0;
-  padding: 1rem 1.5rem .75rem 1.5rem;
-  background: #1c1c1c;
-}
-
-header h1 {
-  margin: 0;
-  padding: 0;
-}
-
-header h1 span {
-  display: inline-block;
-  height: 2rem;
-  vertical-align: top;
-}
-
-header .logo {
-  margin: 0 .5rem 0 0;
-  max-width: 2rem;
-}
-
-header .time {
-  margin-top: .5rem;
-}
-
 .container {
   width: 100%;
-  max-width: 1800px;
+  max-width: 1560px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0;
 }
 
 .row {
@@ -141,8 +102,8 @@ button {
   white-space: nowrap;
   vertical-align: middle;
   user-select: none;
-  color: #bf4b31;
-  border: 1px solid #bf4b31;
+  color: #ff5253;
+  border: 1px solid #ff5253;
   background-color: #ffffff;
   padding: .375rem .75rem;
   font-size: 1rem;
@@ -157,8 +118,8 @@ button {
 
 button.primary {
   color: #ffffff;
-  background-color: #bf4b31;
-  border-color: #bf4b31;
+  background-color: #ff5253;
+  border-color: #ff5253;
 }
 
 button.secondary {
@@ -167,9 +128,9 @@ button.secondary {
 }
 
 button.primary:hover {
-  color: #bf4b31;
+  color: #ff5253;
   background-color: #ffffff;
-  border-color: #bf4b31;
+  border-color: #ff5253;
 }
 
 button.secondary:hover {

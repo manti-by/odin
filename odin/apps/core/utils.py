@@ -8,12 +8,12 @@ from django.templatetags.l10n import unlocalize
 from odin.api.v1.core.serializers import MetricChoices
 
 
-GREEN_COLOR = "#87C540"
-YELLOW_COLOR = "#FFDD00"
-RED_COLOR = "#DA525D"
+GREEN_COLOR = "#82c38b"
+YELLOW_COLOR = "#f8ed43"
+RED_COLOR = "#ae5224"
 
 LIGHT_GREY_COLOR = "#E9E9E9"
-DARK_GREY_COLOR = "#404040"
+DARK_GREY_COLOR = "#2f4133"
 
 
 def create_metric_gauge_chart(value: Decimal, metric: MetricChoices) -> str:

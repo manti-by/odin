@@ -12,6 +12,7 @@
 {% block styles %}
   <link href="{% static 'css/index/base.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/boiler-room.css' %}" rel="stylesheet">
+  <link href="{% static 'css/index/errors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/sensors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/weather.css' %}" rel="stylesheet">
   <link href="{% static 'css/responsive/index.css' %}" rel="stylesheet">
@@ -28,129 +29,138 @@
     <div class="grid">
       <div class="tile sensors esp8266">
         <h2>{% translate "Sensors" %}</h2>
-        <ul>
-          {% for sensor in sensors.esp8266 %}
-            <li
-              class="sensor row"
-              data-sensor-id="{{ sensor.sensor_id }}"
-              data-sensor-name="{{ sensor.name }}"
-              data-target-temp="{{ sensor.context.target_temp|default_if_none:'' }}"
-            >
-              <div class="name">{{ sensor.name }}</div>
-              <div class="temp">{{ sensor.temp|format_decimal }}<span>&deg;C</span></div>
-              <div class="edit">
-                <a href="#edit">
-                  <img src="{% static 'img/settings.svg' %}" alt="settings" width="20">
-                </a>
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-      <div class="tile sensors ds18b20">
-        <h2>{% translate "Boiler Room" %}</h2>
-        <ul class="row">
-          {% for sensor in sensors.ds18b20 %}
-            <li class="sensor">
-              <div class="value">
-                <img src="/api/v1/core/chart/?value={{ sensor.temp|unlocalize }}&metric=temp">
-              </div>
-              <div class="name">{{ sensor.name }}</div>
-              <div class="attrs">
-                {% if sensor.relay %}
-                  <span class="relay info">
-                    {% relay_state_image sensor.relay.state %}
-                  </span>
-                {% endif %}
-                {% if sensor.linked_sensor %}
-                  <span class="linked-sensor info">
-                    <span class="arrow">&odot;</span>
-                    {{ sensor.linked_sensor.temp|format_decimal }}&deg;C
-                  </span>
-                {% endif %}
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-      <div class="tile weather">
-        <h2>{% translate "Weather" %}</h2>
-        {% if weather %}
-          <div class="temp attr">
-            <span>
-              {{ weather.temp_display }}&deg;C
-            </span>
-            <span class="meta info">
-              <span>{% translate "max" %}</span> {{ weather.temp_max_display }}&deg;C<br/>
-              <span>{% translate "min" %}</span> {{ weather.temp_min_display }}&deg;C
-            </span>
-          </div>
-          <div class="row attr">
-            <div class="humidity">
-              <span class="humidity-chart">
-                <img src="/api/v1/core/chart/?value={{ weather.data.humidity }}&metric=humidity">
-              </span>
-              <label>{% translate "Humidity" %}</label>
-            </div>
-            <div class="pressure">
-              <span class="pressure-chart">
-                <img src="/api/v1/core/chart/?value={{ weather.pressure }}&metric=pressure">
-              </span>
-              <label>{% translate "Pressure" %}</label>
-            </div>
-          </div>
-          <div class="wind attr row">
-            <div class="direction">
-              <span style="transform: rotate({{ weather.data.wind.direction }}deg);">↓</span>
-            </div>
-            <div>
-              <div class="label">
-                {% translate "Wind" %}
-                {{ weather.data.wind.direction|wind_direction_abbr }}
-                {{ weather.data.wind.speed }}{% translate "m/s" %}
-              </div>
-              <div class="gusts info">
-                {% translate "Gusts up to" %} {{ weather.data.wind.gusts }}{% translate "m/s" %}
-              </div>
-            </div>
-          </div>
-          {% if weather.has_attrs %}
-            <div class="attributes attr">
-              <label>{% translate "Attributes" %} - </label>
-              <span>
-                {% if weather.data.attributes.fog %}
-                  {% translate "Fog" %},
-                {% endif %}
-                {% if weather.data.attributes.snow %}
-                  {% translate "Snow" %},
-                {% endif %}
-                {% if weather.data.attributes.thunderstorm %}
-                  {% translate "Thunderstorm" %},
-                {% endif %}
-                {% if weather.data.attributes.black_ice %}
-                  {% translate "Black Ice" %}
-                {% endif %}
-              </span>
-            </div>
-          {% endif %}
-        {% else %}
-          <div>{% translate "No Data" %}</div>
-        {% endif %}
-      </div>
-      <div class="tile errors">
-        <h2>{% translate "Errors" %}</h2>
-        {% if error_logs %}
+        <div class="body">
           <ul>
-            {% for log in error_logs %}
-              <li class="log row">
-                <div class="time">{{ log.asctime|date:"d.m H:i" }}</div>
-                <div class="msg">{{ log.msg }}</div>
+            {% for sensor in sensors.esp8266 %}
+              <li
+                class="sensor row"
+                data-sensor-id="{{ sensor.sensor_id }}"
+                data-sensor-name="{{ sensor.name }}"
+                data-target-temp="{{ sensor.context.target_temp|default_if_none:'' }}"
+              >
+                <div class="name">{{ sensor.name }}</div>
+                <div class="temp">{{ sensor.temp|format_decimal }}<span>&deg;C</span></div>
+                <div class="humidity">{{ sensor.humidity|format_decimal }}<span>%</span></div>
+                <div class="edit">
+                  <a href="#edit">
+                    <img src="{% static 'img/settings.svg' %}" alt="settings" width="20">
+                  </a>
+                </div>
               </li>
             {% endfor %}
           </ul>
-        {% else %}
-          <div class="success">{% translate "No errors for the last 24 hours" %}</div>
-        {% endif %}
+        </div>
+      </div>
+      <div class="tile sensors ds18b20">
+        <h2>{% translate "Boiler Room" %}</h2>
+        <div class="body">
+          <ul class="row">
+            {% for sensor in sensors.ds18b20 %}
+              <li class="sensor">
+                <div class="value">
+                  <img src="/api/v1/core/chart/?value={{ sensor.temp|unlocalize }}&metric=temp">
+                </div>
+                <div class="attrs">
+                  {% if sensor.relay %}
+                    <span class="relay info">
+                      {% relay_state_image sensor.relay.state %}
+                    </span>
+                  {% endif %}
+                  {% if sensor.linked_sensor %}
+                    <span class="linked-sensor info">
+                      <span class="arrow">&odot;</span>
+                      {{ sensor.linked_sensor.temp|format_decimal }}&deg;C
+                    </span>
+                  {% endif %}
+                </div>
+                <div class="name">{{ sensor.name }}</div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="tile weather">
+        <h2>{% translate "Weather" %}</h2>
+        <div class="body">
+          {% if weather %}
+            <div class="temp attr">
+              <span>
+                {{ weather.temp_display }}&deg;C
+              </span>
+              <span class="meta info">
+                <span>{% translate "max" %}</span> {{ weather.temp_max_display }}&deg;C<br/>
+                <span>{% translate "min" %}</span> {{ weather.temp_min_display }}&deg;C
+              </span>
+            </div>
+            <div class="row attr">
+              <div class="humidity">
+                <span class="humidity-chart">
+                  <img src="/api/v1/core/chart/?value={{ weather.data.humidity }}&metric=humidity">
+                </span>
+                <label>{% translate "Humidity" %}</label>
+              </div>
+              <div class="pressure">
+                <span class="pressure-chart">
+                  <img src="/api/v1/core/chart/?value={{ weather.pressure }}&metric=pressure">
+                </span>
+                <label>{% translate "Pressure" %}</label>
+              </div>
+            </div>
+            <div class="wind attr row">
+              <div class="direction">
+                <span style="transform: rotate({{ weather.data.wind.direction }}deg);">↓</span>
+              </div>
+              <div>
+                <div class="label">
+                  {% translate "Wind" %}
+                  {{ weather.data.wind.direction|wind_direction_abbr }}
+                  {{ weather.data.wind.speed }}{% translate "m/s" %}
+                </div>
+                <div class="gusts info">
+                  {% translate "Gusts up to" %} {{ weather.data.wind.gusts }}{% translate "m/s" %}
+                </div>
+              </div>
+            </div>
+            {% if weather.has_attrs %}
+              <div class="attributes attr">
+                <label>{% translate "Attributes" %} - </label>
+                <span>
+                  {% if weather.data.attributes.fog %}
+                    {% translate "Fog" %},
+                  {% endif %}
+                  {% if weather.data.attributes.snow %}
+                    {% translate "Snow" %},
+                  {% endif %}
+                  {% if weather.data.attributes.thunderstorm %}
+                    {% translate "Thunderstorm" %},
+                  {% endif %}
+                  {% if weather.data.attributes.black_ice %}
+                    {% translate "Black Ice" %}
+                  {% endif %}
+                </span>
+              </div>
+            {% endif %}
+          {% else %}
+            <div>{% translate "No Data" %}</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="tile errors">
+        <h2>{% translate "Errors" %}</h2>
+        <div class="body">
+          {% if error_logs %}
+            <ul>
+              {% for log in error_logs %}
+                <li class="log row">
+                  <div class="time">{{ log.asctime|date:"d.m H:i" }}</div>
+                  <div class="msg">{{ log.msg }}</div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="success">{% translate "No errors for the last 24 hours" %}</div>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>

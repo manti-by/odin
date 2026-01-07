@@ -94,6 +94,12 @@ class Sensor(models.Model):
             return self.latest_log.temp
         return None
 
+    @property
+    def humidity(self) -> Decimal | None:
+        if self.latest_log:
+            return self.latest_log.humidity
+        return None
+
 
 class SensorLogManager(models.Manager):
     def current(self) -> query.QuerySet:

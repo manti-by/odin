@@ -1,5 +1,5 @@
 .home .weather .attr {
-  margin-left: 17.5%;
+  margin-left: 10%;
   padding: .25rem;
   line-height: 1.5;
 }
@@ -20,6 +20,7 @@
 }
 
 .home .weather .temp {
+  margin-top: 1rem;
   font-size: 3.75rem;
   font-weight: bold;
 }

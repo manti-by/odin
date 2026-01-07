@@ -1,9 +1,40 @@
-.menu a {
-  display: inline-block;
-  margin: .5rem;
-  border-bottom: 3px solid transparent;
+header {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1560px;
+  margin: 4.5rem auto 1.5rem auto;
+  padding: 1rem 0 .75rem 0;
 }
 
-.menu a:hover {
+header a {
+  display: inline-block;
+  margin-left: .5rem;
+  padding-bottom: .25rem;
+  border-bottom: 3px solid transparent;
+  text-transform: uppercase;
+}
+
+header a:hover {
   border-bottom-color: #495057;
+}
+
+header .logo {
+  display: inline-block;
+  height: 1rem;
+  width: 1rem;
+  margin-right: .25rem;
+  overflow: visible;
+}
+
+header .logo img {
+  display: block;
+  position: relative;
+  top: -2px;
+  width: 1.5rem;
+}
+
+header h1 {
+  margin: 0;
 }

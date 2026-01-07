@@ -1,3 +1,7 @@
+.home .ds18b20 .body {
+  padding-top: .5rem;
+}
+
 .home .ds18b20 ul {
   padding: .25rem 0;
 }
@@ -11,7 +15,9 @@
 
 .home .ds18b20 .sensor .value {
   display: block;
-  min-height: 175px;
+  position: relative;
+  left: -5px;
+  height: 150px;
 }
 
 .home .ds18b20 .sensor .temp {
@@ -20,15 +26,20 @@
 }
 
 .home .ds18b20 .sensor .name {
-  margin-bottom: .5rem
+  width: 100px;
+  margin: 0 auto .5rem auto;
 }
 
 .home .ds18b20 .sensor .value img {
-  width: 175px;
+  width: 160px;
 }
 
 .home .ds18b20 .sensor .linked-sensor {
   font-weight: normal;
+}
+
+.home .ds18b20 .sensor .attrs {
+  margin-bottom: .5rem;
 }
 
 .home .ds18b20 .sensor .attrs .relay {
