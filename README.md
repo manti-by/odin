@@ -1,10 +1,10 @@
-# Odin server core application
+# ODIN server core application
 
-Local dashboard for [Coruscant project](https://github.com/manti-by/coruscant).
-
-## About
-
-Odin is a Django based application that provides a local dashboard for the Coruscant project. 
+[ODIN](https://github.com/manti-by/odin/) is a Django-based backend application delivering comprehensive RESTful APIs 
+and management interfaces. It powers data ingestion, processing, and visualization for the 
+[Coruscant](https://github.com/manti-by/coruscant/) Raspberry Pi-based heating control system, exposes endpoints for 
+[Centax](https://github.com/manti-by/centax/) satellite sensor telemetry (including real-time IoT data streams), 
+and features an interactive dashboard with customizable graphs and historical analytics. 
 
 [![Python 3.13](https://img.shields.io/badge/python-3.13-green.svg)](https://www.python.org/downloads/release/python-3136/)
 [![Code style: ruff](https://img.shields.io/badge/ruff-enabled-informational?logo=ruff)](https://astral.sh/ruff)
