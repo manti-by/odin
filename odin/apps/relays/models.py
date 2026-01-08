@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.db import models
 from django.db.models import query
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+
+
+if TYPE_CHECKING:
+    from odin.apps.sensors.models import Sensor
 
 
 class RelayType(models.TextChoices):
@@ -54,8 +61,14 @@ class Relay(models.Model):
     def state(self) -> str:
         return self.context.get("state", RelayState.UNKNOWN)
 
+    @cached_property
+    def sensor(self) -> Sensor | None:
+        from odin.apps.sensors.models import Sensor
+
+        return Sensor.objects.filter(relay_id=self.relay_id).order_by("created_at").last()
+
     @property
-    def target_state(self) -> RelayState.choices:
+    def pump_target_state(self) -> RelayState.choices:
         now = timezone.localtime()
         day, hour = now.strftime("%w"), now.strftime("%H")
 
@@ -63,3 +76,25 @@ class Relay(models.Model):
         if state is not None:
             return RelayState.ON if state else RelayState.OFF
         return RelayState.UNKNOWN
+
+    @property
+    def servo_target_state(self) -> RelayState.choices:
+        if not self.sensor or self.sensor.temp is None:
+            return RelayState.UNKNOWN
+
+        target_temp_min = self.sensor.target_temp - self.sensor.temp_hysteresis
+        target_temp_max = self.sensor.target_temp + self.sensor.temp_hysteresis
+
+        if target_temp_min < self.sensor.temp < target_temp_max:
+            return RelayState.OFF
+        return RelayState.ON
+
+    @property
+    def target_state(self) -> RelayState.choices:
+        match self.type:
+            case RelayType.PUMP:
+                return self.pump_target_state
+            case RelayType.SERVO:
+                return self.servo_target_state
+            case _:
+                return RelayState.UNKNOWN

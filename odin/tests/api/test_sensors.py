@@ -1,11 +1,14 @@
+from datetime import timedelta
+from decimal import Decimal
+
 import pytest
 
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
-from odin.apps.sensors.models import Sensor, SensorType
-from odin.tests.factories import SensorFactory
+from odin.apps.sensors.models import Sensor, SensorLog, SensorType
+from odin.tests.factories import SensorFactory, SensorLogFactory
 
 
 @pytest.mark.django_db
@@ -49,7 +52,7 @@ class TestSensorsAPI:
         assert sensor.context["target_temp"] == "25.5"
 
     def test_sensors__list_empty(self):
-        """Test that list returns empty result when no sensors exist."""
+        """Test that list returns an empty result when no sensors exist."""
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 0
@@ -81,7 +84,7 @@ class TestSensorsAPI:
 
     def test_sensors__update_with_existing_context(self):
         """Test that update merges with existing context."""
-        sensor = SensorFactory(context={"existing_key": "existing_value", "target_temp": "20.0"})
+        sensor: Sensor = SensorFactory(context={"existing_key": "existing_value", "target_temp": "20.0"})  # noqa
         url = reverse("api:v1:sensors:update", args=(sensor.sensor_id,))
 
         response = self.client.patch(url, data={"context": {"target_temp": "25.5"}}, format="json")
@@ -99,7 +102,7 @@ class TestSensorsAPI:
 
     def test_sensors__update_with_empty_context(self):
         """Test that update with empty context dict works."""
-        sensor = SensorFactory(context={"existing_key": "existing_value"})
+        sensor: Sensor = SensorFactory(context={"existing_key": "existing_value"})  # noqa
         url = reverse("api:v1:sensors:update", args=(sensor.sensor_id,))
 
         response = self.client.patch(url, data={"context": {}}, format="json")
@@ -122,3 +125,54 @@ class TestSensorsAPI:
         assert sensor_data["sensor_id"] == "test_sensor"
         assert sensor_data["name"] == "Test Sensor"
         assert sensor_data["type"] == SensorType.DS18B20
+
+
+@pytest.mark.django_db
+class TestSensorsModelProperties:
+    def test_sensors__target_temp_returns_none_when_not_set(self):
+        """Test that target_temp returns None when not in context."""
+        sensor: Sensor = SensorFactory(context={})  # noqa
+        assert sensor.target_temp is None
+
+    def test_sensors__target_temp_returns_value_from_context(self):
+        """Test that target_temp returns value from context."""
+        sensor: Sensor = SensorFactory(context={"target_temp": "25.5"})  # noqa
+        assert sensor.target_temp == Decimal("25.5")
+
+    def test_sensors__temp_hysteresis_returns_default_when_not_set(self):
+        """Test that temp_hysteresis returns default when not in context."""
+        sensor: Sensor = SensorFactory(context={})  # noqa
+        assert sensor.temp_hysteresis == Decimal("0.5")
+
+    def test_sensors__temp_hysteresis_returns_value_from_context(self):
+        """Test that temp_hysteresis returns value from context."""
+        sensor: Sensor = SensorFactory(context={"hysteresis": "1.0"})  # noqa
+        assert sensor.temp_hysteresis == Decimal("1.0")
+
+    def test_sensors__temp_returns_none_when_no_logs(self):
+        """Test that temp returns None when no logs exist."""
+        sensor: Sensor = SensorFactory()  # noqa
+        assert sensor.temp is None
+
+    def test_sensors__temp_returns_latest_log_temp(self):
+        """Test that temp returns temperature from the latest log."""
+        sensor: Sensor = SensorFactory()  # noqa
+        older_log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("22.5"))  # noqa
+        newer_log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.5"))  # noqa
+        newer_log.created_at = older_log.created_at + timedelta(hours=1)
+        newer_log.save()
+        assert sensor.temp == Decimal("23.5")
+
+    def test_sensors__humidity_returns_none_when_no_logs(self):
+        """Test that humidity returns None when no logs exist."""
+        sensor: Sensor = SensorFactory()  # noqa
+        assert sensor.humidity is None
+
+    def test_sensors__humidity_returns_latest_log_humidity(self):
+        """Test that humidity returns humidity from latest log."""
+        sensor: Sensor = SensorFactory()  # noqa
+        older_log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, humidity=Decimal("65.0"))  # noqa
+        newer_log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, humidity=Decimal("70.0"))  # noqa
+        newer_log.created_at = older_log.created_at + timedelta(hours=1)
+        newer_log.save()
+        assert sensor.humidity == Decimal("70.0")

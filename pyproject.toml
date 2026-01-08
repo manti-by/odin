@@ -1,6 +1,6 @@
 [project]
 name = "odin"
-version = "v1.5.4"
+version = "v1.5.5"
 description = "Django based application that provides a local dashboard for the Coruscant project."
 readme = "README.md"
 requires-python = ">=3.13.6,<3.14.0"

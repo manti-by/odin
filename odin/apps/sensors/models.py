@@ -3,6 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+from django.conf import settings
 from django.db import models
 from django.db.models import query
 from django.utils.functional import cached_property
@@ -93,6 +94,18 @@ class Sensor(models.Model):
         if self.latest_log:
             return self.latest_log.temp
         return None
+
+    @property
+    def target_temp(self) -> Decimal | None:
+        if not (value := self.context.get("target_temp")):
+            return None
+        return Decimal(str(value))
+
+    @property
+    def temp_hysteresis(self) -> Decimal | None:
+        if not (value := self.context.get("hysteresis")):
+            return settings.DEFAULT_TEMP_HYSTERESIS
+        return Decimal(str(value))
 
     @property
     def humidity(self) -> Decimal | None:

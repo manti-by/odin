@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 import secrets
+from decimal import Decimal
 from pathlib import Path
 
 
@@ -223,3 +224,8 @@ REST_FRAMEWORK = {
 # Music library settings
 
 MUSIC_PATH = os.getenv("MUSIC_PATH", "/mnt/data/Music/Library")
+
+
+# Sensors and relays
+
+DEFAULT_TEMP_HYSTERESIS = Decimal(0.5)
