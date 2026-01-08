@@ -1,12 +1,15 @@
 from rest_framework import serializers
 
 from odin.api.utils.serializers import BaseSerializer
+from odin.apps.relays.models import RelayState
 
 
 class RelaySerializer(BaseSerializer):
     relay_id = serializers.CharField()
     name = serializers.CharField()
     type = serializers.CharField()
+    state = serializers.CharField()
+    target_state = serializers.ChoiceField(choices=RelayState.choices)
     context = serializers.JSONField()
     created_at = serializers.DateTimeField(read_only=True)
 

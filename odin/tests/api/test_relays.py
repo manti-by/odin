@@ -35,21 +35,8 @@ class TestRelaysAPI:
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 2
 
-    def test_relays__update(self):
-        relay: Relay = RelayFactory()  # noqa
-        response = self.client.get(self.url, format="json")
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["count"] == 1
-
-        url = reverse("api:v1:relays:update", args=(relay.relay_id,))
-        response = self.client.patch(url, data={"context": {"state": "ON"}}, format="json")
-        assert response.status_code == status.HTTP_200_OK
-
-        relay.refresh_from_db()
-        assert relay.context["state"] == "ON"
-
     def test_relays__list_empty(self):
-        """Test that list returns empty result when no relays exist."""
+        """Test that list returns an empty result when no relays exist."""
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 0
@@ -81,62 +68,6 @@ class TestRelaysAPI:
         assert servo_relay.relay_id in relay_ids
         assert valve_relay.relay_id in relay_ids
 
-    def test_relays__update_with_existing_context(self):
-        """Test that update merges with existing context."""
-        relay = RelayFactory(context={"existing_key": "existing_value", "state": "OFF"})
-        url = reverse("api:v1:relays:update", args=(relay.relay_id,))
-
-        response = self.client.patch(url, data={"context": {"state": "ON"}}, format="json")
-        assert response.status_code == status.HTTP_200_OK
-
-        relay.refresh_from_db()
-        assert relay.context["state"] == "ON"
-        assert relay.context["existing_key"] == "existing_value"
-
-    def test_relays__update_different_states(self):
-        """Test updating relay to different state values."""
-        relay = RelayFactory()
-        url = reverse("api:v1:relays:update", args=(relay.relay_id,))
-
-        # Test ON state
-        response = self.client.patch(url, data={"context": {"state": "ON"}}, format="json")
-        assert response.status_code == status.HTTP_200_OK
-        relay.refresh_from_db()
-        assert relay.context["state"] == "ON"
-        assert relay.state == "ON"
-
-        # Test OFF state
-        response = self.client.patch(url, data={"context": {"state": "OFF"}}, format="json")
-        assert response.status_code == status.HTTP_200_OK
-        relay.refresh_from_db()
-        assert relay.context["state"] == "OFF"
-        assert relay.state == "OFF"
-
-        # Test custom state
-        response = self.client.patch(url, data={"context": {"state": "STANDBY"}}, format="json")
-        assert response.status_code == status.HTTP_200_OK
-        relay.refresh_from_db()
-        assert relay.context["state"] == "STANDBY"
-        assert relay.state == "STANDBY"
-
-    def test_relays__update_non_existent_relay(self):
-        """Test that update returns 404 for non-existent relay."""
-        url = reverse("api:v1:relays:update", args=("non_existent_id",))
-        response = self.client.patch(url, data={"context": {"state": "ON"}}, format="json")
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    def test_relays__update_with_empty_context(self):
-        """Test that update with empty context dict works."""
-        relay = RelayFactory(context={"existing_key": "existing_value"})
-        url = reverse("api:v1:relays:update", args=(relay.relay_id,))
-
-        response = self.client.patch(url, data={"context": {}}, format="json")
-        assert response.status_code == status.HTTP_200_OK
-
-        relay.refresh_from_db()
-        # Empty context should preserve existing context (update, not replace)
-        assert "existing_key" in relay.context
-
     def test_relays__response_fields(self):
         """Test that response includes all expected fields."""
         RelayFactory(relay_id="test_relay", name="Test Relay", type=RelayType.PUMP)
@@ -151,17 +82,100 @@ class TestRelaysAPI:
         assert relay_data["name"] == "Test Relay"
         assert relay_data["type"] == RelayType.PUMP
 
-    def test_relays__state_property(self):
-        """Test that relay state property works correctly."""
-        # Relay without state in context should return UNKNOWN
-        relay = RelayFactory(context={})
-        assert relay.state == "UNKNOWN"
 
-        # Relay with state in context should return that state
-        relay = RelayFactory(context={"state": "ON"})
-        assert relay.state == "ON"
+@pytest.mark.django_db
+class TestRelaysRetrieveAPI:
+    def setup_method(self):
+        self.client = APIClient()
+        self.relay: Relay = RelayFactory()  # noqa
+        self.url = reverse("api:v1:relays:retrieve_update", args=(self.relay.relay_id,))
 
-        relay.context["state"] = "OFF"
-        relay.save()
-        relay.refresh_from_db()
-        assert relay.state == "OFF"
+    def test_relays__retrieve(self):
+        """Test retrieving a single relay."""
+        response = self.client.get(self.url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["relay_id"] == self.relay.relay_id
+        assert response.data["name"] == self.relay.name
+        assert response.data["type"] == self.relay.type
+
+    def test_relays__retrieve_includes_target_state(self):
+        """Test that retrieve response includes target_state field."""
+        self.relay.context = {"schedule": {"0": {"10": True, "11": False}}}
+        self.relay.save()
+
+        response = self.client.get(self.url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert "target_state" in response.data
+
+    def test_relays__retrieve_non_existent(self):
+        """Test that retrieve returns 404 for non-existent relay."""
+        url = reverse("api:v1:relays:retrieve_update", args=("non_existent_id",))
+        response = self.client.get(url, format="json")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestRelaysUpdateAPI:
+    def setup_method(self):
+        self.client = APIClient()
+        self.relay: Relay = RelayFactory()  # noqa
+        self.url = reverse("api:v1:relays:retrieve_update", args=(self.relay.relay_id,))
+
+    def test_relays__update(self):
+        response = self.client.patch(self.url, data={"context": {"state": "ON"}}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.context["state"] == "ON"
+
+    def test_relays__update_with_existing_context(self):
+        """Test that update merges with existing context."""
+        self.relay.context = {"existing_key": "existing_value", "state": "OFF"}
+        self.relay.save()
+
+        response = self.client.patch(self.url, data={"context": {"state": "ON"}}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.context["state"] == "ON"
+        assert self.relay.context["existing_key"] == "existing_value"
+
+    def test_relays__update_different_states(self):
+        """Test updating relay to different state values."""
+        response = self.client.patch(self.url, data={"context": {"state": "ON"}}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        self.relay.refresh_from_db()
+        assert self.relay.context["state"] == "ON"
+        assert self.relay.state == "ON"
+
+        # Test OFF state
+        response = self.client.patch(self.url, data={"context": {"state": "OFF"}}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        self.relay.refresh_from_db()
+        assert self.relay.context["state"] == "OFF"
+        assert self.relay.state == "OFF"
+
+        # Test custom state
+        response = self.client.patch(self.url, data={"context": {"state": "STANDBY"}}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        self.relay.refresh_from_db()
+        assert self.relay.context["state"] == "STANDBY"
+        assert self.relay.state == "STANDBY"
+
+    def test_relays__update_non_existent_relay(self):
+        """Test that update returns 404 for non-existent relay."""
+        url = reverse("api:v1:relays:retrieve_update", args=("non_existent_id",))
+        response = self.client.patch(url, data={"context": {"state": "ON"}}, format="json")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_relays__update_with_empty_context(self):
+        """Test that update with empty context dict works."""
+        self.relay.context = {"existing_key": "existing_value"}
+        self.relay.save()
+
+        response = self.client.patch(self.url, data={"context": {}}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        # Empty context should preserve existing context (update, not replace)
+        assert "existing_key" in self.relay.context

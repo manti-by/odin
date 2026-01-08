@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.db import models
 from django.db.models import query
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
@@ -9,6 +10,12 @@ class RelayType(models.TextChoices):
     PUMP = "PUMP", _("Pump")
     SERVO = "SERVO", _("Servo")
     VALVE = "VALVE", _("Valve")
+
+
+class RelayState(models.TextChoices):
+    ON = "ON", _("ON")
+    OFF = "OFF", _("OFF")
+    UNKNOWN = "UNKNOWN", _("UNKNOWN")
 
 
 class RelayQuerySet(query.QuerySet):
@@ -45,4 +52,14 @@ class Relay(models.Model):
 
     @property
     def state(self) -> str:
-        return self.context.get("state", "UNKNOWN")
+        return self.context.get("state", RelayState.UNKNOWN)
+
+    @property
+    def target_state(self) -> RelayState.choices:
+        now = timezone.localtime()
+        day, hour = now.strftime("%w"), now.strftime("%H")
+
+        state = self.context.get("schedule", {}).get(day, {}).get(hour)
+        if state is not None:
+            return RelayState.ON if state else RelayState.OFF
+        return RelayState.UNKNOWN
