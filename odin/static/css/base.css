@@ -12,7 +12,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: "Roboto", sans-serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.2;
@@ -105,10 +105,7 @@ button {
   color: #ff5253;
   border: 1px solid #ff5253;
   background-color: #ffffff;
-  padding: .375rem .75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: .25rem;
+  padding: .5rem .75rem;
   transition: color .15s ease-in-out,
     background-color .15s ease-in-out,
     border-color .15s ease-in-out,
@@ -118,7 +115,7 @@ button {
 
 button.primary {
   color: #ffffff;
-  background-color: #ff5253;
+  background-color: #321e1d;
   border-color: #ff5253;
 }
 
@@ -128,9 +125,7 @@ button.secondary {
 }
 
 button.primary:hover {
-  color: #ff5253;
-  background-color: #ffffff;
-  border-color: #ff5253;
+  background-color: #ff5253;
 }
 
 button.secondary:hover {
@@ -187,26 +182,21 @@ button.outline.primary:not(:disabled):active,
 }
 
 input, select, textarea {
-  display: block;
+  display: inline-block;
   width: 100%;
   height: calc(2.25rem + 2px);
   padding: .375rem .75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #495057;
-  background-color: #fff;
+  color: #bFbFbF;
+  background-color: #1a1a18;
   background-clip: padding-box;
-  border: 1px solid #ced4da;
-  border-radius: .25rem;
+  border: 1px solid #3d3d3b;
   transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
 
 input:focus, textarea:focus, select:focus {
-    color: #495057;
-    background-color: #fff;
-    border-color: #80bdff;
+    background-color: #242b23;
+    border-color: #82c38b;
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
 }
 
 textarea {
@@ -218,7 +208,7 @@ form .group {
 }
 
 label {
-    display: inline-block;
+    display: inline;
     margin-bottom: 0.5rem;
 }
 

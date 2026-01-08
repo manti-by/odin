@@ -1,6 +1,25 @@
+let temperatureChartInstance = null;
+
 // Initialize temperature chart for DS18B20 sensors
 function initTemperatureChart(chartData) {
-    const ctx = document.getElementById('temperatureChart').getContext('2d');
+    const canvas = document.getElementById('temperatureChart');
+    if (!canvas) {
+        return;
+    }
+
+    if (temperatureChartInstance && typeof temperatureChartInstance.destroy === 'function') {
+        temperatureChartInstance.destroy();
+        temperatureChartInstance = null;
+    }
+
+    if (Chart && typeof Chart.getChart === 'function') {
+        const existing = Chart.getChart(canvas);
+        if (existing) {
+            existing.destroy();
+        }
+    }
+
+    const ctx = canvas.getContext('2d');
     
     // Transform timestamps to Date objects
     const timestamps = chartData.timestamps.map(timestamp => moment(timestamp).toDate());
@@ -29,7 +48,7 @@ function initTemperatureChart(chartData) {
     });
     
     // Create chart
-    const chart = new Chart(ctx, {
+    temperatureChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: timestamps,

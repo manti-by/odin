@@ -12,7 +12,19 @@
 {% block content %}
   {% include "header.html" %}
   <div class="container ds18b20">
-    <h2>{% translate "Temperatures" %}</h2>
+    <div class="row">
+      <form id="dateRangeForm" class="row">
+        <div class="group row">
+          <input type="datetime-local" id="dateFrom" name="start">
+        </div>
+        <div class="group row">
+          <input type="datetime-local" id="dateTo" name="end">
+        </div>
+        <div class="group">
+          <button type="submit" class="primary">{% translate "Apply" %}</button>
+        </div>
+      </form>
+    </div>
     <canvas id="temperatureChart"></canvas>
   </div>
 {% endblock %}
@@ -23,14 +35,55 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>
   <script src="{% static 'js/chart.js' %}"></script>
   <script>
-    // Fetch chart data from API and initialize chart
-    fetch("{% url 'api:v1:sensors:ds18b20' %}")
-      .then(response => response.json())
-      .then(data => {
-        initTemperatureChart(data);
-      })
-      .catch(error => {
-        console.error('Error loading chart data:', error);
+    const ds18b20Url = "{% url 'api:v1:sensors:ds18b20' %}";
+
+    function toLocalDatetimeValue(date) {
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return local.toISOString().slice(0, 16);
+    }
+
+    function fetchAndRenderChart(params = {}) {
+      const url = new URL(ds18b20Url, window.location.origin);
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) {
+          url.searchParams.set(key, value);
+        }
       });
+
+      fetch(url.toString())
+        .then(response => response.json())
+        .then(data => {
+          initTemperatureChart(data);
+        })
+        .catch(error => {
+          console.error('Error loading chart data:', error);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('dateRangeForm');
+      const fromInput = document.getElementById('dateFrom');
+      const toInput = document.getElementById('dateTo');
+
+      const now = new Date();
+      const past = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+      fromInput.value = toLocalDatetimeValue(past);
+      toInput.value = toLocalDatetimeValue(now);
+
+      fetchAndRenderChart({
+        start: fromInput.value,
+        end: toInput.value,
+      });
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        fetchAndRenderChart({
+          start: fromInput.value,
+          end: toInput.value,
+        });
+      });
+    });
   </script>
 {% endblock %}
