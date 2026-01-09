@@ -76,7 +76,7 @@ class TestRelaysAPI:
         assert response.status_code == status.HTTP_200_OK
 
         relay_data = response.data["results"][0]
-        expected_fields = {"relay_id", "name", "type", "context", "created_at"}
+        expected_fields = {"relay_id", "name", "type", "context", "created_at", "force_state"}
         assert expected_fields.issubset(set(relay_data.keys()))
         assert relay_data["relay_id"] == "test_relay"
         assert relay_data["name"] == "Test Relay"
@@ -179,3 +179,66 @@ class TestRelaysUpdateAPI:
         self.relay.refresh_from_db()
         # Empty context should preserve existing context (update, not replace)
         assert "existing_key" in self.relay.context
+
+    def test_relays__update_force_state_to_on(self):
+        """Test that update can set force_state to ON."""
+        response = self.client.patch(self.url, data={"force_state": "ON"}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.force_state == "ON"
+
+    def test_relays__update_force_state_to_off(self):
+        """Test that update can set force_state to OFF."""
+        response = self.client.patch(self.url, data={"force_state": "OFF"}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.force_state == "OFF"
+
+    def test_relays__update_force_state_to_null(self):
+        """Test that update can clear force_state by setting to null."""
+        self.relay.force_state = "ON"
+        self.relay.save()
+
+        response = self.client.patch(self.url, data={"force_state": None}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.force_state is None
+
+
+@pytest.mark.django_db
+class TestRelaysForceStateAPI:
+    def setup_method(self):
+        self.client = APIClient()
+        self.relay: Relay = RelayFactory()  # noqa
+        self.url = reverse("api:v1:relays:list")
+
+    def test_relays__list_includes_force_state_field(self):
+        """Test that list response includes force_state field."""
+        self.relay.force_state = "ON"
+        self.relay.save()
+
+        response = self.client.get(self.url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert "force_state" in response.data["results"][0]
+        assert response.data["results"][0]["force_state"] == "ON"
+
+    def test_relays__retrieve_includes_force_state_field(self):
+        """Test that retrieve response includes force_state field."""
+        self.relay.force_state = "OFF"
+        self.relay.save()
+
+        retrieve_url = reverse("api:v1:relays:retrieve_update", args=(self.relay.relay_id,))
+        response = self.client.get(retrieve_url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert "force_state" in response.data
+        assert response.data["force_state"] == "OFF"
+
+    def test_relays__retrieve_force_state_is_null_when_not_set(self):
+        """Test that force_state is null in response when not set."""
+        retrieve_url = reverse("api:v1:relays:retrieve_update", args=(self.relay.relay_id,))
+        response = self.client.get(retrieve_url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["force_state"] is None

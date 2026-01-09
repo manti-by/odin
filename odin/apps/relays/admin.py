@@ -10,7 +10,7 @@ from .models import Relay
 
 @admin.register(Relay)
 class RelayAdmin(admin.ModelAdmin):
-    fields = ("relay_id", "name", "type", "is_active", "state", "schedule", "updated_at", "created_at")
+    fields = ("relay_id", "name", "type", "is_active", "state", "force_state", "schedule", "updated_at", "created_at")
     list_display = ("relay_id", "name", "type", "is_active", "state", "updated_at", "created_at")
     list_filter = ("type",)
     readonly_fields = ("state", "schedule", "updated_at", "created_at")

@@ -26,5 +26,9 @@ class RelayRetrieveUpdateView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin
         return self.serializer_class
 
     def perform_update(self, serializer: RelayUpdateSerializer) -> None:
-        serializer.instance.context.update(**serializer.validated_data["context"])
-        serializer.instance.save(update_fields=["context"])
+        if "context" in serializer.validated_data:
+            serializer.instance.context.update(**serializer.validated_data["context"])
+            serializer.instance.save(update_fields=["context"])
+        if "force_state" in serializer.validated_data:
+            serializer.instance.force_state = serializer.validated_data["force_state"]
+            serializer.instance.save(update_fields=["force_state"])
