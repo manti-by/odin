@@ -16,7 +16,21 @@ class Command(LoggedCommand):
     url = "https://pogoda.by/api/v2/numeric-weather/2/26852"
 
     @staticmethod
-    def serialize(item: dict) -> dict:
+    def get_ww(item: dict) -> str | None:
+        match item.get("ww"):
+            case 2:
+                return "partly cloudy"
+            case 3:
+                return "clouds"
+            case 20:
+                return "possible precipitation"
+            case 21:
+                return "precipitation"
+            case 22:
+                return "heavy precipitation"
+        return None
+
+    def serialize(self, item: dict) -> dict:
         return {
             "temp": {
                 "avg": item.get("TMP"),
@@ -37,6 +51,8 @@ class Command(LoggedCommand):
                 "thunderstorm": bool(item.get("GROZA")),
                 "black_ice": bool(item.get("GOLOLED")),
                 "fog": bool(item.get("TUMAN")),
+                "visibility": item.get("vis"),
+                "attr": self.get_ww(item=item),
             },
         }
 
