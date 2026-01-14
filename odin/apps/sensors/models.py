@@ -57,6 +57,13 @@ class Sensor(models.Model):
     is_visible = models.BooleanField(default=True, verbose_name=_("Is visible"))
     context = models.JSONField(default=dict, verbose_name=_("Context"))
 
+    temp_offset = models.DecimalField(
+        max_digits=7, decimal_places=2, default=Decimal("0.0"), verbose_name=_("Temp offset")
+    )
+    humidity_offset = models.DecimalField(
+        max_digits=7, decimal_places=2, default=Decimal("0.0"), verbose_name=_("Humidity offset")
+    )
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
 
@@ -92,7 +99,7 @@ class Sensor(models.Model):
     @property
     def temp(self) -> Decimal | None:
         if self.latest_log:
-            return self.latest_log.temp
+            return self.latest_log.temp + self.temp_offset
         return None
 
     @property
@@ -110,7 +117,7 @@ class Sensor(models.Model):
     @property
     def humidity(self) -> Decimal | None:
         if self.latest_log:
-            return self.latest_log.humidity
+            return self.latest_log.humidity + self.humidity_offset
         return None
 
 

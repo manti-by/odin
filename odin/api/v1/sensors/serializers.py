@@ -9,6 +9,12 @@ class SensorSerializer(BaseSerializer):
     name = serializers.CharField()
     type = serializers.CharField()
     context = serializers.JSONField()
+
+    temp = serializers.DecimalField(max_digits=7, decimal_places=2)
+    humidity = serializers.DecimalField(max_digits=7, decimal_places=2)
+    temp_offset = serializers.DecimalField(max_digits=7, decimal_places=2)
+    humidity_offset = serializers.DecimalField(max_digits=7, decimal_places=2)
+
     created_at = serializers.DateTimeField(read_only=True)
 
 
@@ -17,7 +23,7 @@ class SensorUpdateContextSerializer(BaseSerializer):
 
 
 class SensorUpdateSerializer(BaseSerializer):
-    context = SensorUpdateContextSerializer()
+    context = SensorUpdateContextSerializer(required=False)
 
     @property
     def data(self) -> dict:

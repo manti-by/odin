@@ -120,11 +120,32 @@ class TestSensorsAPI:
         assert response.status_code == status.HTTP_200_OK
 
         sensor_data = response.data["results"][0]
-        expected_fields = {"sensor_id", "name", "type", "context", "created_at"}
+        expected_fields = {
+            "sensor_id",
+            "name",
+            "type",
+            "context",
+            "temp",
+            "humidity",
+            "temp_offset",
+            "humidity_offset",
+            "created_at",
+        }
         assert expected_fields.issubset(set(sensor_data.keys()))
         assert sensor_data["sensor_id"] == "test_sensor"
         assert sensor_data["name"] == "Test Sensor"
         assert sensor_data["type"] == SensorType.DS18B20
+
+    def test_sensors__response_includes_offset_fields(self):
+        """Test that response includes temp_offset and humidity_offset fields."""
+        SensorFactory(temp_offset=Decimal("2.5"), humidity_offset=Decimal("5.0"))
+
+        response = self.client.get(self.url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        sensor_data = response.data["results"][0]
+        assert sensor_data["temp_offset"] == "2.50"
+        assert sensor_data["humidity_offset"] == "5.00"
 
 
 @pytest.mark.django_db
@@ -176,3 +197,34 @@ class TestSensorsModelProperties:
         newer_log.created_at = older_log.created_at + timedelta(hours=1)
         newer_log.save()
         assert sensor.humidity == Decimal("70.0")
+
+    def test_sensors__temp_includes_temp_offset(self):
+        """Test that temp property includes temp_offset in calculation."""
+        sensor: Sensor = SensorFactory(temp_offset=Decimal("2.5"))  # noqa
+        log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("20.0"))  # noqa
+        assert sensor.temp == Decimal("22.5")
+
+    def test_sensors__temp_with_negative_offset(self):
+        """Test that temp property handles negative offset correctly."""
+        sensor: Sensor = SensorFactory(temp_offset=Decimal("-1.5"))  # noqa
+        log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("25.0"))  # noqa
+        assert sensor.temp == Decimal("23.5")
+
+    def test_sensors__humidity_includes_humidity_offset(self):
+        """Test that humidity property includes humidity_offset in calculation."""
+        sensor: Sensor = SensorFactory(humidity_offset=Decimal("5.0"))  # noqa
+        log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, humidity=Decimal("60.0"))  # noqa
+        assert sensor.humidity == Decimal("65.0")
+
+    def test_sensors__humidity_with_negative_offset(self):
+        """Test that humidity property handles negative offset correctly."""
+        sensor: Sensor = SensorFactory(humidity_offset=Decimal("-10.0"))  # noqa
+        log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, humidity=Decimal("80.0"))  # noqa
+        assert sensor.humidity == Decimal("70.0")
+
+    def test_sensors__zero_offset_does_not_change_value(self):
+        """Test that zero offset returns an original value."""
+        sensor: Sensor = SensorFactory(temp_offset=Decimal("0.0"), humidity_offset=Decimal("0.0"))  # noqa
+        log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("22.5"), humidity=Decimal("55.0"))  # noqa
+        assert sensor.temp == Decimal("22.5")
+        assert sensor.humidity == Decimal("55.0")
