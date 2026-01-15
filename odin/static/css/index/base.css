@@ -48,3 +48,9 @@
 .home img.icon {
   width: 100px;
 }
+
+.home .more {
+  display: block;
+  text-align: right;
+  text-transform: lowercase;
+}

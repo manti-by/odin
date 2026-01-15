@@ -49,6 +49,7 @@
               </li>
             {% endfor %}
           </ul>
+          <a href="{% url 'sensors_home' %}" class="more info">{% translate "Graphs" %}</a>
         </div>
       </div>
       <div class="tile sensors ds18b20">
@@ -77,6 +78,7 @@
               </li>
             {% endfor %}
           </ul>
+          <a href="{% url 'sensors_boiler' %}" class="more info">{% translate "Graphs" %}</a>
         </div>
       </div>
       <div class="tile weather">

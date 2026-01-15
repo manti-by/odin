@@ -1,7 +1,6 @@
 let temperatureChartInstance = null;
 
-// Initialize temperature chart for DS18B20 sensors
-function initTemperatureChart(chartData) {
+function initTemperatureChart(chartData, options = null) {
     const canvas = document.getElementById('temperatureChart');
     if (!canvas) {
         return;
@@ -20,11 +19,9 @@ function initTemperatureChart(chartData) {
     }
 
     const ctx = canvas.getContext('2d');
-    
-    // Transform timestamps to Date objects
+
     const timestamps = chartData.timestamps.map(timestamp => moment(timestamp).toDate());
-    
-    // Prepare datasets for each sensor
+
     const datasets = chartData.sensors.map((sensor, index) => {
         const colors = [
             { border: 'rgba(255, 99, 132, 1)', fill: 'rgba(255, 99, 132, 0.2)' },
@@ -35,9 +32,9 @@ function initTemperatureChart(chartData) {
             { border: 'rgba(199, 199, 199, 1)', fill: 'rgba(199, 199, 199, 0.2)' },
             { border: 'rgba(83, 102, 255, 1)', fill: 'rgba(83, 102, 255, 0.2)' },
         ];
-        
+
         const color = colors[index % colors.length];
-        
+
         return {
             label: sensor.name || sensor.sensor_id,
             data: sensor.data,
@@ -46,8 +43,14 @@ function initTemperatureChart(chartData) {
             fill: true
         };
     });
-    
-    // Create chart
+
+    const yMin = options?.y_min ?? 20;
+    const yMax = options?.y_max ?? 45;
+    const yTitle = options?.y_title ?? 'Температура (°C)';
+    const xTitle = options?.x_title ?? 'Время';
+    const timeUnit = options?.time_unit ?? 'minute';
+    const timeTooltipFormat = options?.time_tooltip_format ?? 'll HH:mm';
+
     temperatureChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
@@ -60,21 +63,21 @@ function initTemperatureChart(chartData) {
                 x: {
                     type: 'time',
                     time: {
-                        unit: 'minute',
-                        tooltipFormat: 'll HH:mm',
+                        unit: timeUnit,
+                        tooltipFormat: timeTooltipFormat,
                     },
                     title: {
                         display: true,
-                        text: 'Время'
+                        text: xTitle
                     }
                 },
                 y: {
                     title: {
                         display: true,
-                        text: 'Температура (°C)',
+                        text: yTitle
                     },
-                    min: 20,
-                    max: 45
+                    min: yMin,
+                    max: yMax
                 }
             }
         }

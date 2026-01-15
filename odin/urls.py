@@ -22,14 +22,15 @@ from django.contrib import admin
 from django.urls import include, path
 
 from odin.apps.core.views import index_view
-from odin.apps.sensors.views import chart_view
+from odin.apps.sensors.views import chart_boiler_view, chart_home_view
 
 
 urlpatterns = [
     path("api/", include("odin.api.urls", namespace="api")),
     path("admin/rq/", include("django_rq.urls")),
     path("admin/", admin.site.urls),
-    path("sensors/", chart_view, name="sensors"),
+    path("sensors/home/", chart_home_view, name="sensors_home"),
+    path("sensors/boiler/", chart_boiler_view, name="sensors_boiler"),
     path("", index_view, name="index"),
 ]
 

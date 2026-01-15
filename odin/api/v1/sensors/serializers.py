@@ -41,3 +41,12 @@ class SensorLogSerializer(BaseSerializer):
         if not data.get("created_at"):
             data["created_at"] = timezone.now()
         return data
+
+
+class ChartQueryParamsSerializer(BaseSerializer):
+    start = serializers.DateTimeField(required=False)
+    end = serializers.DateTimeField(required=False)
+
+
+class ChartOptionsQueryParamsSerializer(BaseSerializer):
+    type = serializers.ChoiceField(choices=["ds18b20", "esp8266"])

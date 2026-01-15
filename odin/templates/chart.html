@@ -2,7 +2,7 @@
 {% load static i18n %}
 
 {% block title %}
-  {% translate "Temperatures" %}
+  {% translate title %}
 {% endblock %}
 
 {% block styles %}
@@ -11,7 +11,8 @@
 
 {% block content %}
   {% include "header.html" %}
-  <div class="container ds18b20">
+  <div class="container {{ container_class }}">
+    <h2>{{ title }}</h2>
     <div class="row">
       <form id="dateRangeForm" class="row">
         <div class="group row">
@@ -35,29 +36,41 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>
   <script src="{% static 'js/chart.js' %}"></script>
   <script>
-    const ds18b20Url = "{% url 'api:v1:sensors:ds18b20' %}";
+    const apiUrl = "{% url api_url %}";
+    const sensorType = "{{ sensor_type }}";
 
     function toLocalDatetimeValue(date) {
       const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
       return local.toISOString().slice(0, 16);
     }
 
+    function fetchChartOptions() {
+      const url = new URL("{% url 'api:v1:sensors:chart-options' %}", window.location.origin);
+      url.searchParams.set("type", sensorType);
+      return fetch(url.toString())
+        .then(response => response.json())
+        .catch(error => {
+          console.error('Error loading chart options:', error);
+          return null;
+        });
+    }
+
     function fetchAndRenderChart(params = {}) {
-      const url = new URL(ds18b20Url, window.location.origin);
+      const url = new URL(apiUrl, window.location.origin);
       Object.entries(params).forEach(([key, value]) => {
         if (value) {
           url.searchParams.set(key, value);
         }
       });
 
-      fetch(url.toString())
-        .then(response => response.json())
-        .then(data => {
-          initTemperatureChart(data);
-        })
-        .catch(error => {
-          console.error('Error loading chart data:', error);
-        });
+      Promise.all([
+        fetch(url.toString()).then(response => response.json()),
+        fetchChartOptions()
+      ]).then(([data, options]) => {
+        initTemperatureChart(data, options);
+      }).catch(error => {
+        console.error('Error loading chart data:', error);
+      });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -66,7 +79,7 @@
       const toInput = document.getElementById('dateTo');
 
       const now = new Date();
-      const past = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+      const past = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
       fromInput.value = toLocalDatetimeValue(past);
       toInput.value = toLocalDatetimeValue(now);

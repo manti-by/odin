@@ -10,6 +10,10 @@ class TestViews:
         response = client.get(reverse("index"), follow=True)
         assert response.status_code == status.HTTP_200_OK
 
-    def test_chart(self, client):
-        response = client.get(reverse("sensors"), follow=True)
+    def test_home_chart(self, client):
+        response = client.get(reverse("sensors_home"), follow=True)
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_boiler_chart(self, client):
+        response = client.get(reverse("sensors_boiler"), follow=True)
         assert response.status_code == status.HTTP_200_OK
