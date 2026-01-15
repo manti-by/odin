@@ -33,6 +33,21 @@ uv run manage.py makemessages -l ru         # Create translation files
 uv run manage.py compilemessages -l ru      # Compile translation files
 ```
 
+### Database Operations
+
+```bash
+# Development
+make dump     # Backup database to odin.sql
+make restore  # Restore database from odin.sql
+make migrate  # Run database migrations
+make migrations  # Create new migrations
+make locale   # Compile translation files
+
+# Django checks
+uv run manage.py makemigrations --dry-run --check --verbosity=3 --settings=odin.settings.sqlite
+uv run manage.py check --fail-level WARNING --settings=odin.settings.sqlite
+```
+
 ### Testing
 
 ```bash

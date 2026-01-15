@@ -1,6 +1,6 @@
 [project]
 name = "odin"
-version = "v1.5.6"
+version = "v1.6.0"
 description = "Django application that provides several IoT dashboards and services for Coruscant and Centax projects."
 readme = "README.md"
 requires-python = ">=3.13.6,<3.14.0"
@@ -27,7 +27,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "uv-bump>=0.4.0",
+    "uv-bump>=0.4.1",
 ]
 
 [tool.setuptools]
