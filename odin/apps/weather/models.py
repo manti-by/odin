@@ -45,7 +45,7 @@ class Weather(models.Model):
 
     @property
     def has_attrs(self) -> bool:
-        return any(self.attrs.values())
+        return any([v for x, v in self.attrs.items() if x != "attr"])
 
     @staticmethod
     def temp_display_localized(temp: Decimal | None) -> str:

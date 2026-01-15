@@ -55,6 +55,7 @@ class Sensor(models.Model):
     type = models.CharField(max_length=32, choices=SensorType.choices, verbose_name=_("Type"))
     is_active = models.BooleanField(default=True, verbose_name=_("Is active"))
     is_visible = models.BooleanField(default=True, verbose_name=_("Is visible"))
+    order = models.IntegerField(default=0, verbose_name=_("Order"))
     context = models.JSONField(default=dict, verbose_name=_("Context"))
 
     temp_offset = models.DecimalField(
