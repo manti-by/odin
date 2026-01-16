@@ -38,7 +38,10 @@
                 data-sensor-name="{{ sensor.name }}"
                 data-target-temp="{{ sensor.context.target_temp|default_if_none:'' }}"
               >
-                <div class="name">{{ sensor.name }}</div>
+                <div class="name">
+                  <span class="alive-indicator {% if sensor.is_alive %}alive{% else %}dead{% endif %}"></span>
+                  {{ sensor.name }}
+                </div>
                 <div class="temp">{{ sensor.temp|format_decimal }}<span>&deg;C</span></div>
                 <div class="humidity">{{ sensor.humidity|format_decimal }}<span>%</span></div>
                 <div class="edit">
@@ -58,6 +61,7 @@
           <ul class="row">
             {% for sensor in sensors.ds18b20 %}
               <li class="sensor">
+                <span class="alive-indicator {% if sensor.is_alive %}alive{% else %}dead{% endif %}"></span>
                 <div class="value">
                   <img src="/api/v1/core/chart/?value={{ sensor.temp|unlocalize }}&metric=temp">
                 </div>
@@ -165,6 +169,5 @@
         </div>
       </div>
     </div>
-  </div>
-  {% include "modal.html" %}
-{% endblock %}
+</div>
+{% include "modal.html" %} {% endblock %}

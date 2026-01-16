@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.db import models
 from django.db.models import query
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
@@ -80,6 +82,13 @@ class Sensor(models.Model):
     @cached_property
     def latest_log(self) -> SensorLog:
         return SensorLog.objects.filter(sensor_id=self.sensor_id).order_by("created_at").last()
+
+    @property
+    def is_alive(self) -> bool:
+        if not self.latest_log:
+            return False
+        threshold = timezone.now() - timedelta(minutes=10)
+        return self.latest_log.created_at >= threshold
 
     @cached_property
     def linked_sensor(self) -> Sensor | None:

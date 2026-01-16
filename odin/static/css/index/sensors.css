@@ -11,3 +11,21 @@
 .home .esp8266 .sensor .name {
   width: 60%;
 }
+
+.home .alive-indicator {
+  display: inline-block;
+  margin-bottom: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 3px;
+  vertical-align: middle;
+}
+
+.home .alive-indicator.alive {
+  background-color: #4caf50;
+}
+
+.home .alive-indicator.dead {
+  background-color: #f44336;
+}
