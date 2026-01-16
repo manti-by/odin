@@ -15,6 +15,7 @@
   <link href="{% static 'css/index/errors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/sensors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/weather.css' %}" rel="stylesheet">
+  <link href="{% static 'css/index/voltage.css' %}" rel="stylesheet">
   <link href="{% static 'css/responsive/index.css' %}" rel="stylesheet">
   <link href="{% static 'css/modal.css' %}" rel="stylesheet">
 {% endblock %}
@@ -28,7 +29,15 @@
   <div class="container home">
     <div class="grid">
       <div class="tile sensors esp8266">
-        <h2>{% translate "Sensors" %}</h2>
+        <h2>
+          <a href="{% url 'admin:sensors_sensor_changelist' %}">
+            <span class="alive-indicator {% if home_sensors_is_alive %}alive{% else %}dead{% endif %}"></span>
+          </a>
+          {% translate "Sensors" %}
+          <a href="{% url 'sensors_home' %}" class="graph">
+            <img src="{% static 'img/graph.svg' %}" alt="graph" width="16">
+          </a>
+        </h2>
         <div class="body">
           <ul>
             {% for sensor in sensors.esp8266 %}
@@ -38,10 +47,7 @@
                 data-sensor-name="{{ sensor.name }}"
                 data-target-temp="{{ sensor.context.target_temp|default_if_none:'' }}"
               >
-                <div class="name">
-                  <span class="alive-indicator {% if sensor.is_alive %}alive{% else %}dead{% endif %}"></span>
-                  {{ sensor.name }}
-                </div>
+                <div class="name">{{ sensor.name }}</div>
                 <div class="temp">{{ sensor.temp|format_decimal }}<span>&deg;C</span></div>
                 <div class="humidity">{{ sensor.humidity|format_decimal }}<span>%</span></div>
                 <div class="edit">
@@ -52,16 +58,22 @@
               </li>
             {% endfor %}
           </ul>
-          <a href="{% url 'sensors_home' %}" class="more info">{% translate "Graphs" %}</a>
         </div>
       </div>
       <div class="tile sensors ds18b20">
-        <h2>{% translate "Boiler Room" %}</h2>
+        <h2>
+          <a href="{% url 'admin:sensors_sensor_changelist' %}">
+            <span class="alive-indicator {% if boiler_sensors_is_alive %}alive{% else %}dead{% endif %}"></span>
+          </a>
+          {% translate "Boiler Room" %}
+          <a href="{% url 'sensors_boiler' %}" class="graph">
+            <img src="{% static 'img/graph.svg' %}" alt="graph" width="16">
+          </a>
+        </h2>
         <div class="body">
           <ul class="row">
             {% for sensor in sensors.ds18b20 %}
               <li class="sensor">
-                <span class="alive-indicator {% if sensor.is_alive %}alive{% else %}dead{% endif %}"></span>
                 <div class="value">
                   <img src="/api/v1/core/chart/?value={{ sensor.temp|unlocalize }}&metric=temp">
                 </div>
@@ -82,7 +94,6 @@
               </li>
             {% endfor %}
           </ul>
-          <a href="{% url 'sensors_boiler' %}" class="more info">{% translate "Graphs" %}</a>
         </div>
       </div>
       <div class="tile weather">
@@ -152,22 +163,29 @@
         </div>
       </div>
       <div class="tile errors">
-        <h2>{% translate "Errors" %}</h2>
+        <h2>{% translate "Other" %}</h2>
         <div class="body">
-          {% if error_logs %}
-            <ul>
-              {% for log in error_logs %}
-                <li class="log row">
-                  <div class="time">{{ log.asctime|date:"d.m H:i" }}</div>
-                  <div class="msg">{{ log.msg }}</div>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <div class="success">{% translate "No errors for the last 24 hours" %}</div>
-          {% endif %}
+          <div class="voltage">
+            <span class="label">{% translate "Voltage" %}:</span>
+            <span class="value">{{ voltage.voltage|floatformat:0 }} V</span>
+          </div>
+          <div class="errors">
+            {% if error_logs %}
+              <ul>
+                {% for log in error_logs %}
+                  <li class="log row">
+                    <div class="time">{{ log.asctime|date:"d.m H:i" }}</div>
+                    <div class="msg">{{ log.msg }}</div>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="success info">{% translate "No errors for the last 24 hours" %}</div>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
-</div>
-{% include "modal.html" %} {% endblock %}
+  </div>
+  {% include "modal.html" %} 
+{% endblock %}

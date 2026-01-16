@@ -1,0 +1,14 @@
+.home .voltage .body {
+  padding-top: 1rem;
+}
+.home .voltage .voltage-chart {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+.home .voltage .voltage-values {
+  display: flex;
+  justify-content: space-around;
+  font-size: 0.75rem;
+  color: #e0e0e0;
+}

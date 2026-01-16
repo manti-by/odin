@@ -13,6 +13,7 @@ class SensorAdmin(admin.ModelAdmin):
         "type",
         "is_active",
         "is_visible",
+        "is_alive",
         "updated_at",
         "created_at",
     )

@@ -26,6 +26,8 @@ def create_metric_gauge_chart(value: Decimal, metric: MetricChoices) -> str:
         min_value, max_value, min_green_value, max_green_value = 0, 100, 45, 75
     if metric == MetricChoices.PRESSURE:
         min_value, max_value, min_green_value, max_green_value = 670, 810, 740, 780
+    if metric == MetricChoices.VOLTAGE:
+        min_value, max_value, min_green_value, max_green_value = 200, 260, 220, 240
 
     value_color = GREEN_COLOR
     if value < min_green_value:

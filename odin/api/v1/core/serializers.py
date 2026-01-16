@@ -15,6 +15,7 @@ class MetricChoices(TextChoices):
     TEMP = "temp", _("Temp")
     HUMIDITY = "humidity", _("Humidity")
     PRESSURE = "pressure", _("Pressure")
+    VOLTAGE = "voltage", _("Voltage")
 
 
 class ChartTypeSerializer(serializers.Serializer):

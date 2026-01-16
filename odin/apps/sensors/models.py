@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from django.conf import settings
+from django.contrib import admin
 from django.db import models
 from django.db.models import query
 from django.utils import timezone
@@ -84,6 +85,10 @@ class Sensor(models.Model):
         return SensorLog.objects.filter(sensor_id=self.sensor_id).order_by("created_at").last()
 
     @property
+    @admin.display(
+        boolean=True,
+        description=_("Is Alive"),
+    )
     def is_alive(self) -> bool:
         if not self.latest_log:
             return False

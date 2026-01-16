@@ -15,12 +15,15 @@
 }
 
 .home .tile h2 {
-  font-family: "Roboto", sans-serif;
   font-weight: 500;
   margin-bottom: 0;
   padding: .75rem 1.5rem .75rem 1.5rem;
   text-transform: uppercase;
   background: #242b23;
+}
+
+.home .tile h2 a.graph {
+  float: right;
 }
 
 .home .tile .body {
@@ -49,8 +52,18 @@
   width: 100px;
 }
 
-.home .more {
-  display: block;
-  text-align: right;
-  text-transform: lowercase;
+.home .voltage {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.home .voltage .label {
+  font-size: 1.5rem;
+  margin-right: .5rem;
+}
+
+.home .voltage .value {
+  font-size: 1.5rem;
 }
