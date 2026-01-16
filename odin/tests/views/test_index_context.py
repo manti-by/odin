@@ -1,0 +1,74 @@
+from unittest.mock import patch
+
+import pytest
+
+from django.core.cache import cache
+from django.urls import reverse
+
+from odin.apps.core.services import (
+    build_index_context,
+    get_cached_index_context,
+    set_cached_index_context,
+    update_index_context_cache,
+)
+from odin.tests.factories import SensorFactory, VoltageLogFactory, WeatherFactory
+
+
+@pytest.mark.django_db
+class TestIndexContextServices:
+    def test_build_index_context_returns_dict(self):
+        SensorFactory(is_active=True)
+        VoltageLogFactory()
+        WeatherFactory()
+
+        context = build_index_context()
+
+        assert isinstance(context, dict)
+        assert "weather" in context
+        assert "sensors" in context
+        assert "voltage" in context
+        assert "error_logs" in context
+
+    def test_set_and_get_cached_index_context(self):
+        test_context = {"test_key": "test_value"}
+
+        set_cached_index_context(test_context)
+        result = get_cached_index_context()
+
+        assert result == test_context
+
+    def test_get_cached_index_context_returns_none_when_not_set(self):
+        set_cached_index_context(None)
+        result = get_cached_index_context()
+        assert result is None
+
+    def test_update_index_context_cache(self):
+        SensorFactory(is_active=True)
+        VoltageLogFactory()
+        WeatherFactory()
+
+        with patch.object(cache, "set") as mock_set:
+            update_index_context_cache()
+            mock_set.assert_called_once()
+
+
+@pytest.mark.django_db
+class TestIndexView:
+    def test_index_uses_cached_context(self, client):
+        SensorFactory(is_active=True)
+        VoltageLogFactory()
+        WeatherFactory()
+
+        with patch.object(cache, "get") as mock_get:
+            mock_get.return_value = {
+                "weather": None,
+                "sensors": [],
+                "home_sensors_is_alive": True,
+                "boiler_sensors_is_alive": True,
+                "error_logs": [],
+                "voltage": None,
+                "voltage_chart": "",
+                "voltage_values": [],
+            }
+            response = client.get(reverse("index"), follow=True)
+            assert response.status_code == 200

@@ -21,3 +21,10 @@ def schedule_update_weather():
 @scheduler.scheduled_job("interval", minutes=5, id="update_voltage")
 def schedule_update_voltage():
     call_command("update_voltage")
+
+
+@scheduler.scheduled_job("interval", minutes=1, id="update_index_context")
+def schedule_update_index_context():
+    from odin.apps.core.services import update_index_context_cache
+
+    update_index_context_cache()

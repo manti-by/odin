@@ -5,8 +5,10 @@ from factory.fuzzy import FuzzyDecimal
 
 from django.contrib.auth.models import User
 
+from odin.apps.electricity.models import VoltageLog
 from odin.apps.relays.models import Relay
 from odin.apps.sensors.models import Sensor, SensorLog, SensorType
+from odin.apps.weather.models import Weather
 
 
 DEFAULT_USER_PASSWORD = "pa55word"  # noqa
@@ -76,3 +78,25 @@ class SensorLogDataFactory(DictFactory):
     temp = FuzzyDecimal(low=-10, high=40, precision=2)
     humidity = FuzzyDecimal(low=0, high=100, precision=2)
     created_at = factory.Faker("date_time")
+
+
+class VoltageLogFactory(DjangoModelFactory):
+    voltage = FuzzyDecimal(low=200, high=260, precision=2)
+
+    class Meta:
+        model = VoltageLog
+
+
+class WeatherDataFactory(factory.DictFactory):
+    temp = str(FuzzyDecimal(low=-10, high=40, precision=2))
+    pressure = str(FuzzyDecimal(low=670, high=810, precision=2))
+    humidity = str(FuzzyDecimal(low=0, high=100, precision=2))
+
+
+class WeatherFactory(DjangoModelFactory):
+    external_id = factory.Faker("word")
+    data = WeatherDataFactory()
+    period = factory.Faker("date_time")
+
+    class Meta:
+        model = Weather

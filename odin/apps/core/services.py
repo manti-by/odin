@@ -1,9 +1,44 @@
-import hashlib
-import hmac
+from typing import Any
+
+from django.core.cache import cache
+
+from odin.apps.core.models import Log
+from odin.apps.electricity.models import VoltageLog
+from odin.apps.sensors.models import Sensor
+from odin.apps.weather.models import Weather
 
 
-def get_data_hash(data: dict, secret_key: str) -> str:
-    data_string = "\n".join([f"{k}={v}" for k, v in sorted(list(data.items()))]).encode()
-    secret = hashlib.sha512(secret_key.encode()).digest()
-    signature = hmac.new(key=secret, msg=data_string, digestmod=hashlib.sha512)
-    return signature.hexdigest()
+INDEX_CONTEXT_CACHE_KEY = "index_context"
+INDEX_CONTEXT_CACHE_TIMEOUT = 120
+
+
+def build_index_context() -> dict[str, Any]:
+    voltage = VoltageLog.objects.last()
+    home_sensors_is_alive = all([x.is_alive for x in Sensor.objects.active().ds18b20()])
+    boiler_sensors_is_alive = all([x.is_alive for x in Sensor.objects.active().esp8266()])
+    weather = Weather.objects.current()
+    sensors = Sensor.objects.active().visible().order_by("order")
+    error_logs = Log.objects.errors_last_day()
+
+    return {
+        "weather": weather,
+        "sensors": sensors,
+        "home_sensors_is_alive": home_sensors_is_alive,
+        "boiler_sensors_is_alive": boiler_sensors_is_alive,
+        "error_logs": error_logs,
+        "voltage": voltage,
+    }
+
+
+def get_cached_index_context() -> dict[str, Any] | None:
+    return cache.get(INDEX_CONTEXT_CACHE_KEY)
+
+
+def set_cached_index_context(context: dict[str, Any]) -> None:
+    cache.set(INDEX_CONTEXT_CACHE_KEY, context, INDEX_CONTEXT_CACHE_TIMEOUT)
+
+
+def update_index_context_cache() -> None:
+    context = build_index_context()
+    set_cached_index_context(context)
+    return context
