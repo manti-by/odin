@@ -50,7 +50,7 @@ class Relay(models.Model):
     force_state = models.CharField(
         choices=RelayState.active_choices(), null=True, blank=True, max_length=32, verbose_name=_("Force relay state")
     )
-    context = models.JSONField(default=dict, verbose_name=_("Context"))
+    context: models.JSONField[dict] = models.JSONField(default=dict, verbose_name=_("Context"))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))

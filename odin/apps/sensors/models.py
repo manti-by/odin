@@ -59,7 +59,7 @@ class Sensor(models.Model):
     is_active = models.BooleanField(default=True, verbose_name=_("Is active"))
     is_visible = models.BooleanField(default=True, verbose_name=_("Is visible"))
     order = models.IntegerField(default=0, verbose_name=_("Order"))
-    context = models.JSONField(default=dict, verbose_name=_("Context"))
+    context: models.JSONField[dict] = models.JSONField(default=dict, verbose_name=_("Context"))
 
     temp_offset = models.DecimalField(
         max_digits=7, decimal_places=2, default=Decimal("0.0"), verbose_name=_("Temp offset")

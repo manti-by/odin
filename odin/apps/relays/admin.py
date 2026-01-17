@@ -15,6 +15,7 @@ class RelayAdmin(admin.ModelAdmin):
     list_filter = ("type",)
     readonly_fields = ("state", "schedule", "updated_at", "created_at")
 
+    @admin.display(description=_("schedule"))
     def schedule(self, obj: Relay) -> str:
         if not (schedule := obj.context.get("schedule")):
             return "-"
@@ -22,12 +23,9 @@ class RelayAdmin(admin.ModelAdmin):
         html = render_to_string("admin/schedule.html", {"schedule": schedule})
         return format_html(html)
 
-    schedule.short_description = _("schedule")
-
+    @admin.display(description=_("state"))
     def state(self, obj: Relay) -> str:
         return obj.state
-
-    state.short_description = _("state")
 
     def save_model(self, request: HttpRequest, obj: Relay, form: ModelForm, change: bool):
         schedule = {str(d): {str(h).zfill(2): False for h in range(24)} for d in range(7)}

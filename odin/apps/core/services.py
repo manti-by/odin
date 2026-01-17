@@ -38,7 +38,7 @@ def set_cached_index_context(context: dict[str, Any]) -> None:
     cache.set(INDEX_CONTEXT_CACHE_KEY, context, INDEX_CONTEXT_CACHE_TIMEOUT)
 
 
-def update_index_context_cache() -> None:
+def update_index_context_cache() -> dict:
     context = build_index_context()
     set_cached_index_context(context)
     return context

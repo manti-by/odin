@@ -61,8 +61,8 @@ def create_gauge_chart(
     background_color: str = DARK_GREY_COLOR,
     center_x: int | None = None,
     center_y: int | None = None,
-    start_angle: Decimal = -200,
-    end_angle: Decimal = 20,
+    start_angle: Decimal = Decimal("-200"),
+    end_angle: Decimal = Decimal("20"),
 ) -> str:
     """
     Create a circular gauge chart as SVG string.
@@ -108,11 +108,11 @@ def create_gauge_chart(
     value_rad = math.radians(value_angle)
 
     # Calculate shifted borders
-    left_border = max(0, min(1, (min_green_value - min_value) / (max_value - min_value)))
+    left_border = Decimal(max(0, min(1, (min_green_value - min_value) / (max_value - min_value))))
     left_border_angle = start_angle + (end_angle - start_angle) * left_border
     left_border_rad = math.radians(left_border_angle)
 
-    right_border = max(0, min(1, (max_green_value - min_value) / (max_value - min_value)))
+    right_border = Decimal(max(0, min(1, (max_green_value - min_value) / (max_value - min_value))))
     right_border_angle = start_angle + (end_angle - start_angle) * right_border
     right_border_rad = math.radians(right_border_angle)
 

@@ -1,6 +1,6 @@
 [project]
 name = "odin"
-version = "v1.6.0"
+version = "v1.6.1"
 description = "Django application that provides several IoT dashboards and services for Coruscant and Centax projects."
 readme = "README.md"
 requires-python = ">=3.13.6,<3.14.0"
@@ -22,11 +22,13 @@ dependencies = [
     "requests==2.32.5",
     "setuptools>=80.9.0",
     "tinytag==2.2.0",
+    "ty>=0.0.12",
     "uvicorn[standard]==0.38.0",
 ]
 
 [dependency-groups]
 dev = [
+    "debugpy>=1.8.19",
     "uv-bump>=0.4.1",
 ]
 
@@ -51,21 +53,6 @@ exclude_dirs = [
     "odin/tests/factories.py"
 ]
 skips = ["B101", "B308", "B703"]
-
-[tool.black]
-line-length = 120
-target_version = ['py313']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.idea
-  | \.vscode
-  | \.pytest_cache
-  | \.ruff_cache
-  | \.venv
-)/
-'''
 
 [tool.curlylint.rules]
 indent = 2
@@ -101,7 +88,6 @@ exclude = [
     ".pytest_cache",
     ".ruff_cache",
     ".venv",
-    "venv",
 ]
 ignore = [
     "DJ001", # Null values for model char fields
@@ -149,3 +135,15 @@ lines-after-imports = 2
 "**/*test*.py" = ["E402", "F403", "F405", "S", "N802"]
 "**/{settings}/*" = ["E402", "F403", "F405"]
 "**/migrations/*" = ["RUF", "I"]
+
+[tool.ty.src]
+exclude = [
+    ".git",
+    ".idea",
+    ".vscode",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "odin/settings/",
+    "odin/tests/"
+]

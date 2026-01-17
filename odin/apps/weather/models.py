@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.db import models
@@ -26,8 +26,8 @@ class WeatherManager(models.Manager):
 class Weather(models.Model):
     external_id = models.CharField()
     provider = models.CharField(choices=WeatherProvider.choices, default=WeatherProvider.POGODA_BY)
-    data = JSONField(default=dict)
-    period = models.DateTimeField(db_index=True)
+    data: models.JSONField[dict] = JSONField(default=dict)
+    period: models.DateTimeField[datetime] = models.DateTimeField(db_index=True)
     synced_at = models.DateTimeField(db_index=True, auto_now=True)
 
     objects = WeatherManager()

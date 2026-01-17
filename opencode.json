@@ -4,14 +4,8 @@
       "disabled": true
     },
     "ty": {
-      "command": [
-        "uvx",
-        "ty",
-        "server"
-      ],
-      "extensions": [
-        ".py"
-      ]
+      "command": ["uvx", "ty", "server"],
+      "extensions": [".py", ".pyi"]
     }
   },
   "$schema": "https://opencode.ai/config.json"

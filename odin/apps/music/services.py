@@ -12,9 +12,9 @@ from odin.apps.music.models import Music
 
 
 def update_or_create_music(file: str) -> tuple[Music, bool]:
-    file = Path(file).resolve()
-    tags = TinyTag.get(file)
-    created_at = datetime.fromtimestamp(file.stat().st_ctime, tz=pytz.UTC)
+    file_path = Path(file).resolve()
+    tags = TinyTag.get(file_path)
+    created_at = datetime.fromtimestamp(file_path.stat().st_ctime, tz=pytz.utc)
 
     year = None
     if tags.year:
@@ -27,24 +27,24 @@ def update_or_create_music(file: str) -> tuple[Music, bool]:
 
     artist, title, album = tags.artist, tags.title, tags.album
     if not artist or not title:
-        if match := re.match(r"(?P<artist>[\w\s.]*)\s-\s(?P<title>[\w\s.,()]*).*", file.name):
+        if match := re.match(r"(?P<artist>[\w\s.]*)\s-\s(?P<title>[\w\s.,()]*).*", file_path.name):
             artist, title = match.group("artist").strip(), match.group("title").strip()
 
     if not artist or not title:
-        if match := re.match(r"Manti_(?P<title>[\w\s]*).*", file.name):
+        if match := re.match(r"Manti_(?P<title>[\w\s]*).*", file_path.name):
             artist, title = "Manti", match.group("title").replace("_", " ").strip()
 
     if not album:
         try:
-            album = file.parents[0].name
+            album = file_path.parents[0].name
         except IndexError:
             pass
 
     filesize = tags.filesize
     if not tags.filesize:
-        filesize = os.path.getsize(file)
+        filesize = os.path.getsize(file_path)
 
-    file_name = str(file).replace(settings.MUSIC_PATH, "")
+    file_name = str(file_path).replace(settings.MUSIC_PATH, "")
     return Music.objects.update_or_create(
         file=file_name,
         defaults={
@@ -54,9 +54,9 @@ def update_or_create_music(file: str) -> tuple[Music, bool]:
                 "channels": tags.channels,
                 "bitrate": tags.bitrate,
                 "samplerate": tags.samplerate,
-                "mtime": file.stat().st_mtime,
-                "atime": file.stat().st_atime,
-                "ctime": file.stat().st_ctime,
+                "mtime": file_path.stat().st_mtime,
+                "atime": file_path.stat().st_atime,
+                "ctime": file_path.stat().st_ctime,
             },
             "album": album,
             "artist": artist,

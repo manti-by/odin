@@ -35,8 +35,8 @@ class SensorsUpdateView(mixins.UpdateModelMixin, GenericViewSet):
     lookup_url_kwarg = "sensor_id"
 
     def perform_update(self, serializer: SensorUpdateSerializer) -> None:
-        serializer.instance.context.update(**serializer.validated_data["context"])
-        serializer.instance.save(update_fields=["context"])
+        serializer.instance.context.update(**serializer.validated_data["context"])  # ty: ignore[possibly-missing-attribute]
+        serializer.instance.save(update_fields=["context"])  # ty: ignore[possibly-missing-attribute]
 
 
 class SensorsLogView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet):
@@ -78,6 +78,6 @@ class ChartOptionsView(APIView):
         serializer.is_valid(raise_exception=True)
 
         sensor_type = serializer.validated_data["type"]
-        options = settings.CHART_OPTIONS.get(sensor_type, settings.CHART_OPTIONS["ds18b20"])
+        options = settings.CHART_OPTIONS.get(sensor_type, settings.CHART_OPTIONS["DS18B20"])
 
         return Response(options)

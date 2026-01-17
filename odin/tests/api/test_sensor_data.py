@@ -264,7 +264,7 @@ class TestChartOptionsAPI:
 
     def test_chart_options__ds18b20(self):
         """Test that DS18B20 chart options are returned correctly."""
-        response = self.client.get(self.url, {"type": "ds18b20"}, format="json")
+        response = self.client.get(self.url, {"type": "DS18B20"}, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["y_min"] == 20
         assert response.data["y_max"] == 45
@@ -273,7 +273,7 @@ class TestChartOptionsAPI:
 
     def test_chart_options__esp8266(self):
         """Test that ESP8266 chart options are returned correctly."""
-        response = self.client.get(self.url, {"type": "esp8266"}, format="json")
+        response = self.client.get(self.url, {"type": "ESP8266"}, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["y_min"] == 18
         assert response.data["y_max"] == 32

@@ -231,7 +231,7 @@ MUSIC_PATH = os.getenv("MUSIC_PATH", "/mnt/data/Music/Library")
 DEFAULT_TEMP_HYSTERESIS = Decimal(0.5)
 
 CHART_OPTIONS = {
-    "ds18b20": {
+    "DS18B20": {
         "y_min": 20,
         "y_max": 45,
         "y_title": _("Temperature (°C)"),
@@ -239,7 +239,7 @@ CHART_OPTIONS = {
         "time_unit": "minute",
         "time_tooltip_format": "ll HH:mm",
     },
-    "esp8266": {
+    "ESP8266": {
         "y_min": 18,
         "y_max": 32,
         "y_title": _("Temperature (°C)"),

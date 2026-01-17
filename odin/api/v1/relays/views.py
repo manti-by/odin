@@ -1,3 +1,5 @@
+from typing import Any
+
 from rest_framework import mixins
 from rest_framework.viewsets import GenericViewSet
 
@@ -24,9 +26,19 @@ class RelayRetrieveUpdateView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin
         return self.serializer_class
 
     def perform_update(self, serializer: RelayUpdateSerializer) -> None:
-        if "context" in serializer.validated_data:
-            serializer.instance.context.update(**serializer.validated_data["context"])
-            serializer.instance.save(update_fields=["context"])
-        if "force_state" in serializer.validated_data:
-            serializer.instance.force_state = serializer.validated_data["force_state"]
-            serializer.instance.save(update_fields=["force_state"])
+        data: dict[str, Any] = serializer.validated_data
+        if not serializer.instance:
+            raise ValueError("Relay instance not found")
+
+        update_fields = []
+        item: Relay = serializer.instance
+        if item and "context" in data:
+            item.context.update(**data["context"])
+            update_fields.append("context")
+
+        if "force_state" in data:
+            item.force_state = data["force_state"]
+            update_fields.append("force_state")
+
+        if update_fields:
+            item.save(update_fields=update_fields)

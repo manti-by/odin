@@ -15,7 +15,6 @@
   <link href="{% static 'css/index/errors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/sensors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/weather.css' %}" rel="stylesheet">
-  <link href="{% static 'css/index/voltage.css' %}" rel="stylesheet">
   <link href="{% static 'css/responsive/index.css' %}" rel="stylesheet">
   <link href="{% static 'css/modal.css' %}" rel="stylesheet">
 {% endblock %}
@@ -30,7 +29,7 @@
     <div class="grid">
       <div class="tile sensors esp8266">
         <h2>
-          <a href="{% url 'admin:sensors_sensor_changelist' %}">
+          <a href="{% url 'admin:sensors_sensor_changelist' %}?type=ESP8266">
             <span class="alive-indicator {% if home_sensors_is_alive %}alive{% else %}dead{% endif %}"></span>
           </a>
           {% translate "Sensors" %}
@@ -62,7 +61,7 @@
       </div>
       <div class="tile sensors ds18b20">
         <h2>
-          <a href="{% url 'admin:sensors_sensor_changelist' %}">
+          <a href="{% url 'admin:sensors_sensor_changelist' %}?type=DS18B20">
             <span class="alive-indicator {% if boiler_sensors_is_alive %}alive{% else %}dead{% endif %}"></span>
           </a>
           {% translate "Boiler Room" %}
@@ -187,5 +186,5 @@
       </div>
     </div>
   </div>
-  {% include "modal.html" %} 
+  {% include "modal.html" %}
 {% endblock %}

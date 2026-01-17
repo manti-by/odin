@@ -32,6 +32,7 @@ test:
 
 check:
 	git add .
+	uv run ty check
 	uv run pre-commit run
 
 django-checks:

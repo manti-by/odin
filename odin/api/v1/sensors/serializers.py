@@ -2,6 +2,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from odin.api.utils.serializers import BaseSerializer
+from odin.apps.sensors.models import SensorType
 
 
 class SensorSerializer(BaseSerializer):
@@ -37,10 +38,10 @@ class SensorLogSerializer(BaseSerializer):
     humidity = serializers.DecimalField(max_digits=5, decimal_places=2, required=False)
     created_at = serializers.DateTimeField(allow_null=True, required=False)
 
-    def validate(self, data: dict) -> dict:
-        if not data.get("created_at"):
-            data["created_at"] = timezone.now()
-        return data
+    def validate(self, attrs: dict) -> dict:
+        if not attrs.get("created_at"):
+            attrs["created_at"] = timezone.now()
+        return attrs
 
 
 class ChartQueryParamsSerializer(BaseSerializer):
@@ -49,4 +50,4 @@ class ChartQueryParamsSerializer(BaseSerializer):
 
 
 class ChartOptionsQueryParamsSerializer(BaseSerializer):
-    type = serializers.ChoiceField(choices=["ds18b20", "esp8266"])
+    type = serializers.ChoiceField(choices=SensorType.choices)
