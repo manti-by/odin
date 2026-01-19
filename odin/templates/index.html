@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n l10n core_tags weather_tags relay_tags %}
+{% load static i18n l10n core_tags weather_tags relay_tags currency_tags %}
 
 {% block meta %}
   <meta http-equiv="Refresh" content="300" />
@@ -12,6 +12,7 @@
 {% block styles %}
   <link href="{% static 'css/index/base.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/boiler-room.css' %}" rel="stylesheet">
+  <link href="{% static 'css/index/currency.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/errors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/sensors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/weather.css' %}" rel="stylesheet">
@@ -156,6 +157,24 @@
                 </span>
               </div>
             {% endif %}
+          {% else %}
+            <div>{% translate "No Data" %}</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="tile currency">
+        <h2>{% translate "Exchange Rates" %}</h2>
+        <div class="body">
+          {% if exchange_rates %}
+            <div class="rates">
+              {% for currency, rate in exchange_rates.items %}
+                <div class="rate row">
+                  <div class="currency-code">{{ currency }}</div>
+                  <div class="rate-value">{{ rate.rate_per_unit|currency_rate }} BYN</div>
+                  <div class="rate-date">{{ rate.date|date:"d.m" }}</div>
+                </div>
+              {% endfor %}
+            </div>
           {% else %}
             <div>{% translate "No Data" %}</div>
           {% endif %}

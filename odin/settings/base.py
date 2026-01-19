@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "odin.api",
     "odin.apps.core",
+    "odin.apps.currency",
     "odin.apps.electricity",
     "odin.apps.music",
     "odin.apps.relays",
@@ -146,14 +147,14 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
+
 def _(x):
     return x
 
+
 LANGUAGE_CODE = "ru"
 
-LANGUAGES = (
-    ("ru", _("Russian")),
-)
+LANGUAGES = (("ru", _("Russian")),)
 
 LOCALE_PATHS = (BASE_DIR / "locale",)
 

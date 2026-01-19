@@ -3,6 +3,7 @@ from typing import Any
 from django.core.cache import cache
 
 from odin.apps.core.models import Log
+from odin.apps.currency.models import ExchangeRate
 from odin.apps.electricity.models import VoltageLog
 from odin.apps.sensors.models import Sensor
 from odin.apps.weather.models import Weather
@@ -19,6 +20,7 @@ def build_index_context() -> dict[str, Any]:
     weather = Weather.objects.current()
     sensors = Sensor.objects.active().visible().order_by("order")
     error_logs = Log.objects.errors_last_day()
+    exchange_rates = {r.currency: r for r in ExchangeRate.objects.current()}
 
     return {
         "weather": weather,
@@ -27,6 +29,7 @@ def build_index_context() -> dict[str, Any]:
         "boiler_sensors_is_alive": boiler_sensors_is_alive,
         "error_logs": error_logs,
         "voltage": voltage,
+        "exchange_rates": exchange_rates,
     }
 
 

@@ -28,3 +28,8 @@ def schedule_update_index_context():
     from odin.apps.core.services import update_index_context_cache
 
     update_index_context_cache()
+
+
+@scheduler.scheduled_job("interval", hours=4, id="update_exchange_rates")
+def schedule_update_exchange_rates():
+    call_command("update_exchange_rates")
