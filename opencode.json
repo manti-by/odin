@@ -8,5 +8,12 @@
       "extensions": [".py", ".pyi"]
     }
   },
+  "mcp": {
+    "linear": {
+      "type": "local",
+      "command": ["npx", "-y", "mcp-remote", "https://mcp.linear.app/sse"],
+      "enabled": true
+    }
+  },
   "$schema": "https://opencode.ai/config.json"
 }

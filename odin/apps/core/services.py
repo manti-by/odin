@@ -13,9 +13,9 @@ INDEX_CONTEXT_CACHE_TIMEOUT = 120
 
 
 def build_index_context() -> dict[str, Any]:
-    voltage = VoltageLog.objects.order_by("created_at").last()
-    home_sensors_is_alive = all([x.is_alive for x in Sensor.objects.active().ds18b20()])
-    boiler_sensors_is_alive = all([x.is_alive for x in Sensor.objects.active().esp8266()])
+    voltage = VoltageLog.objects.first()
+    home_sensors_is_alive = all([x.is_alive for x in Sensor.objects.active().esp8266()])
+    boiler_sensors_is_alive = all([x.is_alive for x in Sensor.objects.active().ds18b20()])
     weather = Weather.objects.current()
     sensors = Sensor.objects.active().visible().order_by("order")
     error_logs = Log.objects.errors_last_day()
