@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 // Project-local debug tasks
 //
 // For more documentation on how to configure debug tasks,
@@ -19,5 +20,23 @@
     ],
     "args": ["$ZED_WORKTREE_ROOT"],
     "cwd": "$ZED_WORKTREE_ROOT",
+=======
+[
+  {
+    "label": "Run Django Server",
+    "adapter": "Debugpy",
+    "request": "launch",
+    "program": "manage.py",
+    "args": ["runserver", "--noreload"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "pathMappings": [
+      {
+        "localRoot": "${ZED_WORKTREE_ROOT}/",
+        "remoteRoot": "/",
+      },
+    ],
+    "justMyCode": true,
+    "show_console": true,
+>>>>>>> Stashed changes
   },
 ]
