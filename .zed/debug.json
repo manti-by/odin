@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 // Project-local debug tasks
 //
 // For more documentation on how to configure debug tasks,
@@ -6,7 +5,7 @@
 [
   {
     "adapter": "Debugpy",
-    "label": "Debug all pytests",
+    "label": "Run pytests",
     "request": "launch",
     "module": "pytest",
     "command": "uv",
@@ -20,10 +19,9 @@
     ],
     "args": ["$ZED_WORKTREE_ROOT"],
     "cwd": "$ZED_WORKTREE_ROOT",
-=======
-[
+  },
   {
-    "label": "Run Django Server",
+    "label": "Django Server",
     "adapter": "Debugpy",
     "request": "launch",
     "program": "manage.py",
@@ -37,6 +35,5 @@
     ],
     "justMyCode": true,
     "show_console": true,
->>>>>>> Stashed changes
   },
 ]
