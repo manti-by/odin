@@ -2,15 +2,15 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.5rem;
+  padding: 1.5rem 0;
 }
 
 .home .currency .rate {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.25rem 0.5rem;
-  border-bottom: 1px solid #eee;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #333;
 }
 
 .home .currency .rate:last-child {

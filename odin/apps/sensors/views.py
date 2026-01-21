@@ -13,9 +13,9 @@ def chart_view(request: HttpRequest, title: str, container_class: str, api_url: 
 
 def chart_boiler_view(request: HttpRequest) -> HttpResponse:
     title: str = _("Boiler Temperatures")  # noqa
-    return chart_view(request, title, "ds18b20", "api:v1:sensors:ds18b20", "ds18b20")
+    return chart_view(request, title, "ds18b20", "api:v1:sensors:ds18b20", "DS18B20")
 
 
 def chart_home_view(request: HttpRequest) -> HttpResponse:
     title: str = _("Home Temperatures")  # noqa
-    return chart_view(request, title, "esp8266", "api:v1:sensors:esp8266", "esp8266")
+    return chart_view(request, title, "esp8266", "api:v1:sensors:esp8266", "ESP8266")
