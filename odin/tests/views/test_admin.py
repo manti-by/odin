@@ -9,6 +9,7 @@ from odin.tests.factories import DjangoAdminUserFactory, SensorLogFactory
 
 
 @pytest.mark.django_db
+@pytest.mark.views
 class TestSensorAdmin:
     def setup_method(self):
         self.user = DjangoAdminUserFactory()

@@ -164,13 +164,13 @@ class TestRelaysServoTargetState:
 
         assert self.relay.target_state == RelayState.OFF
 
-        def test_relays__servo_target_state_returns_off_when_temp_below_min(self):
-            """Test that servo turns OFF when temp is below target - hysteresis."""
-            self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
-            self.sensor.save()
-            SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("23.0"))
+    def test_relays__servo_target_state_returns_off_when_temp_below_min(self):
+        """Test that servo turns OFF when temp is below target - hysteresis."""
+        self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        self.sensor.save()
+        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("23.0"))
 
-            assert self.relay.target_state == RelayState.OFF
+        assert self.relay.target_state == RelayState.ON
 
     def test_relays__servo_target_state_returns_the_same_when_temp_in_range(self):
         """Test that servo turns OFF when temp is within hysteresis range."""

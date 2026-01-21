@@ -5,6 +5,7 @@ from rest_framework import status
 
 
 @pytest.mark.django_db
+@pytest.mark.views
 class TestViews:
     def test_index(self, client):
         response = client.get(reverse("index"), follow=True)

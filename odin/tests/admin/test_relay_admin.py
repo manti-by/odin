@@ -12,6 +12,7 @@ from odin.tests.factories import DjangoAdminUserFactory, RelayFactory
 
 
 @pytest.mark.django_db
+@pytest.mark.views
 class TestRelayAdmin:
     def setup_method(self):
         self.user = DjangoAdminUserFactory()
@@ -31,6 +32,7 @@ class TestRelayAdmin:
 
 
 @pytest.mark.django_db
+@pytest.mark.views
 class TestRelayAdminSaveModel:
     def setup_method(self):
         self.user = DjangoAdminUserFactory()

@@ -28,7 +28,10 @@ deploy:
 	sudo service nginx reload
 
 test:
-	uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/
+	uv run pytest -m "not views" --disable-warnings --ds=odin.settings.test odin/
+
+full-test:
+	uv run pytest --create-db --disable-warnings --durations=10 --ds=odin.settings.test odin/
 
 check:
 	git add .
@@ -47,7 +50,7 @@ update:
 	uv sync --all-extras --dev
 	uv run pre-commit autoupdate
 
-ci: pip check django-checks test
+ci: pip check django-checks full-test
 
 dump:
 	pg_dump -h localhost -U odin -d odin > odin.sql
