@@ -8,6 +8,49 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
+class Browser(models.TextChoices):
+    CHROME = "chrome", _("Chrome")
+    FIREFOX = "firefox", _("Firefox")
+    SAFARI = "safari", _("Safari")
+    EDGE = "edge", _("Edge")
+    OTHER = "other", _("Other")
+
+
+class DeviceQuerySet(models.QuerySet):
+    def active(self) -> query.QuerySet:
+        return self.filter(is_active=True)
+
+
+class DeviceManager(models.Manager):
+    def get_queryset(self) -> DeviceQuerySet:
+        return DeviceQuerySet(self.model, using=self._db)
+
+    def active(self) -> query.QuerySet:
+        return self.get_queryset().active()
+
+
+class Device(models.Model):
+    subscription = models.JSONField(verbose_name=_("Push subscription data"))
+    browser = models.CharField(
+        max_length=20,
+        choices=Browser.choices,
+        default=Browser.OTHER,
+        verbose_name=_("Browser"),
+    )
+    is_active = models.BooleanField(default=True, verbose_name=_("Is active"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
+
+    objects = DeviceManager()
+
+    class Meta:
+        verbose_name = _("device")
+        verbose_name_plural = _("devices")
+
+    def __str__(self):
+        return f"Device ({self.browser})"
+
+
 class LogQuerySet(models.QuerySet):
     def errors_last_day(self) -> query.QuerySet:
         cutoff = timezone.now() - timedelta(hours=24)

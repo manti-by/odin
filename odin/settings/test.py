@@ -2,6 +2,8 @@ from .base import *  # noqa
 
 ALLOWED_HOSTS = ("*",)
 
+SECRET_KEY = "test-secret-key-for-testing-only"
+
 MEDIA_ROOT = "/tmp/"
 
 LOGGING = {

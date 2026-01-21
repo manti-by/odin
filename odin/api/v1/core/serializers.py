@@ -2,6 +2,13 @@ from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
+from odin.apps.core.models import Browser
+
+
+class DeviceSubscriptionSerializer(serializers.Serializer):
+    subscription = serializers.JSONField()
+    browser = serializers.ChoiceField(choices=Browser.choices, default=Browser.OTHER)
+
 
 class LogSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)

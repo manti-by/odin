@@ -5,6 +5,7 @@ from factory.fuzzy import FuzzyDecimal
 
 from django.contrib.auth.models import User
 
+from odin.apps.core.models import Device
 from odin.apps.electricity.models import VoltageLog
 from odin.apps.relays.models import Relay
 from odin.apps.sensors.models import Sensor, SensorLog, SensorType
@@ -100,3 +101,19 @@ class WeatherFactory(DjangoModelFactory):
 
     class Meta:
         model = Weather
+
+
+class DeviceFactory(DjangoModelFactory):
+    subscription = {
+        "endpoint": "https://fcm.googleapis.com/fcm/send/test_endpoint",
+        "expirationTime": None,
+        "keys": {
+            "p256dh": "BEl62iUYgU3x1PReSkf7G1c8OEQ8L6L5KxV3J5YvQqA=",
+            "auth": "test_auth_token",
+        },
+    }
+    browser = "chrome"
+    is_active = True
+
+    class Meta:
+        model = Device

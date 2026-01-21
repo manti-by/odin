@@ -1,11 +1,52 @@
+from django.conf import settings
 from django.http import HttpResponse
-from rest_framework.generics import CreateAPIView, RetrieveAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from odin.api.v1.core.serializers import ChartTypeSerializer, LogSerializer
-from odin.apps.core.models import Log
+from odin.api.v1.core.serializers import ChartTypeSerializer, DeviceSubscriptionSerializer, LogSerializer
+from odin.apps.core.models import Device, Log
 from odin.apps.core.utils import create_metric_gauge_chart
+
+
+def _never_cache(view_func):
+    def wrapper(request, *args, **kwargs):
+        response = view_func(request, *args, **kwargs)
+        response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
+
+    return wrapper
+
+
+class VapidPublicKeyView(APIView):
+    @_never_cache
+    def get(self, request: Request, *args: list, **kwargs: dict) -> Response:
+        return Response({"public_key": settings.VAPID_PUBLIC_KEY})
+
+
+class DeviceView(CreateAPIView, ListAPIView):
+    serializer_class = DeviceSubscriptionSerializer
+    queryset = Device.objects.active()
+
+    def get(self, request: Request, *args: list, **kwargs: dict) -> Response:
+        return Response({"count": self.get_queryset().count()})
+
+    def perform_create(self, serializer: DeviceSubscriptionSerializer):
+        subscription = serializer.validated_data["subscription"]
+        browser = serializer.validated_data.get("browser", "other")
+        endpoint = subscription.get("endpoint") if isinstance(subscription, dict) else None
+
+        if endpoint:
+            existing = Device.objects.filter(subscription__endpoint=endpoint).first()
+            if existing:
+                existing.subscription = subscription
+                existing.browser = browser
+                existing.is_active = True
+                existing.save(update_fields=["subscription", "browser", "is_active"])
+                return
+
+        Device.objects.create(subscription=subscription, browser=browser, is_active=True)
 
 
 class LogsView(CreateAPIView):
