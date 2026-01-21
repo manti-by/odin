@@ -1,50 +1,44 @@
 {
-  "background_color": "#FFFFFF",
+  "name": "ODIN IoT Dashboard",
+  "short_name": "ODIN",
+  "description": "IoT Dashboard for sensor management, weather monitoring, and home automation",
+  "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1a1a2e",
+  "theme_color": "#ff6f61",
+  "scope": "/",
+  "categories": ["utilities", "lifestyle"],
   "icons": [
     {
-      "sizes": "18x18",
-      "src": "/static/img/appicon/18x18.png",
-      "type": "image/png"
-    },
-    {
-      "sizes": "24x24",
-      "src": "/static/img/appicon/24x24.png",
-      "type": "image/png"
-    },
-    {
-      "sizes": "36x36",
-      "src": "/static/img/appicon/36x36.png",
-      "type": "image/png"
-    },
-    {
       "sizes": "48x48",
-      "src": "/static/img/appicon/48x48.png",
+      "src": "/static/favicon-48.png",
       "type": "image/png"
     },
     {
       "sizes": "72x72",
-      "src": "/static/img/appicon/72x72.png",
+      "src": "/static/favicon-72.png",
       "type": "image/png"
     },
     {
       "sizes": "96x96",
-      "src": "/static/img/appicon/96x96.png",
+      "src": "/static/favicon-96.png",
       "type": "image/png"
     },
     {
-      "sizes": "144x144",
-      "src": "/static/img/appicon/144x144.png",
+      "sizes": "128x128",
+      "src": "/static/favicon-128.png",
       "type": "image/png"
     },
     {
       "sizes": "192x192",
-      "src": "/static/img/appicon/192x192.png",
+      "src": "/static/favicon-192.png",
+      "type": "image/png"
+    },
+    {
+      "sizes": "512x512",
+      "src": "/static/favicon-512.png",
       "type": "image/png"
     }
-  ],
-  "name": "Semkov Gorodok",
-  "short_name": "Semkov Gorodok",
-  "start_url": "https://semkov-gorodok.by/",
-  "theme_color": "#ff6f61"
+  ]
 }

@@ -21,7 +21,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
-from odin.apps.core.views import index_view
+from odin.apps.core.views import index_view, service_worker_view
 from odin.apps.sensors.views import chart_boiler_view, chart_home_view
 
 
@@ -31,6 +31,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("sensors/home/", chart_home_view, name="sensors_home"),
     path("sensors/boiler/", chart_boiler_view, name="sensors_boiler"),
+    path("sw.js", service_worker_view, name="service_worker"),
     path("", index_view, name="index"),
 ]
 

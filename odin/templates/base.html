@@ -9,15 +9,22 @@
 
     <title>{% block title %}{% endblock %}</title>
 
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#ff6f61">
+    <meta name="application-name" content="ODIN">
+    <meta name="description" content="ODIN IoT Dashboard - Sensor Management, Weather Monitoring, and Home Automation">
+
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32.png' %}">
     <link rel="icon" type="image/png" sizes="64x64" href="{% static 'favicon-64.png' %}">
     <link rel="icon" type="image/png" sizes="128x128" href="{% static 'favicon-128.png' %}">
 
     <meta name="mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" type="image/png" sizes="32x32" href="{% static 'avicon-32.png' %}">
-    <link rel="apple-touch-icon" type="image/png" sizes="64x64" href="{% static 'avicon-64.png' %}">
-    <link rel="apple-touch-icon" type="image/png" sizes="128x128" href="{% static 'avicon-128.png' %}">
+    <link rel="apple-touch-icon" type="image/png" sizes="32x32" href="{% static 'favicon-32.png' %}">
+    <link rel="apple-touch-icon" type="image/png" sizes="64x64" href="{% static 'favicon-64.png' %}">
+    <link rel="apple-touch-icon" type="image/png" sizes="128x128" href="{% static 'favicon-128.png' %}">
+    <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="{% static 'favicon-180.png' %}">
+    <link rel="mask-icon" href="{% static 'favicon-128.png' %}" color="#ff6f61">
 
     <link href="{% static 'css/fonts.css' %}" rel="stylesheet">
     <link href="{% static 'css/base.css' %}" rel="stylesheet">
@@ -26,6 +33,7 @@
   </head>
   <body>
     {% block content %}{% endblock %}
+    <script src="{% static 'js/pwa.js' %}" defer></script>
     {% block scripts %}{% endblock %}
   </body>
 </html>
