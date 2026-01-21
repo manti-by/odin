@@ -35,7 +35,9 @@ class SensorsUpdateView(mixins.UpdateModelMixin, GenericViewSet):
     lookup_url_kwarg = "sensor_id"
 
     def perform_update(self, serializer: SensorUpdateSerializer) -> None:
-        serializer.instance.context.update(**serializer.validated_data["context"])  # ty: ignore[possibly-missing-attribute]
+        serializer.instance.context.update(  # ty: ignore[possibly-missing-attribute]
+            **serializer.validated_data["context"]
+        )
         serializer.instance.save(update_fields=["context"])  # ty: ignore[possibly-missing-attribute]
 
 
@@ -60,7 +62,7 @@ class SensorDataView(APIView):
         end = serializer.validated_data.get("end") or timezone.now()
         start = serializer.validated_data.get("start") or (end - timedelta(hours=48))
 
-        data = get_chart_data(self.queryset, start=start, end=end)
+        data = get_chart_data(self.queryset.all(), start=start, end=end)
         return Response(data)
 
 

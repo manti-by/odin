@@ -7,8 +7,6 @@ Command.default_addr = "0.0.0.0"
 
 DEBUG = True
 
-DJANGO_RUNSERVER_HIDE_WARNING = True
-
 ALLOWED_HOSTS = ("*",)
 
 LOGGING = {
