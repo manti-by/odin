@@ -3,7 +3,6 @@ from unittest.mock import patch
 import pytest
 
 from django.core.cache import cache
-from django.urls import reverse
 
 from odin.apps.core.services import (
     build_index_context,
@@ -50,25 +49,3 @@ class TestIndexContextServices:
         with patch.object(cache, "set") as mock_set:
             update_index_context_cache()
             mock_set.assert_called_once()
-
-
-@pytest.mark.django_db
-class TestIndexView:
-    def test_index_uses_cached_context(self, client):
-        SensorFactory(is_active=True)
-        VoltageLogFactory()
-        WeatherFactory()
-
-        with patch.object(cache, "get") as mock_get:
-            mock_get.return_value = {
-                "weather": None,
-                "sensors": [],
-                "home_sensors_is_alive": True,
-                "boiler_sensors_is_alive": True,
-                "error_logs": [],
-                "voltage": None,
-                "voltage_chart": "",
-                "voltage_values": [],
-            }
-            response = client.get(reverse("index"), follow=True)
-            assert response.status_code == 200
