@@ -5,6 +5,8 @@ from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
+from odin.apps.core.kafka import KafkaService
+
 from .models import Relay
 
 
@@ -35,3 +37,8 @@ class RelayAdmin(admin.ModelAdmin):
                 schedule[day][hour] = True
         obj.context.update({"schedule": schedule})
         super().save_model(request, obj, form, change)
+
+        KafkaService.send_relay_update(
+            relay_id=obj.relay_id,  # ty: ignore[invalid-argument-type]
+            target_state=obj.target_state,
+        )

@@ -16,7 +16,7 @@ class RelayTargetStateService:
     def __init__(self, relay: Relay):
         self.relay = relay
 
-    def get_pump_target_state(self) -> RelayState.choices:
+    def get_pump_target_state(self) -> str:
         if self.relay.type != RelayType.PUMP:
             raise ValidationError(f"Relay type {self.relay.type} is not supported")
 
@@ -28,7 +28,7 @@ class RelayTargetStateService:
             return RelayState.ON if state else RelayState.OFF
         return RelayState.UNKNOWN
 
-    def get_servo_target_state(self) -> RelayState.choices:
+    def get_servo_target_state(self) -> str:
         if self.relay.type != RelayType.SERVO:
             raise ValidationError(f"Relay type {self.relay.type} is not supported")
 
@@ -42,9 +42,9 @@ class RelayTargetStateService:
             return RelayState.OFF
         return RelayState.ON
 
-    def get_target_state(self) -> RelayState.choices:
+    def get_target_state(self) -> str:
         if self.relay.force_state is not None:
-            return self.relay.force_state
+            return str(self.relay.force_state)
 
         match self.relay.type:
             case RelayType.PUMP:
