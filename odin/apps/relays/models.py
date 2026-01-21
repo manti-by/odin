@@ -68,6 +68,10 @@ class Relay(models.Model):
     def state(self) -> str:
         return self.context.get("state", RelayState.UNKNOWN)
 
+    @property
+    def is_on(self) -> bool:
+        return self.state == RelayState.ON
+
     @cached_property
     def sensor(self) -> Sensor | None:
         from odin.apps.sensors.models import Sensor

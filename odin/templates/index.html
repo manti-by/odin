@@ -48,6 +48,13 @@
                 data-target-temp="{{ sensor.context.target_temp|default_if_none:'' }}"
               >
                 <div class="name">{{ sensor.name }}</div>
+                <div class="relay">
+                  {% if sensor.relay %}
+                    <span class="alive-indicator {% if sensor.relay.is_on %}cooling{% else %}heating{% endif %}"></span>
+                  {% else %}
+                    <span class="info">nc</span>
+                  {% endif %}
+                </div>
                 <div class="temp">{{ sensor.temp|format_decimal }}<span>&deg;C</span></div>
                 <div class="humidity">{{ sensor.humidity|format_decimal }}<span>%</span></div>
                 <div class="edit">
