@@ -1,5 +1,7 @@
+import base64
+import binascii
+import logging
 import math
-import re
 from decimal import Decimal
 
 from django.core.cache import cache
@@ -7,6 +9,9 @@ from django.template.loader import render_to_string
 from django.templatetags.l10n import unlocalize
 
 from odin.api.v1.core.serializers import MetricChoices
+
+
+logger = logging.getLogger(__name__)
 
 
 GREEN_COLOR = "#82c38b"
@@ -161,14 +166,16 @@ def create_gauge_chart(
 
 
 def pem_to_base64(pem_content: str) -> str | None:
-    """
-    Extracts the base64 content from a PEM formatted string.
+    if not pem_content:
+        return None
 
-    Use regular expression to find the content between markers
-    The regex looks for lines starting with '-----BEGIN' and ending with '-----'
-    and extracts everything in between (non-greedy)
-    """
-    if match := re.search(r"-----BEGIN [A-Z ]+-----\s*([\s\S]+?)\s*-----END [A-Z ]+-----", pem_content):
-        base64_data = match.group(1)
-        return "".join(base64_data.split())
+    try:
+        lines = pem_content.strip().splitlines()
+        base64_lines = [line for line in lines if not line.startswith("-----")]
+        b64_content = base64.b64decode("".join(base64_lines))
+        return base64.urlsafe_b64encode(b64_content).rstrip(b"=").decode()
+
+    except binascii.Error:
+        logger.error("Invalid PEM content")
+
     return None
