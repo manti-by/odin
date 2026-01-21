@@ -1,4 +1,5 @@
 import math
+import re
 from decimal import Decimal
 
 from django.core.cache import cache
@@ -157,3 +158,17 @@ def create_gauge_chart(
             "stroke_width": stroke_width,
         },
     )
+
+
+def pem_to_base64(pem_content: str) -> str | None:
+    """
+    Extracts the base64 content from a PEM formatted string.
+
+    Use regular expression to find the content between markers
+    The regex looks for lines starting with '-----BEGIN' and ending with '-----'
+    and extracts everything in between (non-greedy)
+    """
+    if match := re.search(r"-----BEGIN [A-Z ]+-----\s*([\s\S]+?)\s*-----END [A-Z ]+-----", pem_content):
+        base64_data = match.group(1)
+        return "".join(base64_data.split())
+    return None

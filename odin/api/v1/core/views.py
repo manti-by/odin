@@ -7,22 +7,15 @@ from rest_framework.views import APIView
 
 from odin.api.v1.core.serializers import ChartTypeSerializer, DeviceSubscriptionSerializer, LogSerializer
 from odin.apps.core.models import Device, Log
-from odin.apps.core.utils import create_metric_gauge_chart
-
-
-def _never_cache(view_func):
-    def wrapper(request, *args, **kwargs):
-        response = view_func(request, *args, **kwargs)
-        response["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        return response
-
-    return wrapper
+from odin.apps.core.utils import create_metric_gauge_chart, pem_to_base64
 
 
 class VapidPublicKeyView(APIView):
-    @_never_cache
     def get(self, request: Request, *args: list, **kwargs: dict) -> Response:
-        return Response({"public_key": settings.VAPID_PUBLIC_KEY})
+        return Response(
+            {"public_key": pem_to_base64(settings.VAPID_PUBLIC_KEY)},
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
 
 
 class DeviceView(CreateAPIView, ListAPIView):
