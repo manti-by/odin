@@ -162,15 +162,27 @@ class TestRelaysServoTargetState:
         self.sensor.save()
         SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("27.0"))
 
-        assert self.relay.target_state == RelayState.ON
+        assert self.relay.target_state == RelayState.OFF
 
-    def test_relays__servo_target_state_returns_off_when_temp_in_range(self):
+        def test_relays__servo_target_state_returns_off_when_temp_below_min(self):
+            """Test that servo turns OFF when temp is below target - hysteresis."""
+            self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+            self.sensor.save()
+            SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("23.0"))
+
+            assert self.relay.target_state == RelayState.OFF
+
+    def test_relays__servo_target_state_returns_the_same_when_temp_in_range(self):
         """Test that servo turns OFF when temp is within hysteresis range."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
         SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("25.0"))
 
+        self.relay.context["state"] = RelayState.OFF
         assert self.relay.target_state == RelayState.OFF
+
+        self.relay.context["state"] = RelayState.ON
+        assert self.relay.target_state == RelayState.ON
 
     def test_relays__servo_target_state_returns_unknown_when_no_temp(self):
         """Test that target_state returns UNKNOWN when sensor has no temperature reading."""

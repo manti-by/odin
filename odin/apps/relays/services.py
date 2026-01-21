@@ -26,7 +26,8 @@ class RelayTargetStateService:
         state = self.relay.context.get("schedule", {}).get(day, {}).get(hour)
         if state is not None:
             return RelayState.ON if state else RelayState.OFF
-        return RelayState.UNKNOWN
+
+        return self.relay.state
 
     def get_servo_target_state(self) -> str:
         if self.relay.type != RelayType.SERVO:
@@ -35,12 +36,15 @@ class RelayTargetStateService:
         if not self.relay.sensor or self.relay.sensor.temp is None:
             return RelayState.UNKNOWN
 
-        target_temp_min = self.relay.sensor.target_temp - self.relay.sensor.temp_hysteresis
-        target_temp_max = self.relay.sensor.target_temp + self.relay.sensor.temp_hysteresis
+        target_temp, hysteresis = self.relay.sensor.target_temp, self.relay.sensor.temp_hysteresis
 
-        if target_temp_min < self.relay.sensor.temp < target_temp_max:
+        if self.relay.sensor.temp < target_temp - hysteresis:
+            return RelayState.ON
+
+        if self.relay.sensor.temp > target_temp + hysteresis:
             return RelayState.OFF
-        return RelayState.ON
+
+        return self.relay.state
 
     def get_target_state(self) -> str:
         if self.relay.force_state is not None:
