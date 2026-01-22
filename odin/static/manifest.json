@@ -4,7 +4,7 @@
   "description": "IoT Dashboard for sensor management, weather monitoring, and home automation",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "landscape-primary",
+  "orientation": "natural",
   "background_color": "#161614",
   "theme_color": "#242b23",
   "scope": "/",
