@@ -58,7 +58,7 @@
                 <div class="name">{{ sensor.name }}</div>
                 <div class="relay">
                   {% if sensor.relay %}
-                    <span class="alive-indicator {% if sensor.relay.is_on %}cooling{% else %}heating{% endif %}"></span>
+                    <span class="alive-indicator {% if sensor.relay.is_on %}heating{% else %}cooling{% endif %}"></span>
                   {% else %}
                     <span class="info">nc</span>
                   {% endif %}
