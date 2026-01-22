@@ -32,24 +32,24 @@ ALLOWED_HOSTS = ("odin.local", "192.168.1.100")
 # Application definition
 
 INSTALLED_APPS = [
+    "odin.apps.sensors",
+    "odin.apps.relays",
+    "odin.apps.core",
+    "odin.apps.currency",
+    "odin.apps.electricity",
+    "odin.apps.music",
+    "odin.apps.weather",
+    "odin.api",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
     "command_log",
     "django_rq",
     "django_apscheduler",
-    "rest_framework",
-    "odin.api",
-    "odin.apps.core",
-    "odin.apps.currency",
-    "odin.apps.electricity",
-    "odin.apps.music",
-    "odin.apps.relays",
-    "odin.apps.sensors",
-    "odin.apps.weather",
 ]
 
 MIDDLEWARE = [

@@ -16,13 +16,13 @@
 
 {% block content %}
   <div id="content-main">
+    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
     <div class="module" id="shortcuts-module">
       <h2>{% translate 'Shortcuts' %}</h2>
       <ul class="actionlist">
         <li><a href="{% url 'rq_home' %}">{% translate 'Django RQ' %}</a></li>
       </ul>
     </div>
-    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
   </div>
 {% endblock %}
 

@@ -82,7 +82,7 @@
   }
 
   .home .weather .body {
-    padding-left: 2rem;
+    padding: 0.75rem 0.75rem 2rem 2rem;
   }
 
   .home .weather .temp {
@@ -95,7 +95,7 @@
   }
 
   .home .weather .temp .meta {
-    margin: 1rem;
+    margin: .25rem 0 0 1rem;
     font-size: 0.9rem;
   }
 
