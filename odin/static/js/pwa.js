@@ -31,11 +31,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   );
 });
 
-async function registerPush(serviceWorkerRegistration, vapidPublicKey) {
+async function registerPush(serviceWorkerRegistration, applicationServerKey) {
   try {
     const subscription = await serviceWorkerRegistration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      applicationServerKey: urlBase64ToUint8Array(applicationServerKey),
     });
 
     await fetch("/api/v1/core/devices/", {
