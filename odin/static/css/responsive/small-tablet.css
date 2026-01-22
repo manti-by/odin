@@ -29,6 +29,11 @@
     padding: 1rem;
   }
 
+  .home .esp8266 .relay .alive-indicator {
+    display: block;
+    margin: 6px 2px 0px 2px;
+  }
+
   .home .ds18b20 ul {
     flex-direction: row;
     flex-wrap: wrap;
