@@ -12,5 +12,8 @@ log/*
 static/*
 content/*
 
+keys/*
+!keys/.gitkeep
+
 .python-version
 .env

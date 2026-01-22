@@ -10,25 +10,25 @@ from odin.tests.factories import DeviceFactory
 
 
 @pytest.mark.django_db
-class TestVapidAPI:
+class TestPushAPI:
     def setup_method(self):
         self.client = APIClient()
-        self.url = reverse("api:v1:core:vapid")
+        self.url = reverse("api:v1:core:app-server-key")
 
-    def test_vapid__returns_server_key(self, settings):
+    def test_push__returns_server_key(self, settings):
         keys = VAPID.generate_keys()
         settings.VAPID_SERVER_KEY = keys[2]
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["server_key"] is not None
+        assert response.data["application_server_key"] is not None
 
-    def test_vapid__returns_empty_string_when_server_key_not_configured(self, settings):
+    def test_push__returns_empty_string_when_server_key_not_configured(self, settings):
         settings.VAPID_SERVER_KEY = ""
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["server_key"] == ""
+        assert response.data["application_server_key"] == ""
 
-    def test_vapid__post_not_allowed(self):
+    def test_push__post_not_allowed(self):
         response = self.client.post(self.url, format="json")
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 

@@ -57,7 +57,6 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -257,7 +256,5 @@ KAFKA_RELAY_TOPIC = os.getenv("KAFKA_RELAY_TOPIC", "coruscant")
 
 # Web Push settings
 
-VAPID_SERVER_KEY = os.getenv("VAPID_SERVER_KEY", "")
-VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
-VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
-VAPID_ADMIN_EMAIL = os.getenv("VAPID_ADMIN_EMAIL", "mailto:admin@example.com")
+FIREBASE_CLOUD_MESSAGING_PUBLIC_KEY = os.getenv("FIREBASE_CLOUD_MESSAGING_PUBLIC_KEY", "")
+FIREBASE_ADMIN_CREDENTIALS_FILE = os.getenv("FIREBASE_ADMIN_CREDENTIALS_FILE", "keys/firebase-admin-key.json")

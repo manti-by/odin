@@ -10,10 +10,10 @@ from odin.apps.core.models import Device, Log
 from odin.apps.core.utils import create_metric_gauge_chart
 
 
-class VapidPublicKeyView(APIView):
+class ApplicationServerKeyView(APIView):
     def get(self, request: Request, *args: list, **kwargs: dict) -> Response:
         return Response(
-            {"server_key": settings.VAPID_SERVER_KEY},
+            {"application_server_key": settings.FIREBASE_CLOUD_MESSAGING_PUBLIC_KEY},
             headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
         )
 

@@ -7,16 +7,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   let applicationServerKey = "";
 
   try {
-    const response = await fetch("/api/v1/core/vapid/");
+    const response = await fetch("/api/v1/core/app-server-key/");
     const data = await response.json();
-    applicationServerKey = data.server_key || "";
+    applicationServerKey = data.application_server_key || "";
   } catch (error) {
     console.error("Failed to fetch application server key:", error);
     return;
   }
 
   if (!applicationServerKey) {
-    console.error("Application erver key not configured");
+    console.error("Application server key not configured");
     return;
   }
 
