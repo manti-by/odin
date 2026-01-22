@@ -5,7 +5,7 @@ from .models import Device, Log
 
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ("id", "browser", "is_active", "created_at", "updated_at")
+    list_display = ("id", "browser", "is_active", "is_admin", "created_at", "updated_at")
     list_filter = ("browser", "is_active", "created_at")
     search_fields = ("subscription",)
     readonly_fields = ("created_at", "updated_at")

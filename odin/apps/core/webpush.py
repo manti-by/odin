@@ -33,3 +33,8 @@ def send_push_notification(
     except WebPushException as e:
         logger.error(f"Can't send a webpush to device {device.pk}: {e}")
     return None
+
+
+def send_push_notification_to_admins(title: str, body: str, icon: str | None = None, badge: str | None = None) -> None:
+    for device in Device.objects.filter(is_admin=True):
+        send_push_notification(device=device, title=title, body=body, icon=icon, badge=badge)

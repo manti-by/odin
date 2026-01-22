@@ -38,6 +38,7 @@ class Device(models.Model):
         verbose_name=_("Browser"),
     )
     is_active = models.BooleanField(default=True, verbose_name=_("Is active"))
+    is_admin = models.BooleanField(default=False, verbose_name=_("Is admin"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
 
