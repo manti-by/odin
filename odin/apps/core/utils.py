@@ -1,5 +1,3 @@
-import base64
-import binascii
 import logging
 import math
 from decimal import Decimal
@@ -163,19 +161,3 @@ def create_gauge_chart(
             "stroke_width": stroke_width,
         },
     )
-
-
-def pem_to_base64(pem_content: str) -> str | None:
-    if not pem_content:
-        return None
-
-    try:
-        lines = pem_content.strip().splitlines()
-        base64_lines = [line for line in lines if not line.startswith("-----")]
-        b64_content = base64.b64decode("".join(base64_lines))
-        return base64.urlsafe_b64encode(b64_content).rstrip(b"=").decode()
-
-    except binascii.Error:
-        logger.error("Invalid PEM content")
-
-    return None

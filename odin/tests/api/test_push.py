@@ -15,24 +15,18 @@ class TestVapidAPI:
         self.client = APIClient()
         self.url = reverse("api:v1:core:vapid")
 
-    def test_vapid__returns_public_key(self, settings):
+    def test_vapid__returns_server_key(self, settings):
         keys = VAPID.generate_keys()
-        settings.VAPID_PUBLIC_KEY = keys[1].decode()
+        settings.VAPID_SERVER_KEY = keys[2]
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["public_key"] is not None
+        assert response.data["server_key"] is not None
 
-    def test_vapid__returns_none_for_invalid_public_key(self, settings):
-        settings.VAPID_PUBLIC_KEY = "test_public_key_12345"
+    def test_vapid__returns_empty_string_when_server_key_not_configured(self, settings):
+        settings.VAPID_SERVER_KEY = ""
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["public_key"] is None
-
-    def test_vapid__returns_none_when_public_key_not_configured(self, settings):
-        settings.VAPID_PUBLIC_KEY = ""
-        response = self.client.get(self.url, format="json")
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["public_key"] is None
+        assert response.data["server_key"] == ""
 
     def test_vapid__post_not_allowed(self):
         response = self.client.post(self.url, format="json")

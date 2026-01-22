@@ -4,26 +4,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  let vapidPublicKey = "";
+  let applicationServerKey = "";
 
   try {
     const response = await fetch("/api/v1/core/vapid/");
     const data = await response.json();
-    vapidPublicKey = data.public_key || "";
+    applicationServerKey = data.server_key || "";
   } catch (error) {
-    console.error("Failed to fetch VAPID key:", error);
+    console.error("Failed to fetch application server key:", error);
     return;
   }
 
-  if (!vapidPublicKey) {
-    console.error("VAPID public key not configured");
+  if (!applicationServerKey) {
+    console.error("Application erver key not configured");
     return;
   }
 
   navigator.serviceWorker.register("/static/js/sw.js").then(
     (registration) => {
       console.log("Service Worker registered:", registration.scope);
-      registerPush(registration, vapidPublicKey);
+      registerPush(registration, applicationServerKey);
     },
     (error) => {
       console.error("Service Worker registration failed:", error);

@@ -257,6 +257,7 @@ KAFKA_RELAY_TOPIC = os.getenv("KAFKA_RELAY_TOPIC", "coruscant")
 
 # Web Push settings
 
+VAPID_SERVER_KEY = os.getenv("VAPID_SERVER_KEY", "")
 VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
 VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
 VAPID_ADMIN_EMAIL = os.getenv("VAPID_ADMIN_EMAIL", "mailto:admin@example.com")
