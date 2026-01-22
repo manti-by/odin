@@ -30,7 +30,7 @@ class DeviceManager(models.Manager):
 
 
 class Device(models.Model):
-    subscription = models.JSONField(verbose_name=_("Push subscription data"))
+    subscription: models.JSONField[dict] = models.JSONField(verbose_name=_("Push subscription data"))
     browser = models.CharField(
         max_length=20,
         choices=Browser.choices,

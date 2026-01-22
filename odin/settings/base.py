@@ -219,7 +219,7 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 15,
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.TokenAuthentication"],
 }
 
 
@@ -259,4 +259,5 @@ KAFKA_RELAY_TOPIC = os.getenv("KAFKA_RELAY_TOPIC", "coruscant")
 # Web Push settings
 
 FIREBASE_CLOUD_MESSAGING_PUBLIC_KEY = os.getenv("FIREBASE_CLOUD_MESSAGING_PUBLIC_KEY", "")
-FIREBASE_ADMIN_CREDENTIALS_FILE = os.getenv("FIREBASE_ADMIN_CREDENTIALS_FILE", "keys/firebase-admin-key.json")
+FIREBASE_CLOUD_MESSAGING_PRIVATE_KEY = os.getenv("FIREBASE_CLOUD_MESSAGING_PRIVATE_KEY", "")
+FIREBASE_CLOUD_MESSAGING_ADMIN_EMAIL = os.getenv("FIREBASE_CLOUD_MESSAGING_ADMIN_EMAIL", "")
