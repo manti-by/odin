@@ -1,5 +1,4 @@
 import pytest
-from webpush import VAPID
 
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -16,14 +15,13 @@ class TestPushAPI:
         self.url = reverse("api:v1:core:app-server-key")
 
     def test_push__returns_server_key(self, settings):
-        keys = VAPID.generate_keys()
-        settings.VAPID_SERVER_KEY = keys[2]
+        settings.FIREBASE_CLOUD_MESSAGING_PUBLIC_KEY = "something"
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["application_server_key"] is not None
 
     def test_push__returns_empty_string_when_server_key_not_configured(self, settings):
-        settings.VAPID_SERVER_KEY = ""
+        settings.FIREBASE_CLOUD_MESSAGING_PUBLIC_KEY = ""
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["application_server_key"] == ""

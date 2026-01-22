@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.http import HttpResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -18,6 +20,7 @@ class ApplicationServerKeyView(APIView):
         )
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class DeviceView(CreateAPIView, ListAPIView):
     serializer_class = DeviceSubscriptionSerializer
     queryset = Device.objects.active()
