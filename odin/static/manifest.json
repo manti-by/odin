@@ -4,7 +4,7 @@
   "description": "IoT dashboard for a home automation",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "natural",
+  "orientation": "portrait-primary",
   "background_color": "#161614",
   "theme_color": "#242b23",
   "scope": "/",
