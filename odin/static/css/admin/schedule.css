@@ -1,0 +1,79 @@
+.field-group input {
+  box-sizing: border-box;
+
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 5px 6px;
+  margin-top: 0;
+  color: var(--body-fg);
+  background-color: var(--body-bg);
+}
+
+/* Ensure time and number inputs have consistent appearance */
+.field-group input[type="time"],
+.field-group input[type="number"],
+.field-group select {
+  height: 32px;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+
+.periodic-schedule {
+  max-width: none;
+}
+
+.period-item {
+  border-bottom: 1px solid #333;
+  padding-bottom: 15px;
+  margin-bottom: 5px;
+}
+
+.period-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: end;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+}
+
+.field-group label {
+  margin-bottom: .25rem;
+}
+
+.schedule-actions {
+  margin-top: 15px;
+}
+
+.btn {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 4px;
+  color: var(--button-fg);
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--button-bg);
+  color: white;
+}
+
+.btn-danger {
+  background: var(--delete-button-bg);
+  color: white;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.help-text {
+  color: #666;
+  font-size: 11px;
+  margin-top: 3px;
+}

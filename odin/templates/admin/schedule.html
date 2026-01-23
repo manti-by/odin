@@ -1,29 +1,72 @@
-{% load i18n relay_tags %}
+{% load i18n static core_tags %}
 
-<table>
-  <thead>
-    <tr>
-      <th>{% translate 'Day \ Hour' %}</th>
-      {% for hour in schedule.0  %}
-        <th>{{ hour }}</th>
-      {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-    {% for day, hours in schedule.items %}
-      <tr>
-        <th>{{ day|day_name }}</th>
-        {% for hour, enabled in hours.items %}
-          <td>
-            <input
-              type="checkbox"
-              name="schedule-{{ day }}-{{ hour }}"
-              value="True"
-              {% if enabled %}checked{% endif %}
-            >
-          </td>
-        {% endfor %}
-      </tr>
+<div class="periodic-schedule">
+  <div class="periods-container" id="periods-container">
+    {% for period in schedule.periods %}
+      <div class="period-item" data-index="{{ forloop.counter0 }}">
+        <div class="period-fields">
+          <div class="field-group">
+            <label class="required">{% translate 'Start Time' %}</label>
+            <input type="time" name="schedule-periods-{{ forloop.counter0 }}-start_time" value="{{ period.start_time }}" required/>
+          </div>
+          <div class="field-group">
+            <label class="required">{% translate 'End Time' %}</label>
+            <input type="time" name="schedule-periods-{{ forloop.counter0 }}-end_time" value="{{ period.end_time }}" required/>
+          </div>
+          {% if relay_type == 'PUMP' %}
+            <div class="field-group">
+              <label>{% translate 'Target State' %}</label>
+              <select name="schedule-periods-{{ forloop.counter0 }}-target_state" required>
+                <option value="ON" {% if period.target_state == 'ON' %}selected{% endif %}>
+                  {% translate 'ON' %}
+                </option>
+                <option value="OFF" {% if period.target_state == 'OFF' %}selected{% endif %}>
+                  {% translate 'OFF' %}
+                </option>
+              </select>
+            </div>
+          {% endif %}
+          {% if relay_type == 'SERVO' %}
+            <div class="field-group">
+              <label>{% translate 'Temperature' %} &deg;C</label>
+              <input type="number" step="0.1" name="schedule-periods-{{ forloop.counter0 }}-target_temp" value="{{ period.target_temp|format_decimal }}" required/>
+            </div>
+          {% endif %}
+          <div class="field-group actions">
+            <button type="button" class="remove-period btn btn-danger">{% translate 'Remove' %}</button>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="period-item" data-index="0">
+        <div class="period-fields">
+          <div class="field-group">
+            <label>{% translate 'Start Time' %}</label>
+            <input type="time" name="schedule-periods-0-start_time" value="05:00" required/>
+          </div>
+          <div class="field-group">
+            <label>{% translate 'End Time' %}</label>
+            <input type="time" name="schedule-periods-0-end_time" value="22:59" required />
+          </div>
+          <div class="field-group hidden">
+            <label>{% translate 'Target State' %}</label>
+            <select name="schedule-periods-0-target_state" required>
+              <option value="ON" selected>{% translate 'ON' %}</option>
+              <option value="OFF">{% translate 'OFF' %}</option>
+            </select>
+          </div>
+          <div class="field-group hidden">
+            <label>{% translate 'Temperature' %} &deg;C</label>
+            <input type="number" step="0.1" name="schedule-periods-0-target_temp" value="24.5"/>
+          </div>
+          <div class="field-group actions">
+            <button type="button" class="remove-period btn btn-danger" disabled>{% translate 'Remove' %}</button>
+          </div>
+        </div>
+      </div>
     {% endfor %}
-  </tbody>
-</table>
+  </div>
+  <div class="schedule-actions">
+    <button type="button" id="add-period" class="btn btn-primary">{% translate 'Add Period' %}</button>
+  </div>
+</div>

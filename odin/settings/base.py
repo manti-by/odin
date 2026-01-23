@@ -236,7 +236,7 @@ CHART_OPTIONS = {
     "DS18B20": {
         "y_min": 20,
         "y_max": 45,
-        "y_title": _("Temperature (°C)"),
+        "y_title": f"{_('Temperature')} °C",
         "x_title": _("Time"),
         "time_unit": "minute",
         "time_tooltip_format": "ll HH:mm",
@@ -244,7 +244,7 @@ CHART_OPTIONS = {
     "ESP8266": {
         "y_min": 18,
         "y_max": 32,
-        "y_title": _("Temperature (°C)"),
+        "y_title": f"{_('Temperature')} °C",
         "x_title": _("Time"),
         "time_unit": "minute",
         "time_tooltip_format": "ll HH:mm",

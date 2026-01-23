@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-22 16:08+0300\n"
+"POT-Creation-Date: 2026-01-23 18:15+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -74,29 +74,33 @@ msgstr "Браузер"
 msgid "Is active"
 msgstr "Активный"
 
-#: odin/apps/core/models.py:41 odin/apps/electricity/models.py:19
+#: odin/apps/core/models.py:41
+msgid "Is admin"
+msgstr "Админ"
+
+#: odin/apps/core/models.py:42 odin/apps/electricity/models.py:19
 #: odin/apps/relays/models.py:55 odin/apps/sensors/models.py:71
 msgid "Created at"
 msgstr "Создан"
 
-#: odin/apps/core/models.py:42 odin/apps/relays/models.py:56
+#: odin/apps/core/models.py:43 odin/apps/relays/models.py:56
 #: odin/apps/sensors/models.py:72
 msgid "Updated at"
 msgstr "Обновлен"
 
-#: odin/apps/core/models.py:47
+#: odin/apps/core/models.py:48
 msgid "device"
 msgstr "устройство"
 
-#: odin/apps/core/models.py:48
+#: odin/apps/core/models.py:49
 msgid "devices"
 msgstr "устройства"
 
-#: odin/apps/core/models.py:78
+#: odin/apps/core/models.py:79
 msgid "log"
 msgstr "лог"
 
-#: odin/apps/core/models.py:79
+#: odin/apps/core/models.py:80
 msgid "logs"
 msgstr "логи"
 
@@ -149,11 +153,11 @@ msgstr "Альбом"
 msgid "music"
 msgstr "музыка"
 
-#: odin/apps/relays/admin.py:20
+#: odin/apps/relays/admin.py:39
 msgid "schedule"
 msgstr "расписание"
 
-#: odin/apps/relays/admin.py:28
+#: odin/apps/relays/admin.py:47
 msgid "state"
 msgstr "состояние"
 
@@ -302,20 +306,15 @@ msgstr "северо-западный"
 msgid "Russian"
 msgstr "Русский"
 
-#: odin/settings/base.py:239 odin/settings/base.py:247
-#: odin/templates/modal.html:12
-msgid "Temperature (°C)"
-msgstr "Температура (°C)"
-
 #: odin/settings/base.py:240 odin/settings/base.py:248
 msgid "Time"
 msgstr "Время"
 
-#: odin/templates/admin/index.html:20
+#: odin/templates/admin/index.html:21
 msgid "Shortcuts"
 msgstr "Закладки"
 
-#: odin/templates/admin/index.html:22
+#: odin/templates/admin/index.html:23
 msgid "Django RQ"
 msgstr "Очереди"
 
@@ -351,9 +350,25 @@ msgstr "Удалено:"
 msgid "n/a"
 msgstr "н/а"
 
-#: odin/templates/admin/schedule.html:6
-msgid "Day \\ Hour"
-msgstr "День \\ Час"
+#: odin/templates/admin/schedule.html:9
+msgid "Start Time"
+msgstr "Время начала"
+
+#: odin/templates/admin/schedule.html:13
+msgid "End Time"
+msgstr "Время окончания"
+
+#: odin/templates/admin/schedule.html:17 odin/templates/modal.html:12
+msgid "Temperature"
+msgstr "Температура"
+
+#: odin/templates/admin/schedule.html:21
+msgid "Remove"
+msgstr "Удалить"
+
+#: odin/templates/admin/schedule.html:28
+msgid "Add Period"
+msgstr "Добавить период"
 
 #: odin/templates/admin/select_filter.html:5
 #, python-format
@@ -443,3 +458,9 @@ msgstr "Закрыть"
 #: odin/templates/modal.html:16
 msgid "Send"
 msgstr "Отправить"
+
+#~ msgid "Days"
+#~ msgstr "Дни недели"
+
+#~ msgid "Leave unchecked to apply to all days"
+#~ msgstr "Оставьте не отмеченным, чтобы применить ко всем дням."

@@ -9,4 +9,6 @@ register = template.Library()
 
 @register.filter(is_safe=False)
 def format_decimal(value: Decimal) -> str:
+    if value is None:
+        return ""
     return str(formats.localize(round(value, 1), use_l10n=False))
