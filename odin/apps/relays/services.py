@@ -31,7 +31,7 @@ class RelayTargetStateService:
 
             if start_time <= end_time and start_time <= current_time <= end_time:
                 return period
-            elif current_time >= start_time or current_time <= end_time:
+            elif end_time <= start_time and (current_time >= start_time or current_time <= end_time):
                 return period
 
         return None
