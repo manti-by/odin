@@ -29,4 +29,7 @@ class LogAdmin(admin.ModelAdmin):
     list_filter = ("levelname", "filename", "asctime")
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        return super().get_queryset(request).exclude(levelname="DEBUG")
+        queryset = super().get_queryset(request)
+        if request.GET.get("levelname") == "DEBUG":
+            return queryset
+        return queryset.exclude(levelname="DEBUG")
