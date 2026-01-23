@@ -206,9 +206,9 @@
             {% if error_logs %}
               <ul>
                 {% for log in error_logs %}
-                  <li class="log row">
-                    <div class="time">{{ log.asctime|date:"d.m H:i" }}</div>
-                    <div class="msg">{{ log.msg }}</div>
+                  <li class="log">
+                    <span class="time">{{ log.asctime|date:"d.m H:i" }}</span>
+                    <span class="msg">{{ log.msg }}</span>
                   </li>
                 {% endfor %}
               </ul>

@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db.models.query import QuerySet
+from django.http import HttpRequest
 
 from .models import Device, Log
 
@@ -25,3 +27,6 @@ class LogAdmin(admin.ModelAdmin):
     list_display = ("levelname", "filename", "name", "msg", "asctime")
     search_fields = ("msg",)
     list_filter = ("levelname", "filename", "asctime")
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).exclude(levelname="DEBUG")

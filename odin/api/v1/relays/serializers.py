@@ -10,8 +10,6 @@ class RelaySerializer(BaseSerializer):
     type = serializers.CharField()
     state = serializers.CharField()
     target_state = serializers.ChoiceField(choices=RelayState.choices)
-    context = serializers.JSONField()
-    force_state = serializers.CharField(allow_null=True)
     created_at = serializers.DateTimeField(read_only=True)
 
 
@@ -21,7 +19,6 @@ class RelayUpdateContextSerializer(BaseSerializer):
 
 class RelayUpdateSerializer(BaseSerializer):
     context = RelayUpdateContextSerializer(required=False)
-    force_state = serializers.CharField(required=False, allow_null=True)
 
     @property
     def data(self) -> dict:
