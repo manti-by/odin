@@ -1,3 +1,5 @@
+import logging
+import subprocess  # nosec
 from typing import Any
 
 from django.core.cache import cache
@@ -8,6 +10,8 @@ from odin.apps.electricity.models import VoltageLog
 from odin.apps.sensors.models import Sensor
 from odin.apps.weather.models import Weather
 
+
+logger = logging.getLogger(__name__)
 
 INDEX_CONTEXT_CACHE_KEY = "index_context"
 INDEX_CONTEXT_CACHE_TIMEOUT = 120
@@ -30,6 +34,7 @@ def build_index_context() -> dict[str, Any]:
         "error_logs": error_logs,
         "voltage": voltage,
         "exchange_rates": exchange_rates,
+        "systemd_status": systemd_status(),
     }
 
 
@@ -45,3 +50,15 @@ def update_index_context_cache() -> dict:
     context = build_index_context()
     set_cached_index_context(context)
     return context
+
+
+def systemd_status() -> dict[str, str]:
+    result = {}
+    for service in ["scheduler.service", "worker.service"]:
+        try:
+            status = subprocess.run(["/usr/bin/systemctl", "is-active", service], capture_output=True, check=True)  # nosec
+            result[service] = {"status": status.stdout.decode().strip()}
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Cannot get status for {service}: {e}")
+            result[service] = {"error": str(e)}
+    return result

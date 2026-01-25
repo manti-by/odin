@@ -202,6 +202,20 @@
             <span class="label">{% translate "Voltage" %}:</span>
             <span class="value">{{ voltage.voltage|floatformat:0 }} V</span>
           </div>
+          <div class="systemd-status">
+            {% if systemd_status %}
+              <ul>
+                {% for service, status in systemd_status.items %}
+                  <li class="systemd">
+                    <span class="service">{{ service }}</span>
+                    <span class="status">{{ status }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="success info">{% translate "No errors for the last 24 hours" %}</div>
+            {% endif %}
+          </div>
           <div class="errors">
             {% if error_logs %}
               <ul>
