@@ -19,23 +19,23 @@ This project adheres strictly to the Git Flow branching model. AI agents must fo
 
 ### Main Branch:
 
-    - The `master` branch always contains production-ready, stable code.
-    - Never commit directly to `master`.
-    - Do not use `git push --force` on the `master` branch.
-    - Do not merge branches into `master` without explicit approval.
+- The `master` branch always contains production-ready, stable code.
+- Never commit directly to `master`.
+- Do not use `git push --force` on the `master` branch.
+- Do not merge branches into `master` without explicit approval.
 
 ### Feature Branches:
 
-    - Create feature branches using the naming convention `<agent-name>/feature/<descriptive-name>` (e.g., `opencode/feature/add-user-authentication`).
-    - Use the [Conventional Commits](https://www.conventionalcommits.org) specification for commit messages (e.g., `feat:`, `fix:`, `docs:`).
-    - Ensure all local tests pass before committing.
-    - Use `git push --force-with-lease` if needed on your feature branch, but never on `master`.
+- Create feature branches using the naming convention `<agent-name>/feature/<issue-id>-<descriptive-name>` (e.g., `opencode/feature/ODIN-10-add-user-authentication`).
+- Use the [Conventional Commits](https://www.conventionalcommits.org) specification for commit messages (e.g., `feat:`, `fix:`, `docs:`).
+- Ensure all local tests pass before committing.
+- Use `git push --force-with-lease` if needed on your feature branch, but never on `master`.
 
 ### Pull Requests (PRs):
 
-    - Open a Pull Request for every completed feature branch.
-    - PRs must be reviewed and pass all CI checks before merging.
-    - The PR title should follow the Conventional Commits specification.
+- Open a Pull Request for every completed feature branch.
+- PRs must be reviewed and pass all CI checks before merging.
+- The PR title should follow the Conventional Commits specification.
 
 ## Development Commands
 
@@ -388,6 +388,7 @@ The project uses pre-commit hooks for code quality:
 - Ruff (linting and formatting)
 - Bandit (security analysis)
 - pyupgrade (Python 3.13+ syntax)
+- validate-pyproject (checks on pyproject.toml)
 - curlylint (HTML linting)
 
 ## Deployment
