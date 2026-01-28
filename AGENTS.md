@@ -13,6 +13,30 @@ It uses Django 5.2.7 with Django REST Framework, PostgreSQL, Redis, and modern P
 - Static files like images, CSS and JS in `./odin/static/`
 - Django templates in `./odin/templates/`
 
+## Git Workflow
+
+This project adheres strictly to the Git Flow branching model. AI agents must follow these guidelines:
+
+### Main Branch:
+
+    - The `master` branch always contains production-ready, stable code.
+    - Never commit directly to `master`.
+    - Do not use `git push --force` on the `master` branch.
+    - Do not merge branches into `master` without explicit approval.
+
+### Feature Branches:
+
+    - Create feature branches using the naming convention `<agent-name>/feature/<descriptive-name>` (e.g., `opencode/feature/add-user-authentication`).
+    - Use the [Conventional Commits](https://www.conventionalcommits.org) specification for commit messages (e.g., `feat:`, `fix:`, `docs:`).
+    - Ensure all local tests pass before committing.
+    - Use `git push --force-with-lease` if needed on your feature branch, but never on `master`.
+
+### Pull Requests (PRs):
+
+    - Open a Pull Request for every completed feature branch.
+    - PRs must be reviewed and pass all CI checks before merging.
+    - The PR title should follow the Conventional Commits specification.
+
 ## Development Commands
 
 ### Package Management
@@ -74,18 +98,6 @@ uv run pre-commit run
 uv run ruff check .                 # Lint
 uv run ruff format .                # Format
 uv run bandit -c pyproject.toml .   # Security analysis
-```
-
-### Database Operations
-
-```bash
-# Development
-make dump     # Backup database to odin.sql
-make restore  # Restore database from odin.sql
-
-# Django checks
-uv run manage.py makemigrations --dry-run --check --verbosity=3 --settings=odin.settings.sqlite
-uv run manage.py check --fail-level WARNING --settings=odin.settings.sqlite
 ```
 
 ## Language & Environment
