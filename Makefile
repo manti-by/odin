@@ -34,7 +34,7 @@ test:
 	uv run pytest -m "not views" --disable-warnings --ds=odin.settings.test odin/
 
 full-test:
-	uv run pytest --create-db --disable-warnings --durations=10 --ds=odin.settings.test odin/
+	uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/
 
 check:
 	git add .

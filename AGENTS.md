@@ -37,6 +37,14 @@ This project adheres strictly to the Git Flow branching model. AI agents must fo
 - PRs must be reviewed and pass all CI checks before merging.
 - The PR title should follow the Conventional Commits specification.
 
+## Linear Workflow
+
+- When starting implementation of any issue from `TODO`, move it to `In Progress` column.
+- When feature is completed and PR is created, move it to `In Review` column.
+- After approval, merge the feature branch into `master` and move the issue to `Done` column.
+- If the feature branch is not merged into `master`, move it back to `In Progress` column.
+- If the feature branch is closed without merging, move it to `Closed` column.
+
 ## Development Commands
 
 ### Package Management

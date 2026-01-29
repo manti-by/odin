@@ -208,7 +208,11 @@
                 {% for service, status in systemd_status.items %}
                   <li class="systemd">
                     <span class="service">{{ service }}</span>
-                    <span class="status">{{ status }}</span>
+                    {% if status.error %}
+                      <span class="error">{{ status.error }}</span>
+                    {% else %}
+                      <span class="status">{{ status.status }}</span>
+                    {% endif %}
                   </li>
                 {% endfor %}
               </ul>

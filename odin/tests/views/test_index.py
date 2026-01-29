@@ -12,11 +12,19 @@ from odin.tests.factories import SensorFactory, VoltageLogFactory, WeatherFactor
 @pytest.mark.django_db
 @pytest.mark.views
 class TestIndexView:
-    def test_index(self, client):
+    @patch("odin.apps.core.services.subprocess.run")
+    def test_index(self, mock_subprocess, client):
+        # Mock systemctl calls
+        mock_subprocess.return_value.stdout = b"active"
+
         response = client.get(reverse("index"), follow=True)
         assert response.status_code == status.HTTP_200_OK
 
-    def test_index_uses_cached_context(self, client):
+    @patch("odin.apps.core.services.subprocess.run")
+    def test_index_uses_cached_context(self, mock_subprocess, client):
+        # Mock systemctl calls
+        mock_subprocess.return_value.stdout = b"active"
+
         SensorFactory(is_active=True)
         VoltageLogFactory()
         WeatherFactory()

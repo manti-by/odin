@@ -15,7 +15,11 @@ from odin.tests.factories import SensorFactory, VoltageLogFactory, WeatherFactor
 
 @pytest.mark.django_db
 class TestIndexContextServices:
-    def test_build_index_context_returns_dict(self):
+    @patch("odin.apps.core.services.subprocess.run")
+    def test_build_index_context_returns_dict(self, mock_subprocess):
+        # Mock systemctl calls
+        mock_subprocess.return_value.stdout = b"active"
+
         SensorFactory(is_active=True)
         VoltageLogFactory()
         WeatherFactory()
@@ -27,6 +31,7 @@ class TestIndexContextServices:
         assert "sensors" in context
         assert "voltage" in context
         assert "error_logs" in context
+        assert "systemd_status" in context
 
     def test_set_and_get_cached_index_context(self):
         test_context = {"test_key": "test_value"}
@@ -41,7 +46,11 @@ class TestIndexContextServices:
         result = get_cached_index_context()
         assert result is None
 
-    def test_update_index_context_cache(self):
+    @patch("odin.apps.core.services.subprocess.run")
+    def test_update_index_context_cache(self, mock_subprocess):
+        # Mock systemctl calls
+        mock_subprocess.return_value.stdout = b"active"
+
         SensorFactory(is_active=True)
         VoltageLogFactory()
         WeatherFactory()

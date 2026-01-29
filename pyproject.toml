@@ -35,9 +35,6 @@ dev = [
     "uv-bump>=0.4.1",
 ]
 
-[tool.setuptools]
-py-modules = []
-
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_format = "%(levelname)s %(asctime)s %(message)s"
@@ -48,6 +45,7 @@ norecursedirs = '''
 .github
 .pytest_cache
 .ruff_cache
+.venv
 '''
 
 [tool.bandit]
