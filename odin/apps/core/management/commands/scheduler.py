@@ -18,4 +18,3 @@ class Command(BaseCommand):
             scheduler.start()
         except (KeyboardInterrupt, SystemExit):
             scheduler.shutdown()
-
