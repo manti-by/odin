@@ -1,14 +1,32 @@
+.home .voltage {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
 .home .voltage .body {
-  padding-top: 1rem;
+    padding-top: 1rem;
 }
+
+.home .voltage .label {
+    font-size: 1.5rem;
+    margin-right: 0.5rem;
+}
+
+.home .voltage .value {
+    font-size: 1.5rem;
+}
+
 .home .voltage .voltage-chart {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
 }
+
 .home .voltage .voltage-values {
-  display: flex;
-  justify-content: space-around;
-  font-size: 0.75rem;
-  color: #e0e0e0;
+    display: flex;
+    justify-content: space-around;
+    font-size: 0.75rem;
+    color: #e0e0e0;
 }

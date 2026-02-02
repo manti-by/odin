@@ -1,3 +1,16 @@
 .home .errors .body {
-  padding-top: 1rem;
+    padding-top: 1rem;
+}
+
+.home .systemd-status {
+    margin-bottom: 0.75rem;
+}
+
+.home .systemd-status .service {
+    display: inline-block;
+    min-width: 150px;
+}
+
+.home .systemd-status .error {
+    color: #f44336;
 }

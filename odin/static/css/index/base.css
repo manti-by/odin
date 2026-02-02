@@ -1,68 +1,52 @@
 .home .grid {
-  display: grid;
-  width: 100%;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-column-gap: 1.5rem;
-  grid-row-gap: 1.5rem;
-  padding-bottom: 2rem;
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-column-gap: 1.5rem;
+    grid-row-gap: 1.5rem;
+    padding-bottom: 2rem;
 }
 
 .home .tile {
-  min-height: 320px;
-  overflow: hidden;
-  border: 1px solid #3d3d3b;
-  background: #1a1a18;
+    min-height: 320px;
+    overflow: hidden;
+    border: 1px solid #3d3d3b;
+    background: #1a1a18;
 }
 
 .home .tile h2 {
-  font-weight: 500;
-  margin-bottom: 0;
-  padding: 0.75rem 1.5rem 0.75rem 1.5rem;
-  text-transform: uppercase;
-  background: #242b23;
+    font-weight: 500;
+    margin-bottom: 0;
+    padding: 0.75rem 1.5rem 0.75rem 1.5rem;
+    text-transform: uppercase;
+    background: #242b23;
 }
 
 .home .tile h2 a.graph {
-  float: right;
+    float: right;
 }
 
 .home .tile .body {
-  padding: 0 1.5rem 2rem 1.5rem;
+    padding: 0 1.5rem 2rem 1.5rem;
 }
 
 .home ul {
-  margin: 0;
-  padding: 0;
+    margin: 0;
+    padding: 0;
 }
 
 .home li {
-  list-style: none;
+    list-style: none;
 }
 
 .home ul a {
-  border-bottom: 3px solid transparent;
+    border-bottom: 3px solid transparent;
 }
 
 .home ul a:hover {
-  border-bottom-color: #495057;
+    border-bottom-color: #495057;
 }
 
 .home img.icon {
-  width: 100px;
-}
-
-.home .voltage {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.home .voltage .label {
-  font-size: 1.5rem;
-  margin-right: 0.5rem;
-}
-
-.home .voltage .value {
-  font-size: 1.5rem;
+    width: 100px;
 }
