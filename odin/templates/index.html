@@ -20,6 +20,7 @@
   <link href="{% static 'css/index/currency.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/errors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/sensors.css' %}" rel="stylesheet">
+  <link href="{% static 'css/index/voltage.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/weather.css' %}" rel="stylesheet">
   <link href="{% static 'css/responsive/mobile.css' %}" rel="stylesheet">
   <link href="{% static 'css/responsive/small-tablet.css' %}" rel="stylesheet">
@@ -181,12 +182,12 @@
         <h2>{% translate "Exchange Rates" %}</h2>
         <div class="body">
           {% if exchange_rates %}
+            <div class="date info">{{ exchange_rates.0.date|date:"d.m.Y" }}</div>
             <div class="rates">
-              {% for currency, rate in exchange_rates.items %}
+              {% for rate in exchange_rates %}
                 <div class="rate row">
-                  <div class="currency-code">{{ currency }}</div>
+                  <div class="currency-code">{{ rate.currency }}</div>
                   <div class="rate-value">{{ rate.rate_per_unit|currency_rate }} BYN</div>
-                  <div class="rate-date">{{ rate.date|date:"d.m" }}</div>
                 </div>
               {% endfor %}
             </div>

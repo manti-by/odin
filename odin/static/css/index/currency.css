@@ -1,15 +1,18 @@
 .home .currency .rates {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.5rem 0;
+  padding: .5rem 0;
+}
+
+.home .currency .date {
+  padding: 1rem 0 0 0;
 }
 
 .home .currency .rate {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.25rem 0;
+  padding: 0.5rem 0;
   border-bottom: 1px solid #333;
 }
 
@@ -27,7 +30,7 @@
   flex-grow: 1;
   text-align: right;
   font-size: 1.1rem;
-  padding: 0 1rem;
+  padding: 0 0 0 1rem;
 }
 
 .home .currency .rate-date {

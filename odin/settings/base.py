@@ -103,11 +103,12 @@ DATABASES = {
 # https://docs.djangoproject.com/en/5.0/ref/settings/#caches
 
 redis_host = os.getenv("REDIS_HOST", "localhost")
+redis_db = os.getenv("REDIS_DB", "0")
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{redis_host}:6379/0",
+        "LOCATION": f"redis://{redis_host}:6379/{redis_db}",
         "OPTIONS": {
             "MAX_ENTRIES": 5000,
             "CLIENT_CLASS": "django_redis.client.DefaultClient",

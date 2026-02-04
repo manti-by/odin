@@ -2,6 +2,7 @@ import logging
 import subprocess  # nosec
 from typing import Any
 
+from django.conf import settings
 from django.core.cache import cache
 
 from odin.apps.core.models import Log
@@ -24,7 +25,7 @@ def build_index_context() -> dict[str, Any]:
     weather = Weather.objects.current()
     sensors = Sensor.objects.active().visible().order_by("order")
     error_logs = Log.objects.errors_last_day()
-    exchange_rates = {r.currency: r for r in ExchangeRate.objects.current()}
+    exchange_rates = ExchangeRate.objects.current()
 
     return {
         "weather": weather,
@@ -52,7 +53,10 @@ def update_index_context_cache() -> dict:
     return context
 
 
-def systemd_status() -> dict[str, str]:
+def systemd_status() -> dict[str, dict]:
+    if settings.DEBUG:
+        return {"scheduler.service": {"status": "active"}, "worker.service": {"error": "DEBUG error message"}}
+
     result = {}
     for service in ["scheduler.service", "worker.service"]:
         try:
