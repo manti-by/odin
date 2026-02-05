@@ -4,8 +4,8 @@ import logging
 from typing import Any
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -29,22 +29,23 @@ class Command(BaseCommand):
             logger.error("UNET_USERNAME or UNET_PASSWORD not set in settings")
             return
 
-        driver: WebDriver | None = None
-
         try:
-            driver = webdriver.Chrome()
+            chrome_options = Options()
+            chrome_options.add_argument("--headless=new")  # Use "--headless=new" for Chrome 109+
+            chrome_options.add_argument("--window-size=1920,1080")  # Set a consistent viewport size
 
+            driver = webdriver.Chrome(options=chrome_options)
             driver.get("https://my.unet.by/login")
 
-            WebDriverWait(driver, 10).until(expected_conditions.presence_of_element_located((By.ID, "username")))
+            WebDriverWait(driver, 10).until(expected_conditions.presence_of_element_located((By.NAME, "username")))
 
-            username_field = driver.find_element(By.ID, "username")
+            username_field = driver.find_element(By.NAME, "username")
             username_field.send_keys(username)
 
-            password_field = driver.find_element(By.ID, "password")
+            password_field = driver.find_element(By.NAME, "password")
             password_field.send_keys(password)
 
-            login_button = driver.find_element(By.XPATH, "//button[@type='submit']")
+            login_button = driver.find_element(By.XPATH, "//input[@type='submit']")
             login_button.click()
 
             WebDriverWait(driver, 10).until(
@@ -63,8 +64,7 @@ class Command(BaseCommand):
             else:
                 logger.warning(f"Unexpected data-units format: {data_units}")
 
+            driver.quit()
+
         except Exception as e:
-            logger.exception("Error fetching traffic data: %s", e)
-        finally:
-            if driver:
-                driver.quit()
+            logger.exception(f"Error fetching traffic data: {e}")

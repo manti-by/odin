@@ -4,25 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Traffic',
+            name="Traffic",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('value', models.DecimalField(decimal_places=2, max_digits=10, verbose_name='Value')),
-                ('unit', models.CharField(max_length=16, verbose_name='Unit')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Created at')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("value", models.DecimalField(decimal_places=2, max_digits=10, verbose_name="Value")),
+                ("unit", models.CharField(max_length=16, verbose_name="Unit")),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True, verbose_name="Created at")),
             ],
             options={
-                'verbose_name': 'traffic',
-                'verbose_name_plural': 'traffic',
-                'ordering': ('-created_at',),
+                "verbose_name": "traffic",
+                "verbose_name_plural": "traffic",
+                "ordering": ("-created_at",),
             },
         ),
     ]

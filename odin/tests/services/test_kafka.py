@@ -6,27 +6,27 @@ from odin.apps.core.kafka import KafkaService
 
 
 class TestKafkaService:
-    def test_get_producer_singleton(self):
+    @patch("odin.apps.core.kafka.KafkaProducer")
+    def test_get_producer_singleton(self, mock_producer_class):
         """Test that get_producer returns the same instance."""
-        with patch("odin.apps.core.kafka.KafkaProducer") as mock_producer_class:
-            producer1 = KafkaService.get_producer()
-            producer2 = KafkaService.get_producer()
+        producer1 = KafkaService.get_producer()
+        producer2 = KafkaService.get_producer()
 
-            assert producer1 is producer2
-            assert mock_producer_class.call_count == 1
+        assert producer1 is producer2
+        assert mock_producer_class.call_count == 1
 
-    def test_get_producer_initializes_correctly(self):
+    @patch("odin.apps.core.kafka.KafkaProducer")
+    def test_get_producer_initializes_correctly(self, mock_producer_class):
         """Test that producer is initialized with correct settings."""
-        with patch("odin.apps.core.kafka.KafkaProducer") as mock_producer_class:
-            KafkaService._producer = None
-            KafkaService.get_producer()
+        KafkaService._producer = None
+        KafkaService.get_producer()
 
-            mock_producer_class.assert_called_once()
-            call_kwargs = mock_producer_class.call_args.kwargs
-            assert "bootstrap_servers" in call_kwargs
-            assert "value_serializer" in call_kwargs
-            assert call_kwargs["acks"] == "all"
-            assert call_kwargs["retries"] == 3
+        mock_producer_class.assert_called_once()
+        call_kwargs = mock_producer_class.call_args.kwargs
+        assert "bootstrap_servers" in call_kwargs
+        assert "value_serializer" in call_kwargs
+        assert call_kwargs["acks"] == "all"
+        assert call_kwargs["retries"] == 3
 
     @patch("odin.apps.core.kafka.KafkaService.get_producer")
     def test_send_message_success(self, mock_get_producer):
