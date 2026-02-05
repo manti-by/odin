@@ -196,16 +196,6 @@
           {% endif %}
         </div>
       </div>
-      <div class="tile traffic">
-        <h2>{% translate "Traffic" %}</h2>
-        <div class="body">
-          {% if traffic %}
-            <div class="traffic-value">{{ traffic.value }} {{ traffic.unit }}</div>
-          {% else %}
-            <div>{% translate "No Data" %}</div>
-          {% endif %}
-        </div>
-      </div>
       <div class="tile errors">
         <h2>{% translate "Other" %}</h2>
         <div class="body">
@@ -213,6 +203,9 @@
             <span class="label">{% translate "Voltage" %}:</span>
             <span class="value">{{ voltage.voltage|floatformat:0 }} V</span>
           </div>
+          {% if traffic %}
+            <div class="traffic">{% translate "Remaining traffic" %}: {{ traffic.value }} {{ traffic.unit }}</div>
+          {% endif %}
           <div class="systemd-status">
             {% if systemd_status %}
               <ul>

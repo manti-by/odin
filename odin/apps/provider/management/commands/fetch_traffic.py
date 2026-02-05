@@ -59,7 +59,7 @@ class Command(BaseCommand):
 
             if data_units and ";" in data_units:
                 unit, value = data_units.split(";", 1)
-                traffic = Traffic.objects.create(value=value, unit=unit.strip())
+                traffic = Traffic.objects.create(value=value.strip(), unit=unit.strip())
                 logger.info(f"Saved traffic data: {traffic}")
             else:
                 logger.warning(f"Unexpected data-units format: {data_units}")
