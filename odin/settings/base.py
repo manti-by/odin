@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "odin.apps.electricity",
     "odin.apps.music",
     "odin.apps.weather",
+    "odin.apps.provider",
     "odin.api",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -76,6 +77,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "odin.apps.provider.context_processors.traffic",
             ],
         },
     },
@@ -262,3 +264,6 @@ KAFKA_RELAY_TOPIC = os.getenv("KAFKA_RELAY_TOPIC", "coruscant")
 FIREBASE_CLOUD_MESSAGING_PUBLIC_KEY = os.getenv("FIREBASE_CLOUD_MESSAGING_PUBLIC_KEY", "")
 FIREBASE_CLOUD_MESSAGING_PRIVATE_KEY = os.getenv("FIREBASE_CLOUD_MESSAGING_PRIVATE_KEY", "")
 FIREBASE_CLOUD_MESSAGING_ADMIN_EMAIL = os.getenv("FIREBASE_CLOUD_MESSAGING_ADMIN_EMAIL", "")
+
+UNET_USERNAME = os.getenv("UNET_USERNAME", "")
+UNET_PASSWORD = os.getenv("UNET_PASSWORD", "")

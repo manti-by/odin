@@ -20,6 +20,7 @@ dependencies = [
     "pytz==2025.2",
     "pywebpush>=2.2.0",
     "requests==2.32.5",
+    "selenium==4.27.1",
     "setuptools>=80.9.0",
     "tinytag==2.2.0",
     "uvicorn[standard]==0.38.0",
