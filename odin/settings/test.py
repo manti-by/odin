@@ -1,5 +1,7 @@
 from .base import *  # noqa
 
+DEBUG = True
+
 ALLOWED_HOSTS = ("*",)
 
 SECRET_KEY = "test-secret-key-for-testing-only"
