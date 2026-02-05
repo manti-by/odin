@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 
-from odin.tests.factories import SensorFactory, VoltageLogFactory, WeatherFactory
+from odin.tests.factories import SensorFactory, TrafficFactory, VoltageLogFactory, WeatherFactory
 
 
 @pytest.mark.django_db
@@ -28,6 +28,7 @@ class TestIndexView:
         SensorFactory(is_active=True)
         VoltageLogFactory()
         WeatherFactory()
+        TrafficFactory()
 
         with patch.object(cache, "get") as mock_get:
             mock_get.return_value = {
@@ -39,6 +40,7 @@ class TestIndexView:
                 "voltage": None,
                 "voltage_chart": "",
                 "voltage_values": [],
+                "traffic": None,
             }
             response = client.get(reverse("index"), follow=True)
             assert response.status_code == 200

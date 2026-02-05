@@ -10,7 +10,7 @@ from odin.apps.core.services import (
     set_cached_index_context,
     update_index_context_cache,
 )
-from odin.tests.factories import SensorFactory, VoltageLogFactory, WeatherFactory
+from odin.tests.factories import SensorFactory, TrafficFactory, VoltageLogFactory, WeatherFactory
 
 
 @pytest.mark.django_db
@@ -30,6 +30,7 @@ class TestIndexContextServices:
         assert "weather" in context
         assert "sensors" in context
         assert "voltage" in context
+        assert "traffic" in context
         assert "error_logs" in context
         assert "systemd_status" in context
 

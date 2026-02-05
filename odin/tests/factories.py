@@ -10,6 +10,7 @@ from odin.apps.electricity.models import VoltageLog
 from odin.apps.relays.models import Relay
 from odin.apps.sensors.models import Sensor, SensorLog, SensorType
 from odin.apps.weather.models import Weather
+from odin.apps.provider.models import Traffic
 
 
 DEFAULT_USER_PASSWORD = "pa55word"  # noqa
@@ -117,3 +118,11 @@ class DeviceFactory(DjangoModelFactory):
 
     class Meta:
         model = Device
+
+
+class TrafficFactory(DjangoModelFactory):
+    value = FuzzyDecimal(low=0, high=1000, precision=3)
+    unit = "GB"
+
+    class Meta:
+        model = Traffic
