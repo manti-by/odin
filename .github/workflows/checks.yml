@@ -2,18 +2,15 @@ name: Checks
 
 on:
   push:
-    branches:
-      - master
+  pull_request:
 
 jobs:
   checks:
-
     name: Run Django checks
 
     runs-on: ubuntu-latest
 
     services:
-
       postgres:
         image: postgres:18
         env:
