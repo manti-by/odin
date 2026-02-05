@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 
 from odin.apps.core.models import Device
 from odin.apps.electricity.models import VoltageLog
+from odin.apps.provider.models import Traffic
 from odin.apps.relays.models import Relay
 from odin.apps.sensors.models import Sensor, SensorLog, SensorType
 from odin.apps.weather.models import Weather
@@ -101,6 +102,14 @@ class WeatherFactory(DjangoModelFactory):
 
     class Meta:
         model = Weather
+
+
+class TrafficFactory(DjangoModelFactory):
+    value = FuzzyDecimal(low=0, high=1000, precision=2)
+    unit = factory.Faker("word", ext_word_list=["GB", "MB", "KB", "TB"])
+
+    class Meta:
+        model = Traffic
 
 
 class DeviceFactory(DjangoModelFactory):
