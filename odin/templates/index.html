@@ -203,6 +203,12 @@
             <span class="label">{% translate "Voltage" %}:</span>
             <span class="value">{{ voltage.voltage|floatformat:0 }} V</span>
           </div>
+          {% if traffic %}
+            <div class="traffic">
+              <span class="label">{% translate "Traffic" %}:</span>
+              <span class="value">{{ traffic.value|format_decimal }} {{ traffic.unit }}</span>
+            </div>
+          {% endif %}
           <div class="systemd-status">
             {% if systemd_status %}
               <ul>
