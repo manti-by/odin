@@ -26,7 +26,7 @@ This project adheres strictly to the Git Flow branching model. AI agents must fo
 
 ### Feature Branches:
 
-- Create feature branches using the naming convention `<agent-name>/feature/<issue-id>-<descriptive-name>` (e.g., `opencode/feature/ODIN-10-add-user-authentication`).
+- Create feature branches using the naming convention `<agent-name>/feature/<issue-id>-<descriptive-name>`, where `<agent-name>` can be `opencode`, `cursor`, `copilot`, etc.
 - Use the [Conventional Commits](https://www.conventionalcommits.org) specification for commit messages (e.g., `feat:`, `fix:`, `docs:`).
 - Ensure all local tests pass before committing.
 - Use `git push --force-with-lease` if needed on your feature branch, but never on `master`.
@@ -118,6 +118,7 @@ uv run bandit -c pyproject.toml .   # Security analysis
 - Follow PEP 257 for docstrings (simple summary line plus detailed explanation)
 - Use structural pattern matching (match/case) for complex conditionals
 - Prefer EAFP (try/except) over LBYL (if checks) for Python idioms
+- Prefer round brackets instead of square brackets where it possible (tuples instead of lists)
 
 ## Django Framework
 
