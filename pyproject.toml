@@ -12,7 +12,7 @@ dependencies = [
     "django-rq==3.2.1",
     "djangorestframework==3.16.1",
     "gunicorn==23.0.0",
-    "ipython>=9.9.0",
+    "ipython>=9.10.0",
     "kafka-python>=2.3.0",
     "pillow>=12.1.0",
     "pre-commit>=4.5.1",
@@ -20,19 +20,19 @@ dependencies = [
     "pytz==2025.2",
     "pywebpush>=2.2.0",
     "requests==2.32.5",
-    "setuptools>=80.9.0",
+    "setuptools>=80.10.2",
     "tinytag==2.2.0",
     "uvicorn[standard]==0.38.0",
 ]
 
 [dependency-groups]
 dev = [
-    "debugpy>=1.8.19",
+    "debugpy>=1.8.20",
     "pytest>=9.0.2",
     "pytest-django>=4.11.1",
     "pytest-factoryboy>=2.8.1",
-    "ty>=0.0.12",
-    "uv-bump>=0.4.1",
+    "ty>=0.0.15",
+    "uv-bump>=0.4.2",
 ]
 
 [tool.pytest.ini_options]
