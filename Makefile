@@ -62,3 +62,7 @@ restore:
 	psql -h localhost -U odin -d postgres -c "DROP DATABASE odin;"
 	psql -h localhost -U odin -d postgres -c "CREATE DATABASE odin;"
 	psql -h localhost -U odin -d odin < odin.sql
+
+agent-instance:
+	git worktree add $(CURDIR)-$(NAME)
+	cp .env $(CURDIR)-$(NAME)/.env
