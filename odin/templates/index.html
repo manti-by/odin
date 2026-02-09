@@ -18,10 +18,9 @@
   <link href="{% static 'css/index/base.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/boiler-room.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/currency.css' %}" rel="stylesheet">
-  <link href="{% static 'css/index/errors.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/sensors.css' %}" rel="stylesheet">
-  <link href="{% static 'css/index/voltage.css' %}" rel="stylesheet">
   <link href="{% static 'css/index/weather.css' %}" rel="stylesheet">
+  <link href="{% static 'css/index/misc.css' %}" rel="stylesheet">
   <link href="{% static 'css/responsive/mobile.css' %}" rel="stylesheet">
   <link href="{% static 'css/responsive/small-tablet.css' %}" rel="stylesheet">
   <link href="{% static 'css/responsive/tablet.css' %}" rel="stylesheet">
@@ -199,13 +198,16 @@
       <div class="tile errors">
         <h2>{% translate "Other" %}</h2>
         <div class="body">
+          {% if traffic %}
+            <div class="traffic">
+              <span class="label">{% translate "traffic" %}</span>
+              <span class="value">{{ traffic.value|floatformat:0 }} {{ traffic.unit }}</span>
+            </div>
+          {% endif %}
           <div class="voltage">
-            <span class="label">{% translate "Voltage" %}:</span>
+            <span class="label">{% translate "Voltage" %}</span>
             <span class="value">{{ voltage.voltage|floatformat:0 }} V</span>
           </div>
-          {% if traffic %}
-            <div class="traffic">{% translate "Remaining traffic" %}: {{ traffic.value }} {{ traffic.unit }}</div>
-          {% endif %}
           <div class="systemd-status">
             {% if systemd_status %}
               <ul>

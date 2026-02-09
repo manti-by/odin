@@ -37,3 +37,8 @@ def schedule_update_index_context():
 @scheduler.scheduled_job("interval", hours=4, id="update_exchange_rates")
 def schedule_update_exchange_rates():
     call_command("update_exchange_rates")
+
+
+@scheduler.scheduled_job("interval", minutes=15, id="fetch_traffic")
+def schedule_fetch_traffic():
+    call_command("fetch_traffic")

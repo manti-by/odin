@@ -36,8 +36,9 @@ class Command(BaseCommand):
 
         try:
             chrome_options = Options()
-            chrome_options.add_argument("--headless=new")  # Use "--headless=new" for Chrome 109+
-            chrome_options.add_argument("--window-size=1920,1080")  # Set a consistent viewport size
+            chrome_options.add_argument("--headless=new")
+            chrome_options.add_argument("--disable-gpu")
+            chrome_options.add_argument("--window-size=1920,1080")
 
             driver = webdriver.Chrome(options=chrome_options)
             driver.get("https://my.unet.by/login")

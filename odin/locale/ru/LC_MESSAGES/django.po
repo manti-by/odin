@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-23 18:15+0300\n"
+"POT-Creation-Date: 2026-02-09 21:42+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,7 +33,7 @@ msgid "Pressure"
 msgstr "Давление"
 
 #: odin/api/v1/core/serializers.py:25 odin/apps/electricity/models.py:18
-#: odin/templates/index.html:202
+#: odin/templates/index.html:208
 msgid "Voltage"
 msgstr "Напряжение"
 
@@ -79,7 +79,8 @@ msgid "Is admin"
 msgstr "Админ"
 
 #: odin/apps/core/models.py:42 odin/apps/electricity/models.py:19
-#: odin/apps/relays/models.py:55 odin/apps/sensors/models.py:71
+#: odin/apps/provider/models.py:21 odin/apps/relays/models.py:55
+#: odin/apps/sensors/models.py:71
 msgid "Created at"
 msgstr "Создан"
 
@@ -153,11 +154,31 @@ msgstr "Альбом"
 msgid "music"
 msgstr "музыка"
 
-#: odin/apps/relays/admin.py:39
+#: odin/apps/provider/apps.py:9
+msgid "provider"
+msgstr "провайдер"
+
+#: odin/apps/provider/models.py:19
+msgid "Value"
+msgstr "Значение"
+
+#: odin/apps/provider/models.py:20
+msgid "Unit"
+msgstr "Единица"
+
+#: odin/apps/provider/models.py:26 odin/apps/provider/models.py:27
+msgid "traffic"
+msgstr "трафик"
+
+#: odin/apps/relays/admin.py:39 odin/apps/sensors/models.py:77
+msgid "sensor"
+msgstr "датчик"
+
+#: odin/apps/relays/admin.py:47
 msgid "schedule"
 msgstr "расписание"
 
-#: odin/apps/relays/admin.py:47
+#: odin/apps/relays/admin.py:53
 msgid "state"
 msgstr "состояние"
 
@@ -177,11 +198,13 @@ msgstr "Сервопривод"
 msgid "Valve"
 msgstr "Клапан"
 
-#: odin/apps/relays/models.py:22
+#: odin/apps/relays/models.py:22 odin/templates/admin/schedule.html:21
+#: odin/templates/admin/schedule.html:54
 msgid "ON"
 msgstr ""
 
-#: odin/apps/relays/models.py:23
+#: odin/apps/relays/models.py:23 odin/templates/admin/schedule.html:24
+#: odin/templates/admin/schedule.html:55
 msgid "OFF"
 msgstr ""
 
@@ -241,10 +264,6 @@ msgstr "Калибровка температуры"
 msgid "Humidity offset"
 msgstr "Калибровка влажности"
 
-#: odin/apps/sensors/models.py:77
-msgid "sensor"
-msgstr "датчик"
-
 #: odin/apps/sensors/models.py:90
 msgid "Is Alive"
 msgstr "Живой"
@@ -302,11 +321,11 @@ msgstr "западный"
 msgid "north-west"
 msgstr "северо-западный"
 
-#: odin/settings/base.py:157
+#: odin/settings/base.py:159
 msgid "Russian"
 msgstr "Русский"
 
-#: odin/settings/base.py:240 odin/settings/base.py:248
+#: odin/settings/base.py:242 odin/settings/base.py:250
 msgid "Time"
 msgstr "Время"
 
@@ -350,23 +369,28 @@ msgstr "Удалено:"
 msgid "n/a"
 msgstr "н/а"
 
-#: odin/templates/admin/schedule.html:9
+#: odin/templates/admin/schedule.html:9 odin/templates/admin/schedule.html:44
 msgid "Start Time"
 msgstr "Время начала"
 
-#: odin/templates/admin/schedule.html:13
+#: odin/templates/admin/schedule.html:13 odin/templates/admin/schedule.html:48
 msgid "End Time"
 msgstr "Время окончания"
 
-#: odin/templates/admin/schedule.html:17 odin/templates/modal.html:12
+#: odin/templates/admin/schedule.html:18 odin/templates/admin/schedule.html:52
+msgid "Target State"
+msgstr "Целевое Состояние"
+
+#: odin/templates/admin/schedule.html:31 odin/templates/admin/schedule.html:59
+#: odin/templates/modal.html:12
 msgid "Temperature"
 msgstr "Температура"
 
-#: odin/templates/admin/schedule.html:21
+#: odin/templates/admin/schedule.html:36 odin/templates/admin/schedule.html:63
 msgid "Remove"
 msgstr "Удалить"
 
-#: odin/templates/admin/schedule.html:28
+#: odin/templates/admin/schedule.html:70
 msgid "Add Period"
 msgstr "Добавить период"
 
@@ -443,7 +467,7 @@ msgstr "Нет данных"
 msgid "Exchange Rates"
 msgstr "Курсы валют"
 
-#: odin/templates/index.html:216
+#: odin/templates/index.html:226 odin/templates/index.html:240
 msgid "No errors for the last 24 hours"
 msgstr "За последние 24 часа ошибок не обнаружено."
 
@@ -458,9 +482,3 @@ msgstr "Закрыть"
 #: odin/templates/modal.html:16
 msgid "Send"
 msgstr "Отправить"
-
-#~ msgid "Days"
-#~ msgstr "Дни недели"
-
-#~ msgid "Leave unchecked to apply to all days"
-#~ msgstr "Оставьте не отмеченным, чтобы применить ко всем дням."

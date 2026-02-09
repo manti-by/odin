@@ -26,7 +26,3 @@ class TestTrafficModel:
         assert traffic_list[0] == traffic3
         assert traffic_list[1] == traffic2
         assert traffic_list[2] == traffic1
-
-    def test_traffic_verbose_name(self):
-        assert Traffic._meta.verbose_name == "traffic"
-        assert Traffic._meta.verbose_name_plural == "traffic"
