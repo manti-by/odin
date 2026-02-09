@@ -6,9 +6,9 @@ After=network.target
 User=manti
 Group=manti
 Restart=always
-EnvironmentFile=/home/manti/www/odin/src/.env
-WorkingDirectory=/home/manti/www/odin/src
-ExecStart=/home/manti/www/odin/src/.venv/bin/gunicorn --timeout 60 --log-level warning --access-logfile /var/log/odin/gunicorn-access.log --error-logfile /var/log/odin/gunicorn-error.log --pythonpath /home/manti/www/odin/src --bind 127.0.0.1:8000 --workers 4 --worker-class uvicorn.workers.UvicornWorker odin.asgi:application
+EnvironmentFile=/home/manti/www/odin/.env
+WorkingDirectory=/home/manti/www/odin
+ExecStart=/home/manti/www/odin/.venv/bin/gunicorn --timeout 60 --log-level warning --access-logfile /var/log/odin/gunicorn-access.log --error-logfile /var/log/odin/gunicorn-error.log --pythonpath /home/manti/www/odin --bind 127.0.0.1:8000 --workers 4 --worker-class uvicorn.workers.UvicornWorker odin.asgi:application
 
 [Install]
 WantedBy=multi-user.target
