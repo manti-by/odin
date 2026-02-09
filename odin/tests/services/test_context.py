@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
@@ -10,6 +11,7 @@ from odin.apps.core.services import (
     set_cached_index_context,
     update_index_context_cache,
 )
+from odin.apps.provider.models import Traffic
 from odin.tests.factories import SensorFactory, VoltageLogFactory, WeatherFactory
 
 
@@ -58,3 +60,12 @@ class TestIndexContextServices:
         with patch.object(cache, "set") as mock_set:
             update_index_context_cache()
             mock_set.assert_called_once()
+
+    def test_traffic_included_in_index_context(self):
+        traffic = Traffic.objects.create(value=Decimal("75.50"), unit="GB")
+        context = build_index_context()
+        assert context["traffic"] == traffic
+
+    def test_traffic_none_when_no_data(self):
+        context = build_index_context()
+        assert context["traffic"] is None

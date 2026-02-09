@@ -8,6 +8,7 @@ from django.core.cache import cache
 from odin.apps.core.models import Log
 from odin.apps.currency.models import ExchangeRate
 from odin.apps.electricity.models import VoltageLog
+from odin.apps.provider.models import Traffic
 from odin.apps.sensors.models import Sensor
 from odin.apps.weather.models import Weather
 
@@ -26,6 +27,7 @@ def build_index_context() -> dict[str, Any]:
     sensors = Sensor.objects.active().visible().order_by("order")
     error_logs = Log.objects.errors_last_day()
     exchange_rates = ExchangeRate.objects.current()
+    traffic = Traffic.objects.first()
 
     return {
         "weather": weather,
@@ -36,6 +38,7 @@ def build_index_context() -> dict[str, Any]:
         "voltage": voltage,
         "exchange_rates": exchange_rates,
         "systemd_status": systemd_status(),
+        "traffic": traffic,
     }
 
 
