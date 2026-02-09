@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import logging
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from selenium import webdriver
+from selenium.common import WebDriverException
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
@@ -28,6 +31,8 @@ class Command(BaseCommand):
         if not username or not password:
             logger.error("UNET_USERNAME or UNET_PASSWORD not set in settings")
             return
+
+        driver: WebDriver | None = None
 
         try:
             chrome_options = Options()
@@ -59,12 +64,17 @@ class Command(BaseCommand):
 
             if data_units and ";" in data_units:
                 unit, value = data_units.split(";", 1)
-                traffic = Traffic.objects.create(value=value.strip(), unit=unit.strip())
+                traffic = Traffic.objects.create(value=Decimal(value.strip()), unit=unit.strip())
                 logger.info(f"Saved traffic data: {traffic}")
             else:
                 logger.warning(f"Unexpected data-units format: {data_units}")
 
-            driver.quit()
+        except WebDriverException as e:
+            logger.error(f"An error occurred in Selenium driver: {e}")
 
-        except Exception as e:
-            logger.exception(f"Error fetching traffic data: {e}")
+        except InvalidOperation as e:
+            logger.error(f"Invalid traffic value format: {e}")
+
+        finally:
+            if driver:
+                driver.quit()

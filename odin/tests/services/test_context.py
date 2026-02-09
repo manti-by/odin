@@ -61,11 +61,11 @@ class TestIndexContextServices:
             update_index_context_cache()
             mock_set.assert_called_once()
 
-        def test_traffic_included_in_index_context(self):
-            traffic = Traffic.objects.create(value=Decimal("75.50"), unit="GB")
-            context = build_index_context()
-            assert context["traffic"] == traffic
+    def test_traffic_included_in_index_context(self):
+        traffic = Traffic.objects.create(value=Decimal("75.50"), unit="GB")
+        context = build_index_context()
+        assert context["traffic"] == traffic
 
-        def test_traffic_none_when_no_data(self):
-            context = build_index_context()
-            assert context["traffic"] is None
+    def test_traffic_none_when_no_data(self):
+        context = build_index_context()
+        assert context["traffic"] is None

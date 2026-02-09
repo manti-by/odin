@@ -5,16 +5,24 @@
 [
   {
     "adapter": "Debugpy",
-    "label": "Run pytests",
+    "label": "Run all tests",
+    "request": "launch",
+    "command": "uv",
+    "module": "pytest",
+    "command_arguments": ["run", "pytest"],
+    "args": ["$ZED_WORKTREE_ROOT"],
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "adapter": "Debugpy",
+    "label": "Run single test",
     "request": "launch",
     "command": "uv",
     "module": "pytest",
     "command_arguments": [
       "run",
       "pytest",
-      "--create-db",
-      "--disable-warnings",
-      "--ds=odin.settings.test"
+      "odin/tests/commands/test_fetch_traffic.py::TestFetchTrafficCommand::test_fetch_traffic_creates_record"
     ],
     "args": ["$ZED_WORKTREE_ROOT"],
     "cwd": "$ZED_WORKTREE_ROOT"
