@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0003_device_is_admin'),
+        ("core", "0003_device_is_admin"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='log',
-            name='stacktrace',
+            model_name="log",
+            name="stacktrace",
             field=models.JSONField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='log',
-            name='variables',
+            model_name="log",
+            name="variables",
             field=models.JSONField(blank=True, null=True),
         ),
     ]
