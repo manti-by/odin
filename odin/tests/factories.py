@@ -42,6 +42,8 @@ class LogDataFactory(DictFactory):
     filename = factory.Faker("word")
     levelname = factory.Faker("word")
     asctime = factory.Faker("date_time")
+    stacktrace = None
+    variables = None
 
 
 class RelayFactory(DjangoModelFactory):

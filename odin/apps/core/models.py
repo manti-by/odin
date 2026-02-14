@@ -72,6 +72,8 @@ class Log(models.Model):
     filename = models.CharField(max_length=100)
     levelname = models.CharField(max_length=100)
     asctime = models.DateTimeField()
+    stacktrace = models.JSONField(null=True, blank=True)
+    variables = models.JSONField(null=True, blank=True)
 
     objects = LogManager()
 

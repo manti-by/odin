@@ -16,6 +16,8 @@ class LogSerializer(serializers.Serializer):
     filename = serializers.CharField(max_length=100)
     levelname = serializers.CharField(max_length=100)
     asctime = serializers.DateTimeField()
+    stacktrace = serializers.JSONField(allow_null=True, required=False)
+    variables = serializers.JSONField(allow_null=True, required=False)
 
 
 class MetricChoices(TextChoices):
