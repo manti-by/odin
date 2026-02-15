@@ -284,3 +284,43 @@ class TestRelaysForceState:
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
             assert self.relay.target_state == RelayState.ON
+
+
+@pytest.mark.django_db
+class TestRelaysRefreshStateFromKafka:
+    def setup_method(self):
+        self.relay: Relay = RelayFactory(type=RelayType.PUMP)
+
+    @patch("odin.apps.core.kafka.KafkaService.get_relay_state_from_kafka")
+    def test_relays__refresh_state_from_kafka_updates_context(self, mock_get_state):
+        """Test that refresh_state_from_kafka updates context with state from Kafka."""
+        mock_get_state.return_value = "ON"
+
+        state = self.relay.refresh_state_from_kafka()
+
+        assert state == "ON"
+        assert self.relay.context["state"] == "ON"
+        self.relay.refresh_from_db()
+        assert self.relay.context["state"] == "ON"
+        mock_get_state.assert_called_once_with(self.relay.relay_id)
+
+    @patch("odin.apps.core.kafka.KafkaService.get_relay_state_from_kafka")
+    def test_relays__refresh_state_from_kafka_raises_error_when_not_found(self, mock_get_state):
+        """Test that refresh_state_from_kafka raises RelayStateError when state not found."""
+        from odin.apps.relays.models import RelayStateError
+
+        mock_get_state.return_value = None
+
+        with pytest.raises(RelayStateError) as exc_info:
+            self.relay.refresh_state_from_kafka()
+
+        assert f"Failed to get state from Kafka for relay {self.relay.relay_id}" in str(exc_info.value)
+
+    @patch("odin.apps.core.kafka.KafkaService.get_relay_state_from_kafka")
+    def test_relays__refresh_state_from_kafka_returns_state_value(self, mock_get_state):
+        """Test that refresh_state_from_kafka returns the state value."""
+        mock_get_state.return_value = "OFF"
+
+        state = self.relay.refresh_state_from_kafka()
+
+        assert state == "OFF"
