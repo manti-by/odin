@@ -20,9 +20,11 @@ dependencies = [
     "pytz==2025.2",
     "pywebpush==2.2.0",
     "requests==2.32.5",
+    "ruff>=0.15.2",
     "selenium==4.40.0",
-    "setuptools>=80.10.2",
+    "setuptools>=82.0.0",
     "tinytag==2.2.0",
+    "ty>=0.0.17",
     "uvicorn[standard]==0.38.0",
 ]
 
@@ -30,9 +32,9 @@ dependencies = [
 dev = [
     "debugpy>=1.8.20",
     "pytest>=9.0.2",
-    "pytest-django>=4.11.1",
+    "pytest-django>=4.12.0",
     "pytest-factoryboy>=2.8.1",
-    "ty>=0.0.15",
+    "ty>=0.0.17",
     "uv-bump>=0.4.2",
 ]
 
