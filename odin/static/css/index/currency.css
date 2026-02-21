@@ -37,3 +37,13 @@
   font-size: 0.85rem;
   color: #666;
 }
+
+.home .currency .trend.up {
+  color: green;
+  margin-left: 0.5rem;
+}
+
+.home .currency .trend.down {
+  color: red;
+  margin-left: 0.5rem;
+}

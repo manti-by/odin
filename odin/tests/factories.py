@@ -6,6 +6,7 @@ from factory.fuzzy import FuzzyDecimal
 from django.contrib.auth.models import User
 
 from odin.apps.core.models import Device
+from odin.apps.currency.models import Currency, ExchangeRate
 from odin.apps.electricity.models import VoltageLog
 from odin.apps.relays.models import Relay
 from odin.apps.sensors.models import Sensor, SensorLog, SensorType
@@ -119,3 +120,13 @@ class DeviceFactory(DjangoModelFactory):
 
     class Meta:
         model = Device
+
+
+class ExchangeRateFactory(DjangoModelFactory):
+    currency = factory.fuzzy.FuzzyChoice(Currency.values)
+    rate = FuzzyDecimal(low=1, high=100, precision=4)
+    scale = 1
+    date = factory.Faker("date")
+
+    class Meta:
+        model = ExchangeRate
