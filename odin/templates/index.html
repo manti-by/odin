@@ -193,6 +193,8 @@
                         <span class="trend up">&#8593;</span>
                       {% elif exchange_rates_trends|get_item:curr < 0 %}
                         <span class="trend down">&#8595;</span>
+                      {% else %}
+                        <span class="trend">-</span>
                       {% endif %}
                     {% endwith %}
                   </div>
