@@ -83,3 +83,15 @@ class Log(models.Model):
 
     def __str__(self):
         return f"Log at {self.asctime}"
+
+
+class Auth(models.Model):
+    token = models.CharField(max_length=64, unique=True, verbose_name=_("Token"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+
+    class Meta:
+        verbose_name = _("auth")
+        verbose_name_plural = _("auth")
+
+    def __str__(self):
+        return f"Auth ({self.token[:8]}...)"
