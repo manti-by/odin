@@ -5,7 +5,7 @@ from factory.fuzzy import FuzzyDecimal
 
 from django.contrib.auth.models import User
 
-from odin.apps.core.models import Device
+from odin.apps.core.models import Auth, Device
 from odin.apps.currency.models import Currency, ExchangeRate
 from odin.apps.electricity.models import VoltageLog
 from odin.apps.relays.models import Relay
@@ -130,3 +130,10 @@ class ExchangeRateFactory(DjangoModelFactory):
 
     class Meta:
         model = ExchangeRate
+
+
+class AuthFactory(DjangoModelFactory):
+    token = factory.Faker("uuid4")
+
+    class Meta:
+        model = Auth
