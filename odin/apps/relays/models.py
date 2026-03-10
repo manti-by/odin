@@ -28,6 +28,10 @@ class RelayState(models.TextChoices):
         return [(cls.ON.value, cls.ON.label), (cls.OFF.value, cls.OFF.label)]
 
 
+class RelayStateError(Exception):
+    """Raised when relay state cannot be retrieved from Kafka."""
+
+
 class RelayQuerySet(query.QuerySet):
     def active(self) -> query.QuerySet:
         return self.filter(is_active=True)
@@ -83,3 +87,14 @@ class Relay(models.Model):
         from odin.apps.relays.services import RelayTargetStateService
 
         return RelayTargetStateService(self).get_target_state()
+
+    def refresh_state_from_kafka(self) -> str:
+        """Refresh relay state from Kafka and return the new state."""
+        from odin.apps.core.kafka import KafkaService
+
+        state = KafkaService.get_relay_state_from_kafka(self.relay_id)
+        if state is None:
+            raise RelayStateError(f"Failed to get state from Kafka for relay {self.relay_id}")
+        self.context["state"] = state
+        self.save(update_fields=["context", "updated_at"])
+        return state
