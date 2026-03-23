@@ -26,6 +26,7 @@ class TestFactory(DictFactory):
 
 
 class UserFactory(DjangoModelFactory):
+    username = factory.Sequence(lambda n: f"user_{n}")
     email = factory.Faker("email")
     password = factory.PostGenerationMethodCall("set_password", DEFAULT_USER_PASSWORD)
 
@@ -133,7 +134,8 @@ class ExchangeRateFactory(DjangoModelFactory):
 
 
 class AuthFactory(DjangoModelFactory):
-    token = factory.Faker("uuid4")
+    user = factory.SubFactory(UserFactory)
+    token = factory.Sequence(lambda n: f"test_token_{n}")
 
     class Meta:
         model = Auth

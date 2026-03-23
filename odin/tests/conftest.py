@@ -33,14 +33,19 @@ def setup_api_client(db, request):
     without this auto-injection.
     """
     if "test_auth.py" in str(request.fspath):
+        yield
         return
     if hasattr(request.cls, "setup_method"):
         original_setup = request.cls.setup_method
 
-        def new_setup(self):
-            original_setup(self)
+        def new_setup(self, *args, **kwargs):
+            original_setup(self, *args, **kwargs)
             if hasattr(self, "client") and isinstance(self.client, APIClient):
                 token = AuthFactory().token
                 self.client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
 
         request.cls.setup_method = new_setup
+        yield
+        request.cls.setup_method = original_setup
+    else:
+        yield

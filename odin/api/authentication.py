@@ -1,5 +1,7 @@
+from django.contrib.auth.models import User
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.request import Request
 
 from odin.apps.core.models import Auth
 
@@ -7,25 +9,23 @@ from odin.apps.core.models import Auth
 class TokenAuthentication(BaseAuthentication):
     keyword = "Token"
 
-    def authenticate(self, request):
+    def authenticate(self, request: Request) -> tuple[User, Auth]:
         auth_header = request.headers.get("Authorization")
-
         if not auth_header:
             raise AuthenticationFailed("Token not provided")
 
-        parts = auth_header.split()
+        try:
+            keyword, token = auth_header.split()
+        except ValueError as e:
+            raise AuthenticationFailed("Invalid authorization header") from e
 
-        if len(parts) != 2 or parts[0] != self.keyword:
+        if keyword.lower() != self.keyword.lower():
             raise AuthenticationFailed("Invalid authorization header")
 
-        token = parts[1]
-
-        auth_instance = Auth.objects.filter(token=token).first()
-
-        if not auth_instance:
+        if not (auth := Auth.objects.filter(token=token).select_related("user").first()):
             raise AuthenticationFailed("Invalid token")
 
-        return (auth_instance, auth_instance)
+        return (auth.user, auth)
 
-    def authenticate_header(self, request):
+    def authenticate_header(self, request: Request) -> str:
         return self.keyword
