@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.db import models
 from django.db.models import query
@@ -83,3 +83,32 @@ class Log(models.Model):
 
     def __str__(self):
         return f"Log at {self.asctime}"
+
+
+class AuthManager(models.Manager):
+    def get_queryset(self) -> LogQuerySet:
+        return LogQuerySet(self.model, using=self._db)
+
+
+class Auth(models.Model):
+    user = models.ForeignKey(
+        "auth.User",
+        on_delete=models.CASCADE,
+        related_name="auth_tokens",
+        null=True,
+        blank=True,
+        verbose_name=_("User"),
+    )
+    token: models.CharField[str] = models.CharField(max_length=64, unique=True, verbose_name=_("Token"))
+    created_at: models.CharField[datetime] = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+
+    is_authenticated = True
+
+    objects = AuthManager()
+
+    class Meta:
+        verbose_name = _("auth")
+        verbose_name_plural = _("auth")
+
+    def __str__(self):
+        return f"Auth ({self.token[:8]}...) for {self.user}"

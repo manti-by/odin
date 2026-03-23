@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
 
-from .models import Device, Log
+from odin.apps.core.models import Auth, Device, Log
 
 
 def get_app_list(self, request, app_label=None):
@@ -33,3 +33,11 @@ class LogAdmin(admin.ModelAdmin):
         if request.GET.get("levelname") == "DEBUG":
             return queryset
         return queryset.exclude(levelname="DEBUG")
+
+
+@admin.register(Auth)
+class AuthAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "token", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("token", "user__username", "user__email")
+    readonly_fields = ("created_at",)

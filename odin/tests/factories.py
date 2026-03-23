@@ -5,7 +5,7 @@ from factory.fuzzy import FuzzyDecimal
 
 from django.contrib.auth.models import User
 
-from odin.apps.core.models import Device
+from odin.apps.core.models import Auth, Device
 from odin.apps.currency.models import Currency, ExchangeRate
 from odin.apps.electricity.models import VoltageLog
 from odin.apps.relays.models import Relay
@@ -26,6 +26,7 @@ class TestFactory(DictFactory):
 
 
 class UserFactory(DjangoModelFactory):
+    username = factory.Sequence(lambda n: f"user_{n}")
     email = factory.Faker("email")
     password = factory.PostGenerationMethodCall("set_password", DEFAULT_USER_PASSWORD)
 
@@ -130,3 +131,11 @@ class ExchangeRateFactory(DjangoModelFactory):
 
     class Meta:
         model = ExchangeRate
+
+
+class AuthFactory(DjangoModelFactory):
+    user = factory.SubFactory(UserFactory)
+    token = factory.Sequence(lambda n: f"test_token_{n}")
+
+    class Meta:
+        model = Auth

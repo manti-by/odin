@@ -35,10 +35,10 @@ class SensorsUpdateView(mixins.UpdateModelMixin, GenericViewSet):
     lookup_url_kwarg = "sensor_id"
 
     def perform_update(self, serializer: SensorUpdateSerializer) -> None:
-        serializer.instance.context.update(  # ty: ignore[possibly-missing-attribute]
+        serializer.instance.context.update(  # ty: ignore
             **serializer.validated_data["context"]
         )
-        serializer.instance.save(update_fields=["context"])  # ty: ignore[possibly-missing-attribute]
+        serializer.instance.save(update_fields=["context"])  # ty: ignore
 
 
 class SensorsLogView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet):
