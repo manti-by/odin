@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -58,6 +59,8 @@ class HealthCheckView(RetrieveAPIView):
 
 
 class ChartView(RetrieveAPIView):
+    authentication_classes = []
+    permission_classes = (AllowAny,)
     serializer_class = ChartTypeSerializer
 
     def get(self, request: Request, *args: list, **kwargs: dict) -> HttpResponse:

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db.models import query
 from django.utils import timezone
 from rest_framework import mixins
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -42,6 +43,9 @@ class SensorsUpdateView(mixins.UpdateModelMixin, GenericViewSet):
 
 
 class SensorsLogView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet):
+    # TODO: Temporary disable until satellites updated
+    authentication_classes = []
+    permission_classes = (AllowAny,)
     serializer_class = SensorLogSerializer
 
     def get_queryset(self) -> query.QuerySet:
