@@ -307,14 +307,8 @@ class TestRelaysRefreshStateFromKafka:
     @patch("odin.apps.core.kafka.KafkaService.get_relay_state_from_kafka")
     def test_relays__refresh_state_from_kafka_raises_error_when_not_found(self, mock_get_state):
         """Test that refresh_state_from_kafka raises RelayStateError when state not found."""
-        from odin.apps.relays.models import RelayStateError
-
         mock_get_state.return_value = None
-
-        with pytest.raises(RelayStateError) as exc_info:
-            self.relay.refresh_state_from_kafka()
-
-        assert f"Failed to get state from Kafka for relay {self.relay.relay_id}" in str(exc_info.value)
+        assert self.relay.refresh_state_from_kafka() is None
 
     @patch("odin.apps.core.kafka.KafkaService.get_relay_state_from_kafka")
     def test_relays__refresh_state_from_kafka_returns_state_value(self, mock_get_state):
@@ -322,5 +316,4 @@ class TestRelaysRefreshStateFromKafka:
         mock_get_state.return_value = "OFF"
 
         state = self.relay.refresh_state_from_kafka()
-
         assert state == "OFF"

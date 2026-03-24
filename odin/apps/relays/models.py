@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from django.db import models
@@ -10,6 +12,8 @@ from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
     from odin.apps.sensors.models import Sensor
+
+logger = logging.getLogger(__name__)
 
 
 class RelayType(models.TextChoices):
@@ -46,18 +50,18 @@ class RelayManager(models.Manager):
 
 
 class Relay(models.Model):
-    relay_id = models.CharField(max_length=32, db_index=True, verbose_name=_("Relay ID"))
-    name = models.CharField(max_length=32, verbose_name=_("Name"))
-    type = models.CharField(max_length=32, choices=RelayType.choices, verbose_name=_("Type"))
-    is_active = models.BooleanField(default=True, verbose_name=_("Is active"))
+    relay_id: models.CharField[str] = models.CharField(max_length=32, db_index=True, verbose_name=_("Relay ID"))
+    name: models.CharField[str] = models.CharField(max_length=32, verbose_name=_("Name"))
+    type: models.CharField[str] = models.CharField(max_length=32, choices=RelayType.choices, verbose_name=_("Type"))
+    is_active: models.CharField[bool] = models.BooleanField(default=True, verbose_name=_("Is active"))
 
-    force_state = models.CharField(
+    force_state: models.CharField[str] | None = models.CharField(
         choices=RelayState.active_choices(), null=True, blank=True, max_length=32, verbose_name=_("Force relay state")
     )
     context: models.JSONField[dict] = models.JSONField(default=dict, verbose_name=_("Context"))
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
+    created_at: models.CharField[datetime] = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+    updated_at: models.CharField[datetime] = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
 
     objects = RelayManager()
 
@@ -88,13 +92,14 @@ class Relay(models.Model):
 
         return RelayTargetStateService(self).get_target_state()
 
-    def refresh_state_from_kafka(self) -> str:
-        """Refresh relay state from Kafka and return the new state."""
+    def refresh_state_from_kafka(self) -> str | None:
         from odin.apps.core.kafka import KafkaService
 
         state = KafkaService.get_relay_state_from_kafka(self.relay_id)
         if state is None:
-            raise RelayStateError(f"Failed to get state from Kafka for relay {self.relay_id}")
+            logger.error(f"Failed to get state from Kafka for relay {self.relay_id}")
+            return None
+
         self.context["state"] = state
         self.save(update_fields=["context", "updated_at"])
         return state
