@@ -11,16 +11,16 @@ from odin.tests.factories import AuthFactory
 class TestTokenAuthentication:
     def setup_method(self):
         self.client = APIClient()
-        self.url = reverse("api:v1:core:healthcheck")
+        self.url = reverse("api:v1:core:app-server-key")
 
-    def test_no_token_returns_401(self):
+    def test_no_token_returns_403(self):
         response = self.client.get(self.url, format="json")
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_invalid_token_returns_401(self):
+    def test_invalid_token_returns_403(self):
         self.client.credentials(HTTP_AUTHORIZATION="Token invalid_token")
         response = self.client.get(self.url, format="json")
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_valid_token_returns_200(self):
         auth = AuthFactory()

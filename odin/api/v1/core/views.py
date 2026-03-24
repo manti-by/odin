@@ -54,6 +54,9 @@ class LogsView(CreateAPIView):
 
 
 class HealthCheckView(RetrieveAPIView):
+    authentication_classes = []
+    permission_classes = (AllowAny,)
+
     def get(self, request: Request, *args: list, **kwargs: dict) -> HttpResponse:
         return Response()
 
