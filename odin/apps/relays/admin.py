@@ -84,6 +84,6 @@ class RelayAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
         KafkaService.send_relay_update(
-            relay_id=obj.relay_id,  # ty: ignore[invalid-argument-type]
+            relay_id=obj.relay_id,
             target_state=obj.target_state,
         )

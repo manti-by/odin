@@ -31,6 +31,11 @@ def build_index_context() -> dict[str, Any]:
     exchange_rates_trends = get_exchange_rate_trends()
     traffic = Traffic.objects.first()
 
+    for sensor in sensors:
+        if sensor.relay:
+            # TODO: repplace with a batch refresh
+            sensor.relay.refresh_state_from_kafka()
+
     return {
         "weather": weather,
         "sensors": sensors,
