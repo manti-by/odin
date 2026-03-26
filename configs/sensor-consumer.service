@@ -1,0 +1,18 @@
+[Unit]
+Description=Sensor consumer for ODIN server
+After=network.target
+
+[Service]
+User=manti
+Group=manti
+Restart=always
+WorkingDirectory=/home/manti/www/odin
+EnvironmentFile=/home/manti/www/odin/.env
+ExecStart=/home/manti/www/odin/.venv/bin/python /home/manti/www/odin/manage.py consume_sensors
+StandardOutput=file:/var/log/odin/sensor-consumer-access.log
+StandardError=file:/var/log/odin/sensor-consumer-error.log
+KillSignal=SIGTERM
+TimeoutStopSec=600
+
+[Install]
+WantedBy=multi-user.target

@@ -4,7 +4,7 @@ import pytest
 from kafka.structs import TopicPartition
 
 from odin.apps.core.exceptions import KafkaReadError
-from odin.apps.core.kafka import KafkaService
+from odin.apps.core.kafka import KafkaService, MessageType
 
 
 class TestKafkaService:
@@ -63,53 +63,63 @@ class TestKafkaService:
         assert mock_send_message.call_count == 1
 
     @patch("odin.apps.core.kafka.KafkaService.get_consumer")
-    def test_get_relay_state_from_kafka_returns_state(self, mock_get_consumer):
-        """Test that get_relay_state_from_kafka returns state when found."""
+    def test_get_relay_data_returns_data(self, mock_get_consumer):
+        """Test that get_relay_data returns data when found."""
         mock_consumer = MagicMock()
         mock_get_consumer.return_value = mock_consumer
         mock_consumer.partitions_for_topic.return_value = {0}
         mock_consumer.end_offsets.return_value = {TopicPartition("odin", 0): 1}
 
         mock_message = MagicMock()
-        mock_message.value = {"data": {"type": "RELAY_STATE_UPDATE", "relay_id": "relay_1", "state": "ON"}}
+        mock_message.value = {
+            "type": MessageType.RELAY_STATE_UPDATE.value,
+            "data": {"relay_id": "relay_1", "state": "ON"},
+        }
         mock_consumer.poll.return_value = {TopicPartition("odin", 0): [mock_message]}
 
-        assert KafkaService.get_relay_state_from_kafka("relay_1") == "ON"
+        result = KafkaService.get_relay_data("relay_1")
+        assert result == {"relay_id": "relay_1", "state": "ON"}
         mock_consumer.close.assert_called_once()
 
     @patch("odin.apps.core.kafka.KafkaService.get_consumer")
-    def test_get_relay_state_from_kafka_returns_none_when_not_found(self, mock_get_consumer):
-        """Test that get_relay_state_from_kafka returns None when relay not found."""
+    def test_get_relay_data_returns_none_when_not_found(self, mock_get_consumer):
+        """Test that get_relay_data returns None when relay not found."""
         mock_consumer = MagicMock()
         mock_get_consumer.return_value = mock_consumer
         mock_consumer.partitions_for_topic.return_value = {0}
         mock_consumer.end_offsets.return_value = {TopicPartition("odin", 0): 1}
 
         mock_message = MagicMock()
-        mock_message.value = {"data": {"type": "RELAY_STATE_UPDATE", "relay_id": "relay_other", "state": "OFF"}}
+        mock_message.value = {
+            "type": MessageType.RELAY_STATE_UPDATE.value,
+            "data": {"relay_id": "relay_other", "state": "OFF"},
+        }
         mock_consumer.poll.return_value = {TopicPartition("odin", 0): [mock_message]}
 
-        assert KafkaService.get_relay_state_from_kafka("relay_1") is None
+        assert KafkaService.get_relay_data("relay_1") is None
         mock_consumer.close.assert_called_once()
 
     @patch("odin.apps.core.kafka.KafkaService.get_consumer")
-    def test_get_relay_state_from_kafka_ignores_wrong_message_type(self, mock_get_consumer):
-        """Test that get_relay_state_from_kafka ignores messages with wrong type."""
+    def test_get_relay_data_ignores_wrong_message_type(self, mock_get_consumer):
+        """Test that get_relay_data ignores messages with wrong type."""
         mock_consumer = MagicMock()
         mock_get_consumer.return_value = mock_consumer
         mock_consumer.partitions_for_topic.return_value = {0}
         mock_consumer.end_offsets.return_value = {TopicPartition("odin", 0): 1}
 
         mock_message = MagicMock()
-        mock_message.value = {"data": {"type": "SENSOR_DATA_UPDATE", "relay_id": "relay_1", "state": "ON"}}
+        mock_message.value = {
+            "type": MessageType.SENSOR_DATA_UPDATE.value,
+            "data": {"relay_id": "relay_1", "state": "ON"},
+        }
         mock_consumer.poll.return_value = {TopicPartition("odin", 0): [mock_message]}
 
-        assert KafkaService.get_relay_state_from_kafka("relay_1") is None
+        assert KafkaService.get_relay_data("relay_1") is None
         mock_consumer.close.assert_called_once()
 
     @patch("odin.apps.core.kafka.KafkaService.get_consumer")
-    def test_get_relay_state_from_kafka_raises_kafka_error(self, mock_get_consumer):
-        """Test that get_relay_state_from_kafka raises KafkaReadError on failure and closes consumer."""
+    def test_get_relay_data_raises_kafka_error(self, mock_get_consumer):
+        """Test that get_relay_data raises KafkaReadError on failure and closes consumer."""
         from kafka.errors import KafkaError
 
         mock_consumer = MagicMock()
@@ -117,15 +127,5 @@ class TestKafkaService:
         mock_consumer.partitions_for_topic.side_effect = KafkaError("Connection failed")
 
         with pytest.raises(KafkaReadError):
-            KafkaService.get_relay_state_from_kafka("relay_1")
-        mock_consumer.close.assert_called_once()
-
-    @patch("odin.apps.core.kafka.KafkaService.get_consumer")
-    def test_get_relay_state_from_kafka_returns_none_when_no_partitions(self, mock_get_consumer):
-        """Test that get_relay_state_from_kafka returns None when no partitions."""
-        mock_consumer = MagicMock()
-        mock_get_consumer.return_value = mock_consumer
-        mock_consumer.partitions_for_topic.return_value = None
-
-        assert KafkaService.get_relay_state_from_kafka("relay_1") is None
+            KafkaService.get_relay_data("relay_1")
         mock_consumer.close.assert_called_once()

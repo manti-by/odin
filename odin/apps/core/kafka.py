@@ -35,8 +35,7 @@ class KafkaService:
         if cls._producer is None:
             cls._producer = KafkaProducer(
                 bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
-                key_serializer=lambda k: json.dumps(k).encode("utf-8"),
-                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+                value_serializer=lambda v: json.dumps(v).encode("utf-8") if v else None,
                 acks="all",
                 retries=3,
             )
@@ -46,8 +45,7 @@ class KafkaService:
     def get_consumer(cls) -> KafkaConsumer:
         return KafkaConsumer(
             bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
-            key_deserializer=lambda k: json.loads(k).encode("utf-8"),
-            value_deserializer=lambda v: json.loads(v.decode("utf-8")),
+            value_deserializer=lambda x: json.loads(x.decode("utf-8")) if x else None,
             auto_offset_reset="earliest",
             enable_auto_commit=True,
         )
@@ -76,7 +74,7 @@ class KafkaService:
         return cls.send_message(settings.KAFKA_CORUSCANT_TOPIC, message=message, key=PartitionKey.RELAYS.value)
 
     @classmethod
-    def get_relay_state_from_kafka(cls, relay_id: str, max_messages: int = 10) -> str | None:
+    def get_relay_data(cls, relay_id: str, max_messages: int = 10) -> dict[str, Any] | None:
         consumer = cls.get_consumer()
         try:
             partitions = consumer.partitions_for_topic(settings.KAFKA_ODIN_TOPIC)
@@ -95,9 +93,11 @@ class KafkaService:
             for _tp, messages in records.items():
                 for message in reversed(messages):
                     data = message.value.get("data", {})
-                    if data.get("type") == MessageType.RELAY_STATE_UPDATE.value and data.get("relay_id") == relay_id:
-                        return data.get("state")
-
+                    if (
+                        message.value.get("type") == MessageType.RELAY_STATE_UPDATE.value
+                        and data.get("relay_id") == relay_id
+                    ):
+                        return data
             return None
 
         except KafkaError as e:

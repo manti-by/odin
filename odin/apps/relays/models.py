@@ -97,14 +97,13 @@ class Relay(models.Model):
 
     def refresh_state_from_kafka(self) -> str | None:
         try:
-            state = KafkaService.get_relay_state_from_kafka(self.relay_id)
+            if not (data := KafkaService.get_relay_data(self.relay_id)):
+                logger.error(f"There are no messages for relay {self.relay_id}")
+                return None
         except KafkaReadError:
-            state = None
-
-        if state is None:
             logger.error(f"Failed to get state from Kafka for relay {self.relay_id}")
             return None
 
-        self.context["state"] = state
+        self.context["state"] = data.get("state")
         self.save(update_fields=["context", "updated_at"])
-        return state
+        return data.get("state")
