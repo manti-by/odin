@@ -9,6 +9,9 @@ from django.db.models import query
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
+from odin.apps.core.exceptions import KafkaReadError
+from odin.apps.core.kafka import KafkaService
+
 
 if TYPE_CHECKING:
     from odin.apps.sensors.models import Sensor
@@ -93,9 +96,11 @@ class Relay(models.Model):
         return RelayTargetStateService(self).get_target_state()
 
     def refresh_state_from_kafka(self) -> str | None:
-        from odin.apps.core.kafka import KafkaService
+        try:
+            state = KafkaService.get_relay_state_from_kafka(self.relay_id)
+        except KafkaReadError:
+            state = None
 
-        state = KafkaService.get_relay_state_from_kafka(self.relay_id)
         if state is None:
             logger.error(f"Failed to get state from Kafka for relay {self.relay_id}")
             return None

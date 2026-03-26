@@ -11,6 +11,8 @@ from kafka.structs import TopicPartition
 
 from django.conf import settings
 
+from odin.apps.core.exceptions import KafkaReadError
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,7 @@ class KafkaService:
     def get_consumer(cls) -> KafkaConsumer:
         return KafkaConsumer(
             bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
-            key_serializer=lambda k: json.dumps(k).encode("utf-8"),
+            key_deserializer=lambda k: json.loads(k).encode("utf-8"),
             value_deserializer=lambda v: json.loads(v.decode("utf-8")),
             auto_offset_reset="earliest",
             enable_auto_commit=True,
@@ -69,9 +71,9 @@ class KafkaService:
         return False
 
     @classmethod
-    def send_relay_update(cls, relay_id: str, target_state: str) -> None:
+    def send_relay_update(cls, relay_id: str, target_state: str) -> bool:
         message = {"relay_id": relay_id, "target_state": target_state}
-        cls.send_message(settings.KAFKA_CORUSCANT_TOPIC, message=message, key=PartitionKey.RELAYS.value)
+        return cls.send_message(settings.KAFKA_CORUSCANT_TOPIC, message=message, key=PartitionKey.RELAYS.value)
 
     @classmethod
     def get_relay_state_from_kafka(cls, relay_id: str, max_messages: int = 10) -> str | None:
@@ -87,24 +89,19 @@ class KafkaService:
             end_offsets = consumer.end_offsets(topic_partitions)
             for tp in topic_partitions:
                 end_offset = end_offsets[tp]
-                consumer.seek(tp, max(0, end_offset - 1))
+                consumer.seek(tp, max(0, end_offset - max_messages))
 
-            for _ in range(max_messages):
-                records = consumer.poll(timeout_ms=1000)
-                for _tp, messages in records.items():
-                    for message in reversed(messages):
-                        data = message.value.get("data", {})
-                        if (
-                            data.get("type") == MessageType.RELAY_STATE_UPDATE.value
-                            and data.get("relay_id") == relay_id
-                        ):
-                            return data.get("state")
+            records = consumer.poll(timeout_ms=1000)
+            for _tp, messages in records.items():
+                for message in reversed(messages):
+                    data = message.value.get("data", {})
+                    if data.get("type") == MessageType.RELAY_STATE_UPDATE.value and data.get("relay_id") == relay_id:
+                        return data.get("state")
 
             return None
 
         except KafkaError as e:
-            logger.error(f"Failed to get relay state from Kafka for relay {relay_id}: {e}")
-            raise
+            raise KafkaReadError from e
 
         finally:
             consumer.close()

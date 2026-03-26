@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from kafka.structs import TopicPartition
 
+from odin.apps.core.exceptions import KafkaReadError
 from odin.apps.core.kafka import KafkaService
 
 
@@ -108,14 +109,14 @@ class TestKafkaService:
 
     @patch("odin.apps.core.kafka.KafkaService.get_consumer")
     def test_get_relay_state_from_kafka_raises_kafka_error(self, mock_get_consumer):
-        """Test that get_relay_state_from_kafka raises KafkaError on failure and closes consumer."""
+        """Test that get_relay_state_from_kafka raises KafkaReadError on failure and closes consumer."""
         from kafka.errors import KafkaError
 
         mock_consumer = MagicMock()
         mock_get_consumer.return_value = mock_consumer
         mock_consumer.partitions_for_topic.side_effect = KafkaError("Connection failed")
 
-        with pytest.raises(KafkaError):
+        with pytest.raises(KafkaReadError):
             KafkaService.get_relay_state_from_kafka("relay_1")
         mock_consumer.close.assert_called_once()
 
