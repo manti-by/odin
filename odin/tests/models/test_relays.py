@@ -292,9 +292,9 @@ class TestRelaysRefreshStateFromKafka:
         self.relay: Relay = RelayFactory(type=RelayType.PUMP)
 
     @patch("odin.apps.core.kafka.KafkaService.get_relay_data")
-    def test_relays__refresh_state_from_kafka_updates_context(self, mock_get_state):
+    def test_relays__get_relay_data_updates_context(self, mock_get_state):
         """Test that refresh_state_from_kafka updates context with state from Kafka."""
-        mock_get_state.return_value = "ON"
+        mock_get_state.return_value = {"state": "ON"}
 
         state = self.relay.refresh_state_from_kafka()
 
@@ -305,15 +305,15 @@ class TestRelaysRefreshStateFromKafka:
         mock_get_state.assert_called_once_with(self.relay.relay_id)
 
     @patch("odin.apps.core.kafka.KafkaService.get_relay_data")
-    def test_relays__refresh_state_from_kafka_raises_error_when_not_found(self, mock_get_state):
+    def test_relays__get_relay_data_raises_error_when_not_found(self, mock_get_state):
         """Test that refresh_state_from_kafka raises RelayStateError when state not found."""
         mock_get_state.return_value = None
         assert self.relay.refresh_state_from_kafka() is None
 
     @patch("odin.apps.core.kafka.KafkaService.get_relay_data")
-    def test_relays__refresh_state_from_kafka_returns_state_value(self, mock_get_state):
+    def test_relays__get_relay_data_returns_state_value(self, mock_get_state):
         """Test that refresh_state_from_kafka returns the state value."""
-        mock_get_state.return_value = "OFF"
+        mock_get_state.return_value = {"state": "OFF"}
 
         state = self.relay.refresh_state_from_kafka()
         assert state == "OFF"
