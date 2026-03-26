@@ -53,15 +53,15 @@ class Relay(models.Model):
     relay_id: models.CharField[str] = models.CharField(max_length=32, db_index=True, verbose_name=_("Relay ID"))
     name: models.CharField[str] = models.CharField(max_length=32, verbose_name=_("Name"))
     type: models.CharField[str] = models.CharField(max_length=32, choices=RelayType.choices, verbose_name=_("Type"))
-    is_active: models.CharField[bool] = models.BooleanField(default=True, verbose_name=_("Is active"))
+    is_active: models.BooleanField[bool] = models.BooleanField(default=True, verbose_name=_("Is active"))
 
     force_state: models.CharField[str] | None = models.CharField(
         choices=RelayState.active_choices(), null=True, blank=True, max_length=32, verbose_name=_("Force relay state")
     )
     context: models.JSONField[dict] = models.JSONField(default=dict, verbose_name=_("Context"))
 
-    created_at: models.CharField[datetime] = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
-    updated_at: models.CharField[datetime] = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
+    created_at: models.DateTimeField[datetime] = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
+    updated_at: models.DateTimeField[datetime] = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
 
     objects = RelayManager()
 

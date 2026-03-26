@@ -27,13 +27,13 @@ class MessageType(Enum):
 
 class KafkaService:
     _producer: KafkaProducer | None = None
-    _consumer: KafkaConsumer | None = None
 
     @classmethod
     def get_producer(cls) -> KafkaProducer:
         if cls._producer is None:
             cls._producer = KafkaProducer(
                 bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
+                key_serializer=lambda k: json.dumps(k).encode("utf-8"),
                 value_serializer=lambda v: json.dumps(v).encode("utf-8"),
                 acks="all",
                 retries=3,
@@ -42,14 +42,13 @@ class KafkaService:
 
     @classmethod
     def get_consumer(cls) -> KafkaConsumer:
-        if cls._consumer is None:
-            cls._consumer = KafkaConsumer(
-                bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
-                value_deserializer=lambda m: json.loads(m.decode("utf-8")),
-                auto_offset_reset="earliest",
-                enable_auto_commit=True,
-            )
-        return cls._consumer
+        return KafkaConsumer(
+            bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
+            key_serializer=lambda k: json.dumps(k).encode("utf-8"),
+            value_deserializer=lambda v: json.loads(v.decode("utf-8")),
+            auto_offset_reset="earliest",
+            enable_auto_commit=True,
+        )
 
     @classmethod
     def send_message(cls, topic: str, message: dict[str, Any], key: str | None = None) -> bool:

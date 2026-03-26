@@ -31,6 +31,7 @@ def build_index_context() -> dict[str, Any]:
 
     for sensor in sensors:
         if sensor.relay:
+            # TODO: repplace with a batch refresh
             sensor.relay.refresh_state_from_kafka()
 
     return {
