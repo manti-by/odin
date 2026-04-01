@@ -54,7 +54,7 @@ class KafkaService:
     def send_message(cls, topic: str, message: dict[str, Any], key: str | None = None) -> bool:
         try:
             producer = cls.get_producer()
-            future = producer.send(topic, value=message, key=key)
+            future = producer.send(topic, value=message, key=key.encode() if key else None)
             record_metadata = future.get(timeout=10)
 
             logger.info(

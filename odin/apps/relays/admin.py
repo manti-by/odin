@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 
 from odin.apps.core.kafka import KafkaService
 
-from .models import Relay, RelayType
+from .models import Relay, RelayState, RelayType
 
 
 @admin.register(Relay)
@@ -28,7 +28,7 @@ class RelayAdmin(admin.ModelAdmin):
         "updated_at",
         "created_at",
     )
-    list_display = ("relay_id", "name", "type", "is_active", "state", "updated_at")
+    list_display = ("relay_id", "name", "type", "is_active", "is_forced", "state", "updated_at")
     list_filter = ("type",)
     readonly_fields = ("sensor", "state", "schedule", "updated_at", "created_at")
 
@@ -49,6 +49,10 @@ class RelayAdmin(admin.ModelAdmin):
         schedule = obj.context.get("schedule")
         html = render_to_string("admin/schedule.html", {"schedule": schedule, "relay_type": obj.type})
         return format_html(html)
+
+    @admin.display(description=f"{_('Forced')}?", boolean=True)
+    def is_forced(self, obj: Relay) -> bool:
+        return obj.force_state in (RelayState.ON, RelayState.OFF)
 
     @admin.display(description=_("state"))
     def state(self, obj: Relay) -> str:
