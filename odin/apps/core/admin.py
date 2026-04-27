@@ -11,7 +11,7 @@ def get_app_list(self, request, app_label=None):
     return app_list
 
 
-admin.AdminSite.get_app_list = get_app_list  # type: ignore[invalid-assignment]
+admin.AdminSite.get_app_list = get_app_list  # ty: ignore[invalid-assignment]
 
 
 @admin.register(Device)

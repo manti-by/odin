@@ -41,7 +41,7 @@ def convert_legacy_schedule_to_periodic(apps, schema_editor):
                 if relay.type == "PUMP":
                     period["target_state"] = "ON"
                 if relay.type == "SERVO":
-                    period["target_temp"] = 25.0
+                    period["target_temp"]: float = 25.0
                 periods.append(period)
 
                 current_period = {"start": hour, "end": hour}
@@ -54,7 +54,7 @@ def convert_legacy_schedule_to_periodic(apps, schema_editor):
             if relay.type == "PUMP":
                 period["target_state"] = "ON"
             if relay.type == "SERVO":
-                period["target_temp"] = 25.0
+                period["target_temp"]: float = 25.0
             periods.append(period)
 
         if periods:
