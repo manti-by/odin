@@ -46,7 +46,7 @@ django-checks:
 	uv run manage.py makemigrations --dry-run --check --verbosity=3 --settings=odin.settings.sqlite
 	uv run manage.py check --fail-level WARNING --settings=odin.settings.sqlite
 
-pip:
+install:
 	uv sync --all-extras --dev
 
 update:
@@ -54,7 +54,7 @@ update:
 	uv sync --all-extras --dev
 	uv run pre-commit autoupdate
 
-ci: pip check django-checks full-test
+ci: install check django-checks full-test
 
 dump:
 	pg_dump -h localhost -U odin -d odin > odin.sql
