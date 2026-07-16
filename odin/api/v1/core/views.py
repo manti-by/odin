@@ -8,8 +8,14 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from odin.api.v1.core.serializers import ChartTypeSerializer, DeviceSubscriptionSerializer, LogSerializer
+from odin.api.v1.core.serializers import (
+    ChartTypeSerializer,
+    DashboardSerializer,
+    DeviceSubscriptionSerializer,
+    LogSerializer,
+)
 from odin.apps.core.models import Device, Log
+from odin.apps.core.services import get_cached_index_context, update_index_context_cache
 from odin.apps.core.utils import create_metric_gauge_chart
 
 
@@ -72,3 +78,14 @@ class ChartView(RetrieveAPIView):
 
         contents = create_metric_gauge_chart(**serializer.validated_data)
         return HttpResponse(contents, content_type="image/svg+xml")
+
+
+class DashboardView(APIView):
+    authentication_classes = []
+    permission_classes = (AllowAny,)
+
+    def get(self, request: Request, *args, **kwargs):
+        if (context := get_cached_index_context()) is None:
+            context = update_index_context_cache()
+        serializer = DashboardSerializer(context)
+        return Response(serializer.data)
