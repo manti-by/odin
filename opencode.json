@@ -1,12 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "command": {
-    "linear": {
-      "template": "Retrieve a linear issue with the highest priority from the TODO column for the odin project and implement it. Follow the instructions in the AGENTS.md for Git and Linear workflows.",
-      "description": "Implement linear ticket",
-      "agent": "build"
-    }
-  },
+  "plugin": ["@manti-by/openwiki@0.3.0-b"],
   "lsp": {
     "pyright": {
       "disabled": true

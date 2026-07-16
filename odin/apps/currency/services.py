@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
+from typing import cast
 
 from odin.apps.currency.models import Currency, ExchangeRate
 
@@ -11,7 +12,7 @@ def get_exchange_rate_trends() -> dict[str, Decimal | None]:
     if not today_rates:
         return {}
 
-    today_date = today_rates[0].date
+    today_date: date = cast(date, today_rates[0].date)
     yesterday = today_date - timedelta(days=1)
 
     yesterday_rates = {r.currency: r for r in ExchangeRate.objects.filter(date=yesterday)}

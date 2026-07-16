@@ -17,3 +17,5 @@ keys/*
 
 .python-version
 .env
+
+.opencode/

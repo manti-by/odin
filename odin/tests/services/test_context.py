@@ -61,11 +61,15 @@ class TestIndexContextServices:
             update_index_context_cache()
             mock_set.assert_called_once()
 
-    def test_traffic_included_in_index_context(self):
+    @patch("odin.apps.core.services.subprocess.run")
+    def test_traffic_included_in_index_context(self, mock_subprocess):
+        mock_subprocess.return_value.stdout = b"active"
         traffic = Traffic.objects.create(value=Decimal("75.50"), unit="GB")
         context = build_index_context()
         assert context["traffic"] == traffic
 
-    def test_traffic_none_when_no_data(self):
+    @patch("odin.apps.core.services.subprocess.run")
+    def test_traffic_none_when_no_data(self, mock_subprocess):
+        mock_subprocess.return_value.stdout = b"active"
         context = build_index_context()
         assert context["traffic"] is None

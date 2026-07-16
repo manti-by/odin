@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from django.conf import settings
 from django.contrib import admin
@@ -23,16 +23,16 @@ class SensorType(models.TextChoices):
 
 
 class SensorQuerySet(query.QuerySet):
-    def active(self) -> query.QuerySet:
+    def active(self) -> Self:
         return self.filter(is_active=True)
 
-    def visible(self) -> query.QuerySet:
+    def visible(self) -> Self:
         return self.filter(is_visible=True)
 
-    def ds18b20(self) -> query.QuerySet:
+    def ds18b20(self) -> Self:
         return self.filter(type=SensorType.DS18B20)
 
-    def esp8266(self) -> query.QuerySet:
+    def esp8266(self) -> Self:
         return self.filter(type=SensorType.ESP8266)
 
 
@@ -40,10 +40,10 @@ class SensorManager(models.Manager):
     def get_queryset(self) -> SensorQuerySet:
         return SensorQuerySet(self.model, using=self._db)
 
-    def active(self) -> query.QuerySet:
+    def active(self) -> SensorQuerySet:
         return self.get_queryset().active()
 
-    def visible(self) -> query.QuerySet:
+    def visible(self) -> SensorQuerySet:
         return self.get_queryset().visible()
 
 
