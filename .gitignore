@@ -18,4 +18,6 @@ keys/*
 .python-version
 .env
 
+.agents/
 .opencode/
+_bmad/

@@ -9,12 +9,5 @@
       "command": ["uvx", "ty", "server"],
       "extensions": [".py", ".pyi"]
     }
-  },
-  "mcp": {
-    "linear": {
-      "type": "local",
-      "command": ["npx", "-y", "mcp-remote", "https://mcp.linear.app/sse"],
-      "enabled": true
-    }
   }
 }
