@@ -18,6 +18,14 @@ keys/*
 .python-version
 .env
 
+# Agents
 .agents/
 .opencode/
 _bmad/
+
+# Frontend (React SPA under frontend/)
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/bun-debug.log*
