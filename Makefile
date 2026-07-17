@@ -67,3 +67,9 @@ restore:
 agent-instance:
 	git worktree add $(CURDIR)-$(NAME)
 	cp .env $(CURDIR)-$(NAME)/.env
+
+wiki-dedup:
+	opencode run /wiki-dedup
+
+wiki-consistency:
+	opencode run /wiki-consistency
