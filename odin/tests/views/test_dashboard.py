@@ -12,6 +12,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from odin.apps.core.kafka import KafkaService
 from odin.apps.core.models import Log
 from odin.apps.currency.models import Currency
 from odin.apps.provider.models import Traffic
@@ -26,6 +27,9 @@ from odin.tests.factories import (
 )
 
 
+DEFAULT_SYSTEMD_STATUS = {"scheduler.service": {"status": "active"}, "worker.service": {"error": "mocked"}}
+
+
 @pytest.mark.django_db
 @pytest.mark.views
 class TestDashboardAPI:
@@ -33,6 +37,11 @@ class TestDashboardAPI:
         self.client = APIClient()
         self.url = reverse("api:v1:core:dashboard")
         cache.clear()
+        self.systemd_patcher = patch("odin.apps.core.services.systemd_status", return_value=DEFAULT_SYSTEMD_STATUS)
+        self.systemd_patcher.start()
+
+    def teardown_method(self):
+        self.systemd_patcher.stop()
 
     def _make_fake_context(self, **overrides):
         base = {
@@ -124,7 +133,8 @@ class TestDashboardAPI:
             is_visible=True,
         )
 
-        response = self.client.get(self.url, format="json")
+        with patch.object(KafkaService, "get_relay_data", return_value={"state": "ON"}):
+            response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
 
         ds = next(s for s in response.data["sensors"]["ds18b20"] if s["sensor_id"] == "ds1")

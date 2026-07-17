@@ -56,7 +56,7 @@ class LinkedSensorSerializer(serializers.Serializer):
 class DashboardSensorSerializer(serializers.Serializer):
     sensor_id = serializers.CharField(max_length=32)
     name = serializers.CharField(max_length=32)
-    type = serializers.CharField(max_length=32)
+    type = serializers.ChoiceField(choices=SensorType.choices)
     context = serializers.JSONField()
     temp = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
     humidity = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
