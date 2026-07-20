@@ -19,6 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 FRONTEND_DIST_DIR = BASE_DIR.parent / "frontend" / "dist"
 
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -177,7 +178,7 @@ STATICFILES_FINDERS = [
 ]
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
-if FRONTEND_DIST_DIR.exists():
+if FRONTEND_DIST_DIR.is_dir():
     STATICFILES_DIRS.insert(0, FRONTEND_DIST_DIR)
 
 STATIC_ROOT = os.getenv("STATIC_ROOT", BASE_DIR.parent / "static")

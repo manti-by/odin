@@ -21,10 +21,10 @@ messages:
 locale:
 	uv run manage.py compilemessages -l ru
 
-static:
+static: frontend
 	uv run manage.py collectstatic --no-input
 
-deploy:
+deploy: frontend
 	git pull
 	uv sync
 	make frontend

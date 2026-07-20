@@ -285,3 +285,12 @@
 .container--fluid {
   max-width: 100%;
 }
+
+/* ----- Chart ----- */
+.error {
+  color: #c92a2a;
+}
+
+.recharts-responsive-container {
+  min-height: 0;
+}

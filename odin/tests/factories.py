@@ -93,9 +93,9 @@ class VoltageLogFactory(DjangoModelFactory):
 
 
 class WeatherDataFactory(factory.DictFactory):
-    temp = str(FuzzyDecimal(low=-10, high=40, precision=2))
-    pressure = str(FuzzyDecimal(low=670, high=810, precision=2))
-    humidity = str(FuzzyDecimal(low=0, high=100, precision=2))
+    temp = {"avg": "22.50"}
+    pressure = 750
+    humidity = "55"
 
 
 class WeatherFactory(DjangoModelFactory):

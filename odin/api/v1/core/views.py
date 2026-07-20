@@ -13,10 +13,12 @@ from odin.api.v1.core.serializers import (
     DashboardSerializer,
     DeviceSubscriptionSerializer,
     LogSerializer,
+    WeatherChartQueryParamsSerializer,
 )
 from odin.apps.core.models import Device, Log
 from odin.apps.core.services import get_cached_index_context, update_index_context_cache
 from odin.apps.core.utils import create_metric_gauge_chart
+from odin.apps.weather.services import get_weather_chart_data
 
 
 class ApplicationServerKeyView(APIView):
@@ -89,3 +91,14 @@ class DashboardView(APIView):
             context = update_index_context_cache()
         serializer = DashboardSerializer(context)
         return Response(serializer.data)
+
+
+class WeatherChartView(APIView):
+    authentication_classes = []
+    permission_classes = (AllowAny,)
+
+    def get(self, request: Request) -> Response:
+        serializer = WeatherChartQueryParamsSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data = get_weather_chart_data(**serializer.validated_data)
+        return Response(data)
