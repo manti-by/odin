@@ -9,10 +9,10 @@ from odin.apps.core.models import Auth
 class TokenAuthentication(BaseAuthentication):
     keyword = "Token"
 
-    def authenticate(self, request: Request) -> tuple[User, Auth]:
+    def authenticate(self, request: Request) -> tuple[User, Auth] | None:
         auth_header = request.headers.get("Authorization")
         if not auth_header:
-            raise AuthenticationFailed("Token not provided")
+            return None
 
         try:
             keyword, token = auth_header.split()

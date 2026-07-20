@@ -31,6 +31,10 @@ DEBUG = False
 
 ALLOWED_HOSTS = ("odin.local", "192.168.1.100")
 
+CSRF_TRUSTED_ORIGINS = tuple(
+    filter(None, (part.strip() for part in os.getenv("CSRF_TRUSTED_ORIGINS", "http://odin.local,http://192.168.1.100").split(",")))
+)
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -169,6 +173,16 @@ USE_I18N = True
 USE_TZ = True
 
 
+# CSRF and Session cookie settings for same-origin SPA consumption.
+# JS in the React SPA reads csrftoken from document.cookie, so HTTPOnly
+# must stay False. SameSite=Lax is appropriate for same-origin requests.
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False").lower() == "true"
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False").lower() == "true"
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -229,6 +243,10 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "odin.api.authentication.TokenAuthentication",
     ],
+    "DEFAULT_THROTTLE_RATES": {
+        "sensors_update": "30/min",
+        "relays_update": "30/min",
+    },
 }
 
 
