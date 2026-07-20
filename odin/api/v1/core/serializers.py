@@ -2,6 +2,7 @@ from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
+from odin.api.utils.serializers import BaseSerializer
 from odin.apps.core.models import Browser
 from odin.apps.sensors.models import SensorType
 
@@ -173,3 +174,8 @@ class DashboardSerializer(serializers.Serializer):
             "systemd_status": instance.get("systemd_status") or {},
             "traffic": TrafficSerializer(instance.get("traffic")).data if instance.get("traffic") else None,
         }
+
+
+class WeatherChartQueryParamsSerializer(BaseSerializer):
+    start = serializers.DateTimeField(required=False)
+    end = serializers.DateTimeField(required=False)
