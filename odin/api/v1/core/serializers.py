@@ -2,6 +2,7 @@ from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
+from odin.api.utils.serializers import BaseSerializer
 from odin.apps.core.models import Browser
 
 
@@ -36,3 +37,8 @@ class ChartTypeSerializer(serializers.Serializer):
         allow_null=False,
     )
     metric = serializers.ChoiceField(choices=MetricChoices.choices)
+
+
+class WeatherChartQueryParamsSerializer(BaseSerializer):
+    start = serializers.DateTimeField(required=False)
+    end = serializers.DateTimeField(required=False)
