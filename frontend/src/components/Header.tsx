@@ -10,6 +10,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", end: true },
   { to: "/sensors/home", label: "Home (chart)" },
   { to: "/sensors/boiler", label: "Boiler (chart)" },
+  { to: "/styleguide", label: "Styleguide" },
 ];
 
 export function Header() {

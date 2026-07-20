@@ -1,13 +1,10 @@
-import { Header } from "@/components/Header";
+import { Layout } from "@/components/layout/Layout";
 import { Outlet } from "react-router-dom";
 
 export function App() {
   return (
-    <>
-      <Header />
-      <main className="container">
-        <Outlet />
-      </main>
-    </>
+    <Layout>
+      <Outlet />
+    </Layout>
   );
 }
