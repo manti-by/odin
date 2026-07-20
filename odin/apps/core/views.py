@@ -1,20 +1,15 @@
 from __future__ import annotations
 
-import logging
-
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
-
-from odin.apps.core.services import (
-    get_cached_index_context,
-    update_index_context_cache,
-)
-
-
-logger = logging.getLogger(__name__)
+from django.conf import settings
+from django.http import HttpRequest, HttpResponse, HttpResponseServerError
 
 
 def index_view(request: HttpRequest) -> HttpResponse:
-    if not (context := get_cached_index_context()):
-        context = update_index_context_cache()
-    return render(request, "index.html", context=context)
+    """Serve the built React SPA shell."""
+    try:
+        with open(settings.FRONTEND_DIST_DIR / "index.html") as f:
+            return HttpResponse(f.read())
+    except OSError:
+        return HttpResponseServerError(
+            "<h1>Frontend build not available</h1><p>Run <code>make frontend</code> to build the SPA.</p>"
+        )
