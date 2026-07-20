@@ -1,3 +1,4 @@
+import { MiniSparkline } from "@/components/chart/MiniSparkline";
 import { FieldStatus } from "@/components/form/FieldStatus";
 import { Form } from "@/components/form/Form";
 import { SubmitButton } from "@/components/form/SubmitButton";
@@ -50,6 +51,39 @@ export function StyleguidePage() {
           <Icon name="cooling" alt="cooling" width={20} />
           <Icon name="heating" alt="heating" width={20} />
         </p>
+      </section>
+
+      <section>
+        <h3>MiniSparkline</h3>
+        <p>
+          Data-driven inline sparkline. Replaces the server-rendered gauge <code>{"<img>"}</code>. Renders from JSON
+          data (no server round-trip for chart rendering).
+        </p>
+        <div style={{ display: "flex", gap: "2rem", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ width: 120 }}>
+            <MiniSparkline
+              points={[
+                { timestamp: "2026-07-20T10:00:00", value: 22 },
+                { timestamp: "2026-07-20T11:00:00", value: 23 },
+                { timestamp: "2026-07-20T12:00:00", value: 25 },
+                { timestamp: "2026-07-20T13:00:00", value: 24 },
+                { timestamp: "2026-07-20T14:00:00", value: 27 },
+              ]}
+            />
+          </div>
+          <div style={{ width: 120 }}>
+            <MiniSparkline
+              color="rgba(255, 99, 132, 1)"
+              points={[
+                { timestamp: "2026-07-20T10:00:00", value: 30 },
+                { timestamp: "2026-07-20T11:00:00", value: 28 },
+                { timestamp: "2026-07-20T12:00:00", value: 26 },
+                { timestamp: "2026-07-20T13:00:00", value: 24 },
+                { timestamp: "2026-07-20T14:00:00", value: 22 },
+              ]}
+            />
+          </div>
+        </div>
       </section>
 
       <section>
