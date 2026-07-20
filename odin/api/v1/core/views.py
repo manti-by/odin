@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.http import HttpResponse
+from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
@@ -22,6 +23,8 @@ from odin.apps.weather.services import get_weather_chart_data
 
 
 class ApplicationServerKeyView(APIView):
+    permission_classes = (AllowAny,)
+
     def get(self, request: Request, *args: list, **kwargs: dict) -> Response:
         return Response(
             {"application_server_key": settings.FIREBASE_CLOUD_MESSAGING_PUBLIC_KEY},
@@ -31,6 +34,7 @@ class ApplicationServerKeyView(APIView):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class DeviceView(CreateAPIView, ListAPIView):
+    permission_classes = (AllowAny,)
     serializer_class = DeviceSubscriptionSerializer
     queryset = Device.objects.active()
 
@@ -55,6 +59,7 @@ class DeviceView(CreateAPIView, ListAPIView):
 
 
 class LogsView(CreateAPIView):
+    permission_classes = (AllowAny,)
     serializer_class = LogSerializer
 
     def perform_create(self, serializer: LogSerializer):
@@ -102,3 +107,12 @@ class WeatherChartView(APIView):
         serializer.is_valid(raise_exception=True)
         data = get_weather_chart_data(**serializer.validated_data)
         return Response(data)
+
+
+class CsrfTokenView(APIView):
+    authentication_classes = []
+    permission_classes = (AllowAny,)
+
+    def get(self, request: Request) -> Response:
+        get_token(request)
+        return Response({"detail": "CSRF cookie set"})

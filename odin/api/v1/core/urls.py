@@ -3,6 +3,7 @@ from django.urls import path
 from odin.api.v1.core.views import (
     ApplicationServerKeyView,
     ChartView,
+    CsrfTokenView,
     DashboardView,
     DeviceView,
     HealthCheckView,
@@ -22,4 +23,5 @@ urlpatterns = [
     path("devices/", DeviceView.as_view(), name="devices"),
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path("app-server-key/", ApplicationServerKeyView.as_view(), name="app-server-key"),
+    path("csrf/", CsrfTokenView.as_view(), name="csrf"),
 ]

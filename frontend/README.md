@@ -143,3 +143,52 @@ Icons are served by Django's static file server via the Vite dev proxy (`/static
 `DashboardPage` calls `GET /api/v1/sensors/` via `sensorsApi.list()` on mount
 and renders the count, verifying the API client end-to-end against the running
 Django backend.
+
+## Authentication & CSRF
+
+### Session-based authentication
+
+The SPA is served same-origin and relies on Django's session cookies
+(`sessionid`). No auth tokens are stored in the client. Sessions are
+established via the Django admin login (`/admin/`).
+
+- All API requests are sent with `credentials: "same-origin"` (set in
+  `client.ts`), which ensures the session cookie is included.
+- Read endpoints (`/sensors/`, `/dashboard/`, `/relays/`, `/ds18b20/`,
+  `/esp8266/`, `/chart-options/`, `/weather-chart/`, `/healthcheck/`) are
+  public (`AllowAny`).
+- Write endpoints (`PATCH /sensors/<id>/`, `PATCH /relays/<id>/`) require
+  `IsAuthenticated`. The SPA user must have an active Django session.
+
+### CSRF protection
+
+The Django `CsrfViewMiddleware` sets the `csrftoken` cookie on every response
+that uses `get_token`. The SPA's API client reads this cookie and sends its
+value as the `X-CSRFToken` header on all unsafe (POST/PUT/PATCH/DELETE)
+requests.
+
+- `csrf` cookie name: `csrftoken` (Django default), HTTPOnly `false` (so
+  `document.cookie` is readable by the client).
+- SameSite policy: `Lax` (safe for same-origin navigation and subresource
+  requests).
+- **Cookie bootstrap**: On app boot the client should `GET /api/v1/core/csrf/`
+  to ensure the `csrftoken` cookie is present. This endpoint calls
+  `django.middleware.csrf.get_token()` which triggers the middleware to set the
+  cookie in the response. The existing `client.ts` reads the cookie from
+  `document.cookie`, so no explicit client change is needed — just make sure
+  the boot sequence includes a call to this endpoint before the first unsafe
+  request.
+- Token-authenticated requests (used by satellite devices, not the SPA) are
+  CSRF-exempt by DRF design — they bypass the cookie check entirely.
+
+### Rate limiting (throttling)
+
+Write endpoints have DRF `ScopedRateThrottle` rates configured in
+`odin/settings/base.py`:
+
+| Scope             | Rate   | Endpoint(s)                        |
+|-------------------|--------|-------------------------------------|
+| `sensors_update`  | 30/min | `PATCH /api/v1/sensors/<id>/`      |
+| `relays_update`   | 30/min | `PATCH /api/v1/relays/<id>/`       |
+
+Exceeding the rate returns `429 Too Many Requests`.
