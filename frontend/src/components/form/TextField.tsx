@@ -5,7 +5,7 @@ interface TextFieldProps {
   label: string;
   value: string;
   onChange: ChangeEventHandler<HTMLInputElement>;
-  type?: "text" | "number";
+  type?: "text" | "number" | "datetime-local";
   name?: string;
   step?: string;
   required?: boolean;
