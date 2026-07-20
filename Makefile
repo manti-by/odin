@@ -27,6 +27,7 @@ static: frontend
 deploy: frontend
 	git pull
 	uv sync
+	make frontend
 	uv run manage.py migrate
 	uv run manage.py collectstatic --no-input
 	sudo systemctl daemon-reload
