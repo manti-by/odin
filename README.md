@@ -112,6 +112,20 @@ odin/
 ├── locale/           # Translation files
 ├── settings/         # Django settings (base, dev, prod, test, sqlite)
 ├── configs/          # Nginx and other configs
+├── frontend/         # React + TypeScript SPA (Vite + Bun + Biome)
 ├── opencode.json     # Opencode configuration
 └── manage.py         # Django management script
+```
+
+
+## Frontend (React SPA)
+
+The dashboard UI is being migrated to a React SPA under `frontend/`. See
+[`frontend/README.md`](frontend/README.md) for setup and scripts. Quick start:
+
+```shell
+cd frontend
+bun install
+bun run dev      # http://localhost:5173, proxies /api, /admin, /static to Django
+bun run build    # type-checks and emits static assets to frontend/dist
 ```

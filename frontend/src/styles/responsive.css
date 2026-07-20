@@ -1,0 +1,116 @@
+/* ============================================================
+   Responsive breakpoints for shared components.
+   Ported from odin/static/css/responsive/{mobile,small-tablet,tablet,large-tablet}.css
+   Drop dashboard-specific selectors; keep generic component rules.
+   ============================================================ */
+
+/* Mobile: ≤480px (Pixel 7/8) */
+@media (max-width: 480px) {
+  main.container,
+  .container {
+    padding: 0 1rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    grid-row-gap: 0.75rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .tile {
+    min-height: 300px;
+  }
+
+  .tile__title {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .tile__body {
+    padding: 0.75rem;
+  }
+}
+
+/* Small tablet: 481-768px */
+@media (min-width: 481px) and (max-width: 768px) {
+  main.container,
+  .container {
+    padding: 0 1rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    grid-row-gap: 1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .tile {
+    padding: 0.75rem;
+  }
+
+  .tile__title {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .tile__body {
+    padding: 1rem;
+  }
+}
+
+/* Tablet: 769-1024px (iPad Pro) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  main.container,
+  .container {
+    padding: 0 1rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-column-gap: 1rem;
+    grid-row-gap: 1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .tile {
+    padding: 0.75rem 1rem;
+    min-height: 280px;
+  }
+
+  .tile__title {
+    padding: 0.75rem 1rem;
+  }
+
+  .tile__body {
+    padding: 0 1rem 1.25rem;
+  }
+}
+
+/* Large tablet / small laptop: 1025-1400px */
+@media (min-width: 1025px) and (max-width: 1400px) {
+  main.container,
+  .container {
+    padding: 0 1rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-column-gap: 1.25rem;
+    grid-row-gap: 1.25rem;
+  }
+
+  .tile {
+    min-height: 300px;
+  }
+
+  .tile__title {
+    padding: 0.75rem 1.25rem;
+  }
+
+  .tile__body {
+    padding: 0 1.25rem 1.5rem;
+  }
+}
