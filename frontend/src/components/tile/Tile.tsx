@@ -2,7 +2,7 @@ import { AliveIndicator, type AliveState } from "@/components/tile/AliveIndicato
 import type { ReactNode } from "react";
 
 interface TileProps {
-  title: string;
+  title: ReactNode;
   status?: AliveState;
   iconLink?: ReactNode;
   children: ReactNode;

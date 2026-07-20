@@ -1,62 +1,78 @@
-import { ApiError } from "@/lib/api/client";
-import { type Sensor, sensorsApi } from "@/lib/api/sensors";
-import { useCallback, useEffect, useState } from "react";
+import { ResponsiveGrid } from "@/components/grid/ResponsiveGrid";
+import { CurrencyTile } from "@/components/tile/CurrencyTile";
+import { Ds18b20SensorsTile } from "@/components/tile/Ds18b20SensorsTile";
+import { Esp8266SensorsTile } from "@/components/tile/Esp8266SensorsTile";
+import { SystemErrorsTile } from "@/components/tile/SystemErrorsTile";
+import { TargetTempModal } from "@/components/tile/TargetTempModal";
+import { WeatherTile } from "@/components/tile/WeatherTile";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import type { DashboardSensor } from "@/lib/api/dashboard";
+import { useState } from "react";
 
 export function DashboardPage() {
-  const [sensors, setSensors] = useState<Sensor[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, loading, error, reload } = useDashboardData();
+  const [selectedSensor, setSelectedSensor] = useState<DashboardSensor | null>(null);
 
-  const loadSensors = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await sensorsApi.list();
-      setSensors(response.results);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load sensors");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const handleEditSensor = (sensor: DashboardSensor) => {
+    setSelectedSensor(sensor);
+  };
 
-  useEffect(() => {
-    void loadSensors();
-  }, [loadSensors]);
+  const handleModalClose = () => {
+    setSelectedSensor(null);
+  };
+
+  const handleModalSuccess = () => {
+    void reload();
+  };
+
+  if (error && !data) {
+    return (
+      <section>
+        <p className="error" role="alert">
+          {error}
+        </p>
+        <button type="button" onClick={() => void reload()} disabled={loading}>
+          {loading ? "Loading..." : "Retry"}
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section>
-      <h2>Dashboard</h2>
-      <p className="placeholder">Dashboard tiles will be implemented in a follow-up ticket.</p>
-
-      <div className="api-smoke">
-        <h3>API smoke test — GET /api/v1/sensors/</h3>
-        {loading && <p>Loading…</p>}
-        {error && (
-          <p className="error" role="alert">
-            {error}
-          </p>
-        )}
-        {!loading && !error && (
-          <>
-            <p>
-              Loaded <strong>{sensors.length}</strong> active sensor(s).
-            </p>
-            {sensors.length > 0 && (
-              <ul>
-                {sensors.map((s) => (
-                  <li key={s.sensor_id}>
-                    {s.name} ({s.type}) — {s.temp}°C
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
-        <button type="button" onClick={() => void loadSensors()} disabled={loading}>
-          Reload
-        </button>
-      </div>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      <ResponsiveGrid>
+        <Esp8266SensorsTile
+          sensors={data?.sensors.esp8266 ?? []}
+          isAlive={data?.home_sensors_is_alive ?? true}
+          onEditSensor={handleEditSensor}
+          loading={loading}
+        />
+        <Ds18b20SensorsTile
+          sensors={data?.sensors.ds18b20 ?? []}
+          isAlive={data?.boiler_sensors_is_alive ?? true}
+          loading={loading}
+        />
+        <WeatherTile weather={data?.weather ?? null} loading={loading} />
+        <CurrencyTile rates={data?.exchange_rates ?? []} trends={data?.exchange_rates_trends ?? {}} loading={loading} />
+        <SystemErrorsTile
+          traffic={data?.traffic ?? null}
+          voltage={data?.voltage ?? null}
+          systemdStatus={data?.systemd_status ?? {}}
+          errorLogs={data?.error_logs ?? []}
+          loading={loading}
+        />
+      </ResponsiveGrid>
+      <TargetTempModal
+        open={selectedSensor !== null}
+        sensor={selectedSensor}
+        onClose={handleModalClose}
+        onSuccess={handleModalSuccess}
+      />
     </section>
   );
 }

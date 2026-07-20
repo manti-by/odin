@@ -19,6 +19,10 @@ export interface PaginatedSensors {
   results: Sensor[];
 }
 
+export interface SensorContextUpdate {
+  context: Record<string, unknown>;
+}
+
 export const sensorsApi = {
   list: (params?: { page?: number }) => {
     const search = new URLSearchParams();
@@ -27,5 +31,8 @@ export const sensorsApi = {
     }
     const query = search.toString();
     return api.get<PaginatedSensors>(`sensors/${query ? `?${query}` : ""}`);
+  },
+  update: (sensorId: string, body: SensorContextUpdate) => {
+    return api.patch<unknown>(`sensors/${encodeURIComponent(sensorId)}/`, body);
   },
 };

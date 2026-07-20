@@ -1,0 +1,266 @@
+/* ============================================================
+   Tile component styles for dashboard tiles.
+   Ported from odin/static/css/index/{base,sensors,boiler-room,weather,currency,misc}.css
+   ============================================================ */
+
+.tile__loading,
+.tile__empty {
+  padding: 1rem 0;
+  color: #6c757d;
+}
+
+.sensor-list {
+  display: block;
+  padding: 1.75rem 0;
+  margin: 0;
+}
+
+.sensor-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.75rem 0;
+  list-style: none;
+}
+
+.sensor-row__name {
+  width: 60%;
+}
+
+.sensor-row__temp span,
+.sensor-row__humidity span {
+  font-size: 0.85em;
+}
+
+.sensor-row__edit .edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ----- DS18B20 / Boiler Room tile ----- */
+.sensor-row-group {
+  display: flex;
+  padding: 0.25rem 0;
+  margin: 0;
+}
+
+.sensor-card {
+  width: 33%;
+  font-size: 1rem;
+  font-weight: bold;
+  text-align: center;
+  list-style: none;
+}
+
+.sensor-card__value {
+  display: block;
+  position: relative;
+  left: -5px;
+  height: 150px;
+}
+
+.sensor-card__value img {
+  width: 160px;
+}
+
+.sensor-card__attrs {
+  margin-bottom: 0.5rem;
+}
+
+.sensor-card__relay {
+  display: inline-block;
+  height: 24px;
+  margin-right: 0.5rem;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.sensor-card__name {
+  width: 100px;
+  margin: 0 auto 0.5rem;
+}
+
+.linked-sensor {
+  font-weight: normal;
+  vertical-align: top;
+}
+
+.linked-sensor__arrow {
+  font-size: 1.25rem;
+}
+
+/* ----- Weather tile ----- */
+.weather-temp {
+  margin-top: 1rem;
+  font-size: 3.75rem;
+  font-weight: bold;
+}
+
+.weather-temp .meta {
+  margin: 1.5rem 2rem;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+.weather-temp,
+.weather-humidity,
+.weather-pressure {
+  display: flex;
+  flex-flow: row wrap;
+  align-content: center;
+  margin-right: 2rem;
+}
+
+.weather-humidity .tile-label,
+.weather-pressure .tile-label {
+  align-content: center;
+  margin: 0;
+  font-weight: bold;
+  vertical-align: baseline;
+}
+
+.weather-humidity__chart img,
+.weather-pressure__chart img {
+  display: block;
+  margin-right: 0.5rem;
+}
+
+.weather-wind__direction {
+  position: relative;
+  height: 3rem;
+  padding: 0 1.5rem 0 2rem;
+}
+
+.weather-wind__direction span {
+  position: relative;
+  top: -0.75rem;
+  display: inline-block;
+  font-size: 2.75rem;
+  font-weight: bold;
+}
+
+.weather-wind .label {
+  font-weight: bold;
+}
+
+.weather .attr {
+  margin-left: 10%;
+  padding: 0.25rem;
+  line-height: 1.5;
+}
+
+.weather .attr span {
+  display: inline-block;
+}
+
+.weather .attr .tile-label {
+  margin: 0;
+  font-weight: bold;
+  vertical-align: baseline;
+}
+
+/* ----- Currency tile ----- */
+.currency-date {
+  padding: 1rem 0 0;
+}
+
+.currency-rates {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
+}
+
+.currency-rate {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #333;
+}
+
+.currency-rate:last-child {
+  border-bottom: none;
+}
+
+.currency-rate__code {
+  font-weight: bold;
+  font-size: 1.1rem;
+  min-width: 3rem;
+}
+
+.currency-rate__value {
+  flex-grow: 1;
+  text-align: right;
+  font-size: 1.1rem;
+  padding: 0 0 0 1rem;
+}
+
+.currency-rate__value .trend {
+  margin-left: 0.5rem;
+}
+
+.currency-rate__value .trend.up {
+  color: green;
+}
+
+.currency-rate__value .trend.down {
+  color: red;
+}
+
+/* ----- System / Errors tile ----- */
+.system-traffic {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.system-traffic .label,
+.system-voltage .label {
+  display: inline-block;
+  min-width: 150px;
+  text-transform: capitalize;
+}
+
+.system-voltage {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.system-systemd {
+  margin-bottom: 1rem;
+}
+
+.systemd-entry {
+  list-style: none;
+}
+
+.systemd-entry__service {
+  display: inline-block;
+  min-width: 150px;
+}
+
+.systemd-entry__error {
+  color: #f44336;
+}
+
+.log-entry {
+  list-style: none;
+}
+
+.log-entry__time {
+  margin-right: 1rem;
+}
+
+.success.info {
+  padding: 0.5rem 0;
+  color: #6c757d;
+}
+
+.info {
+  color: #6c757d;
+}
