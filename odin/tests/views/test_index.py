@@ -9,40 +9,16 @@ from django.urls import reverse
 from rest_framework import status
 
 from odin.apps.currency.models import Currency
-from odin.tests.factories import ExchangeRateFactory, SensorFactory, VoltageLogFactory, WeatherFactory
+from odin.tests.factories import ExchangeRateFactory
 
 
 @pytest.mark.django_db
 @pytest.mark.views
 class TestIndexView:
-    @patch("odin.apps.core.services.subprocess.run")
-    def test_index(self, mock_subprocess, client):
-        mock_subprocess.return_value.stdout = b"active"
-
+    def test_index_returns_spa_error_when_build_missing(self, client):
         response = client.get(reverse("index"), follow=True)
-        assert response.status_code == status.HTTP_200_OK
-
-    @patch("odin.apps.core.services.subprocess.run")
-    def test_index_uses_cached_context(self, mock_subprocess, client):
-        mock_subprocess.return_value.stdout = b"active"
-
-        SensorFactory(is_active=True)
-        VoltageLogFactory()
-        WeatherFactory()
-
-        with patch.object(cache, "get") as mock_get:
-            mock_get.return_value = {
-                "weather": None,
-                "sensors": [],
-                "home_sensors_is_alive": True,
-                "boiler_sensors_is_alive": True,
-                "error_logs": [],
-                "voltage": None,
-                "voltage_chart": "",
-                "voltage_values": [],
-            }
-            response = client.get(reverse("index"), follow=True)
-            assert response.status_code == 200
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert b"Frontend build not available" in response.content
 
     @patch("odin.apps.core.services.subprocess.run")
     def test_index_exchange_rates_trends_up_arrow(self, mock_subprocess, client):

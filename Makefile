@@ -1,3 +1,8 @@
+frontend:
+	bun install --cwd frontend && bun run --cwd frontend build
+
+.PHONY: run shell migrate migrations messages locale static deploy test full-test check django-checks install update ci dump restore agent-instance wiki-dedup wiki-consistency frontend
+
 run:
 	uv run manage.py runserver
 
@@ -16,10 +21,10 @@ messages:
 locale:
 	uv run manage.py compilemessages -l ru
 
-static:
+static: frontend
 	uv run manage.py collectstatic --no-input
 
-deploy:
+deploy: frontend
 	git pull
 	uv sync
 	uv run manage.py migrate
