@@ -8,9 +8,15 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from odin.api.v1.core.serializers import ChartTypeSerializer, DeviceSubscriptionSerializer, LogSerializer
+from odin.api.v1.core.serializers import (
+    ChartTypeSerializer,
+    DeviceSubscriptionSerializer,
+    LogSerializer,
+    WeatherChartQueryParamsSerializer,
+)
 from odin.apps.core.models import Device, Log
 from odin.apps.core.utils import create_metric_gauge_chart
+from odin.apps.weather.services import get_weather_chart_data
 
 
 class ApplicationServerKeyView(APIView):
@@ -72,3 +78,14 @@ class ChartView(RetrieveAPIView):
 
         contents = create_metric_gauge_chart(**serializer.validated_data)
         return HttpResponse(contents, content_type="image/svg+xml")
+
+
+class WeatherChartView(APIView):
+    authentication_classes = []
+    permission_classes = (AllowAny,)
+
+    def get(self, request: Request) -> Response:
+        serializer = WeatherChartQueryParamsSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data = get_weather_chart_data(**serializer.validated_data)
+        return Response(data)
