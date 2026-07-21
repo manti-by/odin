@@ -117,25 +117,25 @@ export function TemperatureChart({ data, options }: TemperatureChartProps) {
   return (
     <ResponsiveContainer width="100%" height={480}>
       <LineChart data={points} margin={{ top: 16, right: 16, bottom: 8, left: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#3d3d3b" />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
         <XAxis
           dataKey="time"
           type="number"
           scale="time"
           domain={["dataMin", "dataMax"]}
           tickFormatter={(ts: number) => format(new Date(ts), "HH:mm")}
-          stroke="#bfbfbf"
-          label={{ value: xTitle, position: "insideBottomRight", offset: -4, fill: "#bfbfbf" }}
+          stroke="var(--color-text-secondary)"
+          label={{ value: xTitle, position: "insideBottomRight", offset: -4, fill: "var(--color-text-secondary)" }}
         />
         <YAxis
           domain={[yMin, yMax]}
           tickFormatter={(v: number) => `${v}°`}
-          stroke="#bfbfbf"
+          stroke="var(--color-text-secondary)"
           label={{
             value: yTitle,
             angle: -90,
             position: "insideLeft",
-            fill: "#bfbfbf",
+            fill: "var(--color-text-secondary)",
             style: { textAnchor: "middle" },
           }}
         />
@@ -149,15 +149,15 @@ export function TemperatureChart({ data, options }: TemperatureChartProps) {
             return v !== null ? `${v.toFixed(1)}°C` : "—";
           }}
           contentStyle={{
-            background: "#1a1a18",
-            border: "1px solid #3d3d3b",
+            background: "var(--color-surface-2)",
+            border: "1px solid var(--color-border)",
             borderRadius: 6,
-            color: "#bfbfbf",
+            color: "var(--color-text-primary)",
           }}
         />
         <Legend
-          wrapperStyle={{ color: "#bfbfbf" }}
-          formatter={(value: string) => <span style={{ color: "#bfbfbf" }}>{value}</span>}
+          wrapperStyle={{ color: "var(--color-text-secondary)" }}
+          formatter={(value: string) => <span style={{ color: "var(--color-text-secondary)" }}>{value}</span>}
         />
         {ids.map((id, i) => (
           <Line

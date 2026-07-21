@@ -1,6 +1,6 @@
 import { Line, LineChart, ResponsiveContainer, Tooltip } from "recharts";
 
-const DEFAULT_COLOR = "rgba(54, 162, 235, 1)";
+const DEFAULT_COLOR = "var(--color-accent)";
 
 interface SparklinePoint {
   timestamp: string;
@@ -38,10 +38,10 @@ export function MiniSparkline({ points, color = DEFAULT_COLOR, height = 48 }: Mi
         />
         <Tooltip
           contentStyle={{
-            background: "#1a1a18",
-            border: "1px solid #3d3d3b",
-            borderRadius: 4,
-            color: "#bfbfbf",
+            background: "var(--color-surface-2)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-sm)",
+            color: "var(--color-text-primary)",
             fontSize: 12,
           }}
         />

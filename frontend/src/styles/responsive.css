@@ -1,10 +1,8 @@
 /* ============================================================
-   Responsive breakpoints for shared components.
-   Ported from odin/static/css/responsive/{mobile,small-tablet,tablet,large-tablet}.css
-   Drop dashboard-specific selectors; keep generic component rules.
+   Responsive breakpoints for shared components — Warp theme.
    ============================================================ */
 
-/* Mobile: ≤480px (Pixel 7/8) */
+/* Mobile: ≤480px */
 @media (max-width: 480px) {
   main.container,
   .container {
@@ -13,7 +11,8 @@
 
   .grid {
     grid-template-columns: 1fr;
-    grid-row-gap: 0.75rem;
+    grid-column-gap: var(--grid-gap-sm);
+    grid-row-gap: var(--grid-gap-sm);
     padding-left: 0.5rem;
     padding-right: 0.5rem;
   }
@@ -24,7 +23,7 @@
 
   .tile__title {
     padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
   }
 
   .tile__body {
@@ -41,18 +40,15 @@
 
   .grid {
     grid-template-columns: 1fr;
+    grid-column-gap: var(--grid-gap-sm);
     grid-row-gap: 1rem;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }
 
-  .tile {
-    padding: 0.75rem;
-  }
-
   .tile__title {
-    padding: 0.75rem 1rem;
-    font-size: 0.95rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
   }
 
   .tile__body {
@@ -60,7 +56,7 @@
   }
 }
 
-/* Tablet: 769-1024px (iPad Pro) */
+/* Tablet: 769-1024px */
 @media (min-width: 769px) and (max-width: 1024px) {
   main.container,
   .container {
@@ -76,12 +72,11 @@
   }
 
   .tile {
-    padding: 0.75rem 1rem;
     min-height: 280px;
   }
 
   .tile__title {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
   }
 
   .tile__body {
@@ -107,7 +102,7 @@
   }
 
   .tile__title {
-    padding: 0.75rem 1.25rem;
+    padding: 0.5rem 1rem;
   }
 
   .tile__body {

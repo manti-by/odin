@@ -1,0 +1,48 @@
+/* ============================================================
+   Design tokens — Warp / Linear / Zed inspired color system.
+   Dark-first, near-black canvas, 4-step surface ladder,
+   lavender-blue accent, hairline borders, no pure black/white.
+   ============================================================ */
+
+:root {
+  /* ----- Surface ladder ----- */
+  --color-bg: #0c0d0e;
+  --color-surface-1: #0f1011;
+  --color-surface-2: #141516;
+  --color-surface-3: #1a1c23;
+
+  /* ----- Borders ----- */
+  --color-border: #23252a;
+  --color-border-strong: #34343a;
+
+  /* ----- Text ----- */
+  --color-text-primary: #f7f8f8;
+  --color-text-secondary: #8f93a2;
+  --color-text-tertiary: #62666d;
+
+  /* ----- Accent (lavender-blue) ----- */
+  --color-accent: #5e6ad2;
+  --color-accent-hover: #828fff;
+
+  /* ----- Semantic ----- */
+  --color-success: #27a644;
+  --color-error: #ff5370;
+  --color-warning: #ffcb6b;
+
+  /* ----- Typography ----- */
+  --font-sans: system-ui, -apple-system, "Segoe UI", "Roboto", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", monospace;
+
+  /* ----- Radii ----- */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* ----- Transitions ----- */
+  --transition-fast: 0.1s ease-in-out;
+  --transition-normal: 0.15s ease-in-out;
+
+  /* ----- Grid gap ----- */
+  --grid-gap: 1.5rem;
+  --grid-gap-sm: 0.75rem;
+}
