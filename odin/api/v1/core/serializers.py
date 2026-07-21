@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Any
+
 from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
@@ -68,12 +72,12 @@ class DashboardSensorSerializer(serializers.Serializer):
     linked_sensor = serializers.SerializerMethodField()
     is_alive = serializers.BooleanField()
 
-    def get_relay(self, obj):
+    def get_relay(self, obj: Any) -> dict | None:
         if obj.relay:
             return DashboardRelaySerializer(obj.relay).data
         return None
 
-    def get_linked_sensor(self, obj):
+    def get_linked_sensor(self, obj: Any) -> dict | None:
         if obj.linked_sensor:
             return LinkedSensorSerializer(obj.linked_sensor).data
         return None
@@ -95,10 +99,10 @@ class WeatherSerializer(serializers.Serializer):
     synced_at = serializers.DateTimeField()
     provider = serializers.CharField(max_length=32)
 
-    def get_humidity(self, obj):
+    def get_humidity(self, obj: Any) -> Any:
         return (obj.data or {}).get("humidity")
 
-    def get_wind(self, obj):
+    def get_wind(self, obj: Any) -> dict:
         wind = (obj.data or {}).get("wind") or {}
         return {
             "direction": wind.get("direction"),
@@ -106,7 +110,7 @@ class WeatherSerializer(serializers.Serializer):
             "gusts": wind.get("gusts"),
         }
 
-    def get_attributes(self, obj):
+    def get_attributes(self, obj: Any) -> dict[str, bool]:
         attrs = (obj.data or {}).get("attributes") or {}
         return {
             "fog": bool(attrs.get("fog")),
@@ -144,11 +148,18 @@ class ErrorLogSerializer(serializers.Serializer):
 
 
 class DashboardSerializer(serializers.Serializer):
-    def to_representation(self, instance):
-        if not isinstance(instance, dict):
-            msg = f"Expected dict, got {type(instance).__name__}"
-            raise TypeError(msg)
+    weather = WeatherSerializer(allow_null=True, required=False)
+    sensors = serializers.SerializerMethodField()
+    home_sensors_is_alive = serializers.BooleanField(default=False)
+    boiler_sensors_is_alive = serializers.BooleanField(default=False)
+    error_logs = ErrorLogSerializer(many=True, default=list)
+    voltage = VoltageSerializer(allow_null=True, required=False)
+    exchange_rates = ExchangeRateSerializer(many=True, default=list)
+    exchange_rates_trends = serializers.JSONField(default=dict)
+    systemd_status = serializers.JSONField(default=dict)
+    traffic = TrafficSerializer(allow_null=True, required=False)
 
+    def get_sensors(self, instance: dict) -> dict[str, list]:
         sensors_qs = instance.get("sensors") or []
         if not hasattr(sensors_qs, "__iter__"):
             sensors_qs = []
@@ -162,18 +173,7 @@ class DashboardSerializer(serializers.Serializer):
             else:
                 ds18b20.append(data)
 
-        return {
-            "weather": WeatherSerializer(instance.get("weather")).data if instance.get("weather") else None,
-            "sensors": {"esp8266": esp8266, "ds18b20": ds18b20},
-            "home_sensors_is_alive": bool(instance.get("home_sensors_is_alive")),
-            "boiler_sensors_is_alive": bool(instance.get("boiler_sensors_is_alive")),
-            "error_logs": ErrorLogSerializer(instance.get("error_logs") or [], many=True).data,
-            "voltage": VoltageSerializer(instance.get("voltage")).data if instance.get("voltage") else None,
-            "exchange_rates": ExchangeRateSerializer(instance.get("exchange_rates") or [], many=True).data,
-            "exchange_rates_trends": instance.get("exchange_rates_trends") or {},
-            "systemd_status": instance.get("systemd_status") or {},
-            "traffic": TrafficSerializer(instance.get("traffic")).data if instance.get("traffic") else None,
-        }
+        return {"esp8266": esp8266, "ds18b20": ds18b20}
 
 
 class WeatherChartQueryParamsSerializer(BaseSerializer):

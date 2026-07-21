@@ -59,3 +59,33 @@ jobs:
       - name: Run Pytest suite
         run: |
           uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/
+
+  frontend-checks:
+    name: Run frontend checks
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Run Biome lint
+        working-directory: frontend
+        run: bun run lint
+
+      - name: Run TypeScript typecheck
+        working-directory: frontend
+        run: bun run typecheck
+
+      - name: Build frontend
+        working-directory: frontend
+        run: bun run build

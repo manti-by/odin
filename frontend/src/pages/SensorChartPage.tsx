@@ -6,7 +6,7 @@ import type { ChartData, ChartOptions, SensorType } from "@/lib/api/charts";
 import { chartsApi } from "@/lib/api/charts";
 import { ApiError } from "@/lib/api/client";
 import { datetimeLocalToIso, toLocalDatetimeValue } from "@/lib/datetime";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 type SensorLocation = "home" | "boiler";
@@ -91,7 +91,7 @@ export function SensorChartPage() {
   }, [sensorType]);
 
   const handleSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       void load(start, end);
     },

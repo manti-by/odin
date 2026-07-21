@@ -10,21 +10,12 @@ class TestViews:
     def _isolate_dist(self, tmp_path, settings):
         settings.FRONTEND_DIST_DIR = tmp_path
 
-    def test_spa_deep_link_returns_error_when_build_missing(self, client):
-        response = client.get("/sensors/home/", follow=True)
+    @pytest.mark.parametrize("url", ("/sensors/home/", "/sensors/boiler/", "/some/deep/link/"))
+    def test_spa_deep_link__returns_error_when_build_missing(self, client, url):
+        response = client.get(url, follow=True)
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert b"Frontend build not available" in response.content
 
-    def test_spa_deep_link_boiler_returns_error_when_build_missing(self, client):
-        response = client.get("/sensors/boiler/", follow=True)
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert b"Frontend build not available" in response.content
-
-    def test_random_spa_route_returns_error_when_build_missing(self, client):
-        response = client.get("/some/deep/link/", follow=True)
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert b"Frontend build not available" in response.content
-
-    def test_admin_route_still_works(self, client):
+    def test_admin_route__still_works(self, client):
         response = client.get("/admin/", follow=True)
         assert response.status_code == status.HTTP_200_OK

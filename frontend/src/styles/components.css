@@ -9,8 +9,8 @@
   display: grid;
   width: 100%;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-column-gap: var(--grid-gap);
-  grid-row-gap: var(--grid-gap);
+  column-gap: var(--grid-gap);
+  row-gap: var(--grid-gap);
   padding-bottom: 2rem;
 }
 
@@ -254,10 +254,7 @@
   user-select: none;
   padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
-  transition:
-    color var(--transition-fast),
-    background-color var(--transition-fast),
-    border-color var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
   cursor: pointer;
   font-family: inherit;
   font-size: 0.875rem;

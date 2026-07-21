@@ -9,21 +9,22 @@ export function useDashboardData() {
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchIdRef = useRef(0);
+  const isMountedRef = useRef(true);
 
   const fetchData = useCallback(async () => {
     const id = ++fetchIdRef.current;
     setError(null);
     try {
       const result = await dashboardApi.get();
-      if (id === fetchIdRef.current) {
+      if (id === fetchIdRef.current && isMountedRef.current) {
         setData(result);
       }
     } catch {
-      if (id === fetchIdRef.current) {
+      if (id === fetchIdRef.current && isMountedRef.current) {
         setError("Failed to load dashboard data");
       }
     } finally {
-      if (id === fetchIdRef.current) {
+      if (id === fetchIdRef.current && isMountedRef.current) {
         setLoading(false);
       }
     }
@@ -40,6 +41,7 @@ export function useDashboardData() {
       void fetchData();
     }, POLL_INTERVAL);
     return () => {
+      isMountedRef.current = false;
       if (intervalRef.current !== null) {
         clearInterval(intervalRef.current);
       }

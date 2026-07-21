@@ -64,8 +64,8 @@ export function StyleguidePage() {
       <section>
         <h3>Theme tokens</h3>
         <p>
-          Dark-first, near-black canvas with a 4-step surface ladder and lavender-blue accent.{" "}
-          <code>tokens.css</code> defines all variables consumed by component styles.
+          Dark-first, near-black canvas with a 4-step surface ladder and lavender-blue accent. <code>tokens.css</code>{" "}
+          defines all variables consumed by component styles.
         </p>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
@@ -126,8 +126,7 @@ export function StyleguidePage() {
       <section>
         <h3>MiniSparkline</h3>
         <p>
-          Data-driven inline sparkline. The default stroke color uses the accent token{" "}
-          <code>var(--color-accent)</code>.
+          Data-driven inline sparkline. The default stroke color uses the accent token <code>var(--color-accent)</code>.
         </p>
         <div style={{ display: "flex", gap: "2rem", alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ width: 120 }}>
@@ -158,9 +157,7 @@ export function StyleguidePage() {
 
       <section>
         <h3>Tile</h3>
-        <p>
-          Surface-2 background, 1px hairline border, title on surface-3. Optional status dot and icon link.
-        </p>
+        <p>Surface-2 background, 1px hairline border, title on surface-3. Optional status dot and icon link.</p>
         <ResponsiveGrid>
           <Tile
             title="Sensors"
@@ -257,8 +254,8 @@ export function StyleguidePage() {
       <section>
         <h3>Typography</h3>
         <p>
-          UI text uses <code>var(--font-sans)</code>: system-ui, -apple-system, Roboto.{" "}
-          Code, IDs, and numeric values use <code>var(--font-mono)</code>: JetBrains Mono, Fira Code, SF Mono.
+          UI text uses <code>var(--font-sans)</code>: system-ui, -apple-system, Roboto. Code, IDs, and numeric values
+          use <code>var(--font-mono)</code>: JetBrains Mono, Fira Code, SF Mono.
         </p>
         <p style={{ fontFamily: "var(--font-mono)" }}>
           <strong>Monospace sample:</strong> 25.3°C | sensor-esp-01 | 99.7%
@@ -268,8 +265,8 @@ export function StyleguidePage() {
       <section>
         <h3>Container</h3>
         <p>
-          The <code>Container</code> component wraps content with the <code>.container</code> class
-          (max-width 1560px) and accepts <code>as</code> and <code>fluid</code> props.
+          The <code>Container</code> component wraps content with the <code>.container</code> class (max-width 1560px)
+          and accepts <code>as</code> and <code>fluid</code> props.
         </p>
       </section>
     </section>

@@ -7,16 +7,17 @@ from django.http import HttpRequest, HttpResponse, HttpResponseServerError
 def _read_dist_file(filename: str, content_type: str, headers: dict[str, str] | None = None) -> HttpResponse:
     file_path = settings.FRONTEND_DIST_DIR / filename
     try:
-        with open(file_path, encoding="utf-8") as f:
-            response = HttpResponse(f.read(), content_type=content_type)
-            if headers:
-                for key, value in headers.items():
-                    response[key] = value
-            return response
+        content = file_path.read_text(encoding="utf-8")
     except OSError:
         return HttpResponseServerError(
             "<h1>Frontend build not available</h1><p>Run <code>make frontend</code> to build the SPA.</p>"
         )
+
+    response = HttpResponse(content, content_type=content_type)
+    if headers:
+        for key, value in headers.items():
+            response[key] = value
+    return response
 
 
 def index_view(request: HttpRequest) -> HttpResponse:

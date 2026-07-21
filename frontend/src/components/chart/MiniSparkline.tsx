@@ -14,7 +14,7 @@ interface MiniSparklineProps {
 }
 
 export function MiniSparkline({ points, color = DEFAULT_COLOR, height = 48 }: MiniSparklineProps) {
-  const data = points.map((p) => ({ v: p.value }));
+  const data = points.map((p) => ({ name: p.timestamp, value: p.value }));
 
   if (data.length === 0) {
     return (
@@ -28,7 +28,7 @@ export function MiniSparkline({ points, color = DEFAULT_COLOR, height = 48 }: Mi
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
         <Line
-          dataKey="v"
+          dataKey="value"
           type="monotone"
           stroke={color}
           strokeWidth={1.5}

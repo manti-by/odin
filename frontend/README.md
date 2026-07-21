@@ -48,7 +48,7 @@ bun run format      # format the codebase with Biome
 
 ## Project layout
 
-```
+```text
 frontend/
 ├── index.html              # Vite HTML entrypoint
 ├── src/

@@ -52,7 +52,7 @@ class SensorsUpdateView(mixins.UpdateModelMixin, GenericViewSet):
 
 class SensorsLogView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet):
     # TODO: Temporary disable until satellites updated
-    authentication_classes = []
+    authentication_classes = ()
     permission_classes = (AllowAny,)
     serializer_class = SensorLogSerializer
 

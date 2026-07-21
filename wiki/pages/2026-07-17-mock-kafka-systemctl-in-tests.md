@@ -8,7 +8,7 @@ services: [main]
 branch: -
 tickets: []
 tags: [testing, ci, kafka, mocking]
-related: []
+related: [2026-07-21-react-frontend-pr-review-fixes.md]
 ---
 
 # Mock Kafka and systemctl in dashboard tests for CI
@@ -45,7 +45,7 @@ Fix: add `unittest.mock.patch` to the test class.
 
 ## Test Results
 
-```
+```text
 9 passed in test_dashboard.py        ✓
 Full suite: 7 failed → 0 failed     ✓
 ```
@@ -58,4 +58,4 @@ Full suite: 7 failed → 0 failed     ✓
 
 ## References
 
-- Related: none
+- Related: [[2026-07-21-react-frontend-pr-review-fixes]]

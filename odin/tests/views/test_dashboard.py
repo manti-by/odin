@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -33,17 +34,17 @@ DEFAULT_SYSTEMD_STATUS = {"scheduler.service": {"status": "active"}, "worker.ser
 @pytest.mark.django_db
 @pytest.mark.views
 class TestDashboardAPI:
-    def setup_method(self):
+    def setup_method(self) -> None:
         self.client = APIClient()
         self.url = reverse("api:v1:core:dashboard")
         cache.clear()
         self.systemd_patcher = patch("odin.apps.core.services.systemd_status", return_value=DEFAULT_SYSTEMD_STATUS)
         self.systemd_patcher.start()
 
-    def teardown_method(self):
+    def teardown_method(self) -> None:
         self.systemd_patcher.stop()
 
-    def _make_fake_context(self, **overrides):
+    def _make_fake_context(self, **overrides: Any) -> dict:
         base = {
             "weather": None,
             "sensors": [],

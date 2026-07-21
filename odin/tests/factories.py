@@ -93,7 +93,7 @@ class VoltageLogFactory(DjangoModelFactory):
 
 
 class WeatherDataFactory(factory.DictFactory):
-    temp = {"avg": "22.50"}
+    temp = factory.LazyFunction(lambda: {"avg": "22.50"})
     pressure = 750
     humidity = "55"
 

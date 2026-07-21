@@ -98,6 +98,8 @@ function buildPoints(data: ChartData) {
     .filter((p): p is Record<string, number | null> => p !== null);
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export function TemperatureChart({ data, options }: TemperatureChartProps) {
   const points = useMemo(() => (data ? buildPoints(data) : []), [data]);
   const sensors = data?.sensors ?? [];
@@ -109,6 +111,11 @@ export function TemperatureChart({ data, options }: TemperatureChartProps) {
   const yTitle = options?.y_title ?? "Temperature °C";
   const xTitle = options?.x_title ?? "Time";
   const tooltipFormat = options?.time_tooltip_format ? momentToDateFns(options.time_tooltip_format) : "MMM d HH:mm";
+
+  // Ticks show only HH:mm for short ranges; once the selected span exceeds a
+  // day, "HH:mm" alone is ambiguous across multiple days, so include the date.
+  const spanMs = points.length > 1 ? Number(points[points.length - 1].time) - Number(points[0].time) : 0;
+  const tickFormat = spanMs > DAY_MS ? "MMM d HH:mm" : "HH:mm";
 
   if (!data || points.length === 0) {
     return <div className="placeholder">No chart data available.</div>;
@@ -123,7 +130,7 @@ export function TemperatureChart({ data, options }: TemperatureChartProps) {
           type="number"
           scale="time"
           domain={["dataMin", "dataMax"]}
-          tickFormatter={(ts: number) => format(new Date(ts), "HH:mm")}
+          tickFormatter={(ts: number) => format(new Date(ts), tickFormat)}
           stroke="var(--color-text-secondary)"
           label={{ value: xTitle, position: "insideBottomRight", offset: -4, fill: "var(--color-text-secondary)" }}
         />

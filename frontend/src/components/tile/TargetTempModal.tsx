@@ -58,7 +58,7 @@ export function TargetTempModal({ open, sensor, onClose, onSuccess }: TargetTemp
     setIsError(false);
 
     try {
-      await sensorsApi.update(sensor.sensor_id, { context: { ...sensor.context, target_temp: temp } });
+      await sensorsApi.update(sensor.sensor_id, { context: { target_temp: temp } });
       onSuccess();
       setMessage("Saved.");
       setIsError(false);

@@ -14,8 +14,13 @@ export class ApiError extends Error {
 const CSRF_COOKIE_NAME = "csrftoken";
 
 function readCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
+  for (const cookie of document.cookie.split(";")) {
+    const [key, ...rest] = cookie.trim().split("=");
+    if (key === name) {
+      return decodeURIComponent(rest.join("="));
+    }
+  }
+  return null;
 }
 
 function getCsrfToken(): string | null {

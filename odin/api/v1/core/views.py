@@ -67,7 +67,7 @@ class LogsView(CreateAPIView):
 
 
 class HealthCheckView(RetrieveAPIView):
-    authentication_classes = []
+    authentication_classes = ()
     permission_classes = (AllowAny,)
 
     def get(self, request: Request, *args: list, **kwargs: dict) -> HttpResponse:
@@ -75,7 +75,7 @@ class HealthCheckView(RetrieveAPIView):
 
 
 class ChartView(RetrieveAPIView):
-    authentication_classes = []
+    authentication_classes = ()
     permission_classes = (AllowAny,)
     serializer_class = ChartTypeSerializer
 
@@ -88,10 +88,10 @@ class ChartView(RetrieveAPIView):
 
 
 class DashboardView(APIView):
-    authentication_classes = []
+    authentication_classes = ()
     permission_classes = (AllowAny,)
 
-    def get(self, request: Request, *args, **kwargs):
+    def get(self, request: Request, *args: list, **kwargs: dict) -> Response:
         if (context := get_cached_index_context()) is None:
             context = update_index_context_cache()
         serializer = DashboardSerializer(context)
@@ -99,7 +99,7 @@ class DashboardView(APIView):
 
 
 class WeatherChartView(APIView):
-    authentication_classes = []
+    authentication_classes = ()
     permission_classes = (AllowAny,)
 
     def get(self, request: Request) -> Response:
@@ -110,7 +110,7 @@ class WeatherChartView(APIView):
 
 
 class CsrfTokenView(APIView):
-    authentication_classes = []
+    authentication_classes = ()
     permission_classes = (AllowAny,)
 
     def get(self, request: Request) -> Response:
