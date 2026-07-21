@@ -15,13 +15,13 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Header() {
   return (
-    <header>
-      <h1>
-        <span className="logo">
+    <header className="app-header">
+      <div className="app-header__brand">
+        <span className="app-header__logo">
           <img src="/static/img/logo.png" alt="O" />
         </span>
-        <NavLink to="/">ODIN SERVER</NavLink>
-      </h1>
+        <NavLink to="/">ODIN</NavLink>
+      </div>
       <nav className="menu">
         {NAV_ITEMS.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end}>

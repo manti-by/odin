@@ -1,17 +1,12 @@
 /* ============================================================
-   Tile component styles for dashboard tiles.
-   Ported from odin/static/css/index/{base,sensors,boiler-room,weather,currency,misc}.css
+   Dashboard tile inner styles — Warp theme.
+   Consumes tokens from tokens.css.
    ============================================================ */
 
-.tile__loading,
-.tile__empty {
-  padding: 1rem 0;
-  color: #6c757d;
-}
-
+/* ----- Sensor list (ESP8266 tile) ----- */
 .sensor-list {
   display: block;
-  padding: 1.75rem 0;
+  padding: 1.25rem 0;
   margin: 0;
 }
 
@@ -19,41 +14,86 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 0.75rem 0;
+  padding: 0.6rem 0;
+  margin: 0;
   list-style: none;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+.sensor-row:last-child {
+  border-bottom: none;
 }
 
 .sensor-row__name {
   width: 60%;
+  color: var(--color-text-primary);
 }
 
-.sensor-row__temp span,
+.sensor-row__temp {
+  font-family: var(--font-mono);
+  font-size: 0.925rem;
+  color: var(--color-text-primary);
+  min-width: 4rem;
+  text-align: right;
+}
+
+.sensor-row__temp span {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.sensor-row__humidity {
+  font-family: var(--font-mono);
+  font-size: 0.925rem;
+  color: var(--color-text-secondary);
+  min-width: 4rem;
+  text-align: right;
+}
+
 .sensor-row__humidity span {
-  font-size: 0.85em;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.sensor-row__relay {
+  display: inline-flex;
+  align-items: center;
+  min-width: 1.5rem;
 }
 
 .sensor-row__edit .edit-btn {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 0.25rem;
   display: inline-flex;
   align-items: center;
+  color: var(--color-text-tertiary);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.sensor-row__edit .edit-btn:hover {
+  color: var(--color-accent);
+  background: var(--color-surface-1);
 }
 
 /* ----- DS18B20 / Boiler Room tile ----- */
 .sensor-row-group {
   display: flex;
-  padding: 0.25rem 0;
+  padding: 0.5rem 0;
   margin: 0;
+  gap: 0.5rem;
 }
 
 .sensor-card {
-  width: 33%;
-  font-size: 1rem;
-  font-weight: bold;
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 600;
   text-align: center;
   list-style: none;
+  color: var(--color-text-primary);
 }
 
 .sensor-card__value {
@@ -69,41 +109,62 @@
 
 .sensor-card__attrs {
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .sensor-card__relay {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   height: 24px;
-  margin-right: 0.5rem;
-  overflow: hidden;
   vertical-align: middle;
 }
 
 .sensor-card__name {
   width: 100px;
   margin: 0 auto 0.5rem;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .linked-sensor {
-  font-weight: normal;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
   vertical-align: top;
 }
 
 .linked-sensor__arrow {
-  font-size: 1.25rem;
+  font-size: 1rem;
+  margin-right: 0.25rem;
 }
 
 /* ----- Weather tile ----- */
 .weather-temp {
-  margin-top: 1rem;
-  font-size: 3.75rem;
-  font-weight: bold;
+  margin-top: 0.75rem;
+  font-size: 3.5rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  line-height: 1;
+  color: var(--color-text-primary);
 }
 
 .weather-temp .meta {
-  margin: 1.5rem 2rem;
-  font-size: 1rem;
-  font-weight: normal;
+  margin: 0 0 0 1.5rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  color: var(--color-text-tertiary);
+}
+
+.weather-temp .meta span {
+  color: var(--color-text-secondary);
 }
 
 .weather-temp,
@@ -112,15 +173,17 @@
   display: flex;
   flex-flow: row wrap;
   align-content: center;
-  margin-right: 2rem;
 }
 
 .weather-humidity .tile-label,
 .weather-pressure .tile-label {
   align-content: center;
   margin: 0;
-  font-weight: bold;
-  vertical-align: baseline;
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .weather-humidity__chart img,
@@ -129,49 +192,65 @@
   margin-right: 0.5rem;
 }
 
+.weather-wind {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
 .weather-wind__direction {
   position: relative;
-  height: 3rem;
-  padding: 0 1.5rem 0 2rem;
+  height: 2.5rem;
+  width: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .weather-wind__direction span {
-  position: relative;
-  top: -0.75rem;
   display: inline-block;
-  font-size: 2.75rem;
-  font-weight: bold;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
 }
 
 .weather-wind .label {
-  font-weight: bold;
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+}
+
+.weather-wind .gusts {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
 }
 
 .weather .attr {
-  margin-left: 10%;
-  padding: 0.25rem;
+  padding: 0.25rem 0;
   line-height: 1.5;
-}
-
-.weather .attr span {
-  display: inline-block;
 }
 
 .weather .attr .tile-label {
   margin: 0;
-  font-weight: bold;
-  vertical-align: baseline;
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 /* ----- Currency tile ----- */
 .currency-date {
-  padding: 1rem 0 0;
+  padding: 1rem 0 0.25rem;
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
 }
 
 .currency-rates {
   display: flex;
   flex-direction: column;
-  padding: 0.5rem 0;
+  padding: 0.25rem 0;
 }
 
 .currency-rate {
@@ -179,7 +258,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .currency-rate:last-child {
@@ -187,41 +266,54 @@
 }
 
 .currency-rate__code {
-  font-weight: bold;
-  font-size: 1.1rem;
+  font-weight: 600;
+  font-size: 0.925rem;
+  font-family: var(--font-mono);
   min-width: 3rem;
+  color: var(--color-text-primary);
 }
 
 .currency-rate__value {
   flex-grow: 1;
   text-align: right;
-  font-size: 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.925rem;
   padding: 0 0 0 1rem;
+  color: var(--color-text-primary);
 }
 
 .currency-rate__value .trend {
   margin-left: 0.5rem;
+  font-size: 0.85rem;
 }
 
 .currency-rate__value .trend.up {
-  color: green;
+  color: var(--color-success);
 }
 
 .currency-rate__value .trend.down {
-  color: red;
+  color: var(--color-error);
 }
 
 /* ----- System / Errors tile ----- */
 .system-traffic {
   margin-bottom: 1rem;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
 }
 
-.system-traffic .label,
-.system-voltage .label {
+.system-traffic .label {
   display: inline-block;
   min-width: 150px;
-  text-transform: capitalize;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-secondary);
+}
+
+.system-traffic .value {
+  font-family: var(--font-mono);
+  color: var(--color-text-primary);
 }
 
 .system-voltage {
@@ -229,6 +321,22 @@
   justify-content: flex-start;
   align-items: center;
   margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.system-voltage .label {
+  display: inline-block;
+  min-width: 150px;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-secondary);
+}
+
+.system-voltage .value {
+  font-family: var(--font-mono);
+  color: var(--color-text-primary);
 }
 
 .system-systemd {
@@ -237,30 +345,56 @@
 
 .systemd-entry {
   list-style: none;
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0;
 }
 
 .systemd-entry__service {
   display: inline-block;
   min-width: 150px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-text-primary);
+}
+
+.systemd-entry__status {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
 }
 
 .systemd-entry__error {
-  color: #f44336;
+  font-size: 0.8rem;
+  color: var(--color-error);
+  font-family: var(--font-mono);
+}
+
+.system-errors {
+  margin-top: 0.75rem;
 }
 
 .log-entry {
   list-style: none;
+  display: flex;
+  align-items: center;
+  padding: 0.2rem 0;
+  font-size: 0.8rem;
 }
 
 .log-entry__time {
   margin-right: 1rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.log-entry__msg {
+  color: var(--color-text-secondary);
+  word-break: break-word;
 }
 
 .success.info {
   padding: 0.5rem 0;
-  color: #6c757d;
-}
-
-.info {
-  color: #6c757d;
+  color: var(--color-success);
+  font-size: 0.85rem;
 }
