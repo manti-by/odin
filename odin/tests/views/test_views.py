@@ -6,6 +6,10 @@ from rest_framework import status
 @pytest.mark.django_db
 @pytest.mark.views
 class TestViews:
+    @pytest.fixture(autouse=True)
+    def _isolate_dist(self, tmp_path, settings):
+        settings.FRONTEND_DIST_DIR = tmp_path
+
     def test_spa_deep_link_returns_error_when_build_missing(self, client):
         response = client.get("/sensors/home/", follow=True)
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
