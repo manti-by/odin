@@ -1,4 +1,5 @@
 import { App } from "@/App";
+import { initPwa } from "@/pwa";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
@@ -36,3 +37,5 @@ createRoot(root).render(
     <RouterProvider router={router} />
   </StrictMode>,
 );
+
+initPwa();
