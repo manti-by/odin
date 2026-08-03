@@ -4,12 +4,15 @@ from django.conf import settings
 from django.db.models import query
 from django.utils import timezone
 from rest_framework import mixins
-from rest_framework.permissions import AllowAny
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
+from odin.api.authentication import TokenAuthentication
 from odin.api.v1.sensors.serializers import (
     ChartOptionsQueryParamsSerializer,
     ChartQueryParamsSerializer,
@@ -22,6 +25,7 @@ from odin.apps.sensors.services import get_chart_data
 
 
 class SensorsView(mixins.ListModelMixin, GenericViewSet):
+    permission_classes = (AllowAny,)
     serializer_class = SensorSerializer
 
     def get_queryset(self) -> query.QuerySet:
@@ -29,6 +33,10 @@ class SensorsView(mixins.ListModelMixin, GenericViewSet):
 
 
 class SensorsUpdateView(mixins.UpdateModelMixin, GenericViewSet):
+    authentication_classes = (SessionAuthentication, TokenAuthentication)
+    permission_classes = (IsAuthenticated,)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "sensors_update"
     serializer_class = SensorUpdateSerializer
     queryset = Sensor.objects.all()
 
@@ -44,7 +52,7 @@ class SensorsUpdateView(mixins.UpdateModelMixin, GenericViewSet):
 
 class SensorsLogView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet):
     # TODO: Temporary disable until satellites updated
-    authentication_classes = []
+    authentication_classes = ()
     permission_classes = (AllowAny,)
     serializer_class = SensorLogSerializer
 
@@ -56,6 +64,7 @@ class SensorsLogView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericView
 
 
 class SensorDataView(APIView):
+    permission_classes = (AllowAny,)
     queryset: query.QuerySet
     serializer_class = ChartQueryParamsSerializer
 
@@ -79,6 +88,8 @@ class ESP8266DataView(SensorDataView):
 
 
 class ChartOptionsView(APIView):
+    permission_classes = (AllowAny,)
+
     def get(self, request: Request) -> Response:
         serializer = ChartOptionsQueryParamsSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)

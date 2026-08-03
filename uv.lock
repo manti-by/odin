@@ -645,7 +645,7 @@ wheels = [
 
 [[package]]
 name = "odin"
-version = "1.14.0"
+version = "1.18.0"
 source = { virtual = "." }
 dependencies = [
     { name = "django" },

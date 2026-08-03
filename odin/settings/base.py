@@ -17,6 +17,8 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+FRONTEND_DIST_DIR = BASE_DIR.parent / "frontend" / "dist"
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -28,6 +30,10 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = False
 
 ALLOWED_HOSTS = ("odin.local", "192.168.1.100")
+
+CSRF_TRUSTED_ORIGINS = tuple(
+    filter(None, (part.strip() for part in os.getenv("CSRF_TRUSTED_ORIGINS", "http://odin.local,http://192.168.1.100").split(",")))
+)
 
 # Application definition
 
@@ -167,6 +173,16 @@ USE_I18N = True
 USE_TZ = True
 
 
+# CSRF and Session cookie settings for same-origin SPA consumption.
+# JS in the React SPA reads csrftoken from document.cookie, so HTTPOnly
+# must stay False. SameSite=Lax is appropriate for same-origin requests.
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False").lower() == "true"
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False").lower() == "true"
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -176,6 +192,8 @@ STATICFILES_FINDERS = [
 ]
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
+if FRONTEND_DIST_DIR.is_dir():
+    STATICFILES_DIRS.insert(0, FRONTEND_DIST_DIR)
 
 STATIC_ROOT = os.getenv("STATIC_ROOT", BASE_DIR.parent / "static")
 STATIC_URL = "static/"
@@ -225,6 +243,10 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "odin.api.authentication.TokenAuthentication",
     ],
+    "DEFAULT_THROTTLE_RATES": {
+        "sensors_update": "30/min",
+        "relays_update": "30/min",
+    },
 }
 
 

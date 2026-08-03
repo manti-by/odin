@@ -22,22 +22,19 @@ def get_weather_chart_data(start: datetime | None = None, end: datetime | None =
     for entry in entries:
         timestamps.append(entry.period.isoformat())
 
-        t_avg = entry.data.get("temp")
-        if t_avg is not None and t_avg.get("avg") is not None:
-            temp.append(float(t_avg["avg"]))
-        else:
+        try:
+            temp.append(float(entry.data["temp"]["avg"]))
+        except (KeyError, TypeError, ValueError):
             temp.append(None)
 
-        h = entry.data.get("humidity")
-        if h is not None:
-            humidity.append(float(h))
-        else:
+        try:
+            humidity.append(float(entry.data["humidity"]))
+        except (KeyError, TypeError, ValueError):
             humidity.append(None)
 
-        p = entry.data.get("pressure")
-        if p is not None:
-            pressure.append(int(p))
-        else:
+        try:
+            pressure.append(int(entry.data["pressure"]))
+        except (KeyError, TypeError, ValueError):
             pressure.append(None)
 
     return {

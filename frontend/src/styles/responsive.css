@@ -1,0 +1,111 @@
+/* ============================================================
+   Responsive breakpoints for shared components — Warp theme.
+   ============================================================ */
+
+/* Mobile: ≤480px */
+@media (max-width: 480px) {
+  main.container,
+  .container {
+    padding: 0 1rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    column-gap: var(--grid-gap-sm);
+    row-gap: var(--grid-gap-sm);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .tile {
+    min-height: 300px;
+  }
+
+  .tile__title {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .tile__body {
+    padding: 0.75rem;
+  }
+}
+
+/* Small tablet: 481-768px */
+@media (min-width: 481px) and (max-width: 768px) {
+  main.container,
+  .container {
+    padding: 0 1rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    column-gap: var(--grid-gap-sm);
+    row-gap: 1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .tile__title {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .tile__body {
+    padding: 1rem;
+  }
+}
+
+/* Tablet: 769-1024px */
+@media (min-width: 769px) and (max-width: 1024px) {
+  main.container,
+  .container {
+    padding: 0 1rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 1rem;
+    row-gap: 1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .tile {
+    min-height: 280px;
+  }
+
+  .tile__title {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .tile__body {
+    padding: 0 1rem 1.25rem;
+  }
+}
+
+/* Large tablet / small laptop: 1025-1400px */
+@media (min-width: 1025px) and (max-width: 1400px) {
+  main.container,
+  .container {
+    padding: 0 1rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 1.25rem;
+    row-gap: 1.25rem;
+  }
+
+  .tile {
+    min-height: 300px;
+  }
+
+  .tile__title {
+    padding: 0.5rem 1rem;
+  }
+
+  .tile__body {
+    padding: 0 1.25rem 1.5rem;
+  }
+}

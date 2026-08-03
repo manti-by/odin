@@ -8,6 +8,8 @@ SECRET_KEY = "test-secret-key-for-testing-only"
 
 MEDIA_ROOT = "/tmp/"
 
+# Keep base throttle rates (30/min) but start each throttle test with a fresh cache
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

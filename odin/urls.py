@@ -19,19 +19,22 @@ Including another URLconf
 
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 
-from odin.apps.core.views import index_view
-from odin.apps.sensors.views import chart_boiler_view, chart_home_view
+from odin.apps.core.views import index_view, manifest_view, service_worker_view
 
 
 urlpatterns = [
     path("api/", include("odin.api.urls", namespace="api")),
     path("admin/rq/", include("django_rq.urls")),
     path("admin/", admin.site.urls),
-    path("sensors/home/", chart_home_view, name="sensors_home"),
-    path("sensors/boiler/", chart_boiler_view, name="sensors_boiler"),
-    path("", index_view, name="index"),
+    path("sw.js", service_worker_view, name="sw"),
+    path("manifest.webmanifest", manifest_view, name="manifest"),
+    re_path(
+        r"^(?!api(?:$|/)|admin(?:$|/)|static(?:$|/)|media(?:$|/)|sw\.js$|manifest\.webmanifest$).*$",
+        index_view,
+        name="index",
+    ),
 ]
 
 if settings.DEBUG:

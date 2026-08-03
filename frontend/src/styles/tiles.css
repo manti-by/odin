@@ -1,0 +1,400 @@
+/* ============================================================
+   Dashboard tile inner styles — Warp theme.
+   Consumes tokens from tokens.css.
+   ============================================================ */
+
+/* ----- Sensor list (ESP8266 tile) ----- */
+.sensor-list {
+  display: block;
+  padding: 1.25rem 0;
+  margin: 0;
+}
+
+.sensor-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  margin: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+.sensor-row:last-child {
+  border-bottom: none;
+}
+
+.sensor-row__name {
+  width: 60%;
+  color: var(--color-text-primary);
+}
+
+.sensor-row__temp {
+  font-family: var(--font-mono);
+  font-size: 0.925rem;
+  color: var(--color-text-primary);
+  min-width: 4rem;
+  text-align: right;
+}
+
+.sensor-row__temp span {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.sensor-row__humidity {
+  font-family: var(--font-mono);
+  font-size: 0.925rem;
+  color: var(--color-text-secondary);
+  min-width: 4rem;
+  text-align: right;
+}
+
+.sensor-row__humidity span {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.sensor-row__relay {
+  display: inline-flex;
+  align-items: center;
+  min-width: 1.5rem;
+}
+
+.sensor-row__edit .edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-tertiary);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.sensor-row__edit .edit-btn:hover {
+  color: var(--color-accent);
+  background: var(--color-surface-1);
+}
+
+/* ----- DS18B20 / Boiler Room tile ----- */
+.sensor-row-group {
+  display: flex;
+  padding: 0.5rem 0;
+  margin: 0;
+  gap: 0.5rem;
+}
+
+.sensor-card {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  list-style: none;
+  color: var(--color-text-primary);
+}
+
+.sensor-card__value {
+  display: block;
+  position: relative;
+  left: -5px;
+  height: 150px;
+}
+
+.sensor-card__value img {
+  width: 160px;
+}
+
+.sensor-card__attrs {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.sensor-card__relay {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  vertical-align: middle;
+}
+
+.sensor-card__name {
+  width: 100px;
+  margin: 0 auto 0.5rem;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.linked-sensor {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+  vertical-align: top;
+}
+
+.linked-sensor__arrow {
+  font-size: 1rem;
+  margin-right: 0.25rem;
+}
+
+/* ----- Weather tile ----- */
+.weather-temp {
+  margin-top: 0.75rem;
+  font-size: 3.5rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  line-height: 1;
+  color: var(--color-text-primary);
+}
+
+.weather-temp .meta {
+  margin: 0 0 0 1.5rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  color: var(--color-text-tertiary);
+}
+
+.weather-temp .meta span {
+  color: var(--color-text-secondary);
+}
+
+.weather-temp,
+.weather-humidity,
+.weather-pressure {
+  display: flex;
+  flex-flow: row wrap;
+  align-content: center;
+}
+
+.weather-humidity .tile-label,
+.weather-pressure .tile-label {
+  align-content: center;
+  margin: 0;
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.weather-humidity__chart img,
+.weather-pressure__chart img {
+  display: block;
+  margin-right: 0.5rem;
+}
+
+.weather-wind {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.weather-wind__direction {
+  position: relative;
+  height: 2.5rem;
+  width: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weather-wind__direction span {
+  display: inline-block;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.weather-wind .label {
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+}
+
+.weather-wind .gusts {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+}
+
+.weather .attr {
+  padding: 0.25rem 0;
+  line-height: 1.5;
+}
+
+.weather .attr .tile-label {
+  margin: 0;
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ----- Currency tile ----- */
+.currency-date {
+  padding: 1rem 0 0.25rem;
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+}
+
+.currency-rates {
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem 0;
+}
+
+.currency-rate {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.currency-rate:last-child {
+  border-bottom: none;
+}
+
+.currency-rate__code {
+  font-weight: 600;
+  font-size: 0.925rem;
+  font-family: var(--font-mono);
+  min-width: 3rem;
+  color: var(--color-text-primary);
+}
+
+.currency-rate__value {
+  flex-grow: 1;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.925rem;
+  padding: 0 0 0 1rem;
+  color: var(--color-text-primary);
+}
+
+.currency-rate__value .trend {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.currency-rate__value .trend.up {
+  color: var(--color-success);
+}
+
+.currency-rate__value .trend.down {
+  color: var(--color-error);
+}
+
+/* ----- System / Errors tile ----- */
+.system-traffic {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+
+.system-traffic .label {
+  display: inline-block;
+  min-width: 150px;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-secondary);
+}
+
+.system-traffic .value {
+  font-family: var(--font-mono);
+  color: var(--color-text-primary);
+}
+
+.system-voltage {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.system-voltage .label {
+  display: inline-block;
+  min-width: 150px;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-secondary);
+}
+
+.system-voltage .value {
+  font-family: var(--font-mono);
+  color: var(--color-text-primary);
+}
+
+.system-systemd {
+  margin-bottom: 1rem;
+}
+
+.systemd-entry {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.systemd-entry__service {
+  display: inline-block;
+  min-width: 150px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-text-primary);
+}
+
+.systemd-entry__status {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+}
+
+.systemd-entry__error {
+  font-size: 0.8rem;
+  color: var(--color-error);
+  font-family: var(--font-mono);
+}
+
+.system-errors {
+  margin-top: 0.75rem;
+}
+
+.log-entry {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  padding: 0.2rem 0;
+  font-size: 0.8rem;
+}
+
+.log-entry__time {
+  margin-right: 1rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.log-entry__msg {
+  color: var(--color-text-secondary);
+  word-break: break-word;
+}
+
+.success.info {
+  padding: 0.5rem 0;
+  color: var(--color-success);
+  font-size: 0.85rem;
+}

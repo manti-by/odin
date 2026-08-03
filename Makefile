@@ -1,3 +1,19 @@
+frontend-install:
+	bun install --cwd frontend
+
+frontend: frontend-install
+	bun run --cwd frontend build
+
+frontend-lint: frontend-install
+	bun run --cwd frontend lint
+
+frontend-typecheck: frontend-install
+	bun run --cwd frontend typecheck
+
+frontend-check: frontend-lint frontend-typecheck
+
+.PHONY: run shell migrate migrations messages locale static deploy test full-test check django-checks install update ci dump restore agent-instance wiki-dedup wiki-consistency frontend frontend-install frontend-lint frontend-typecheck frontend-check
+
 run:
 	uv run manage.py runserver
 
@@ -16,12 +32,13 @@ messages:
 locale:
 	uv run manage.py compilemessages -l ru
 
-static:
+static: frontend
 	uv run manage.py collectstatic --no-input
 
-deploy:
+deploy: frontend
 	git pull
 	uv sync
+	make frontend
 	uv run manage.py migrate
 	uv run manage.py collectstatic --no-input
 	sudo systemctl daemon-reload
@@ -37,7 +54,7 @@ test:
 full-test:
 	uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/
 
-check:
+check: frontend-check
 	git add .
 	uv run ty check
 	uv run pre-commit run

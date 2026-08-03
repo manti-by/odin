@@ -1,20 +1,36 @@
 from __future__ import annotations
 
-import logging
-
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
-
-from odin.apps.core.services import (
-    get_cached_index_context,
-    update_index_context_cache,
-)
+from django.conf import settings
+from django.http import HttpRequest, HttpResponse, HttpResponseServerError
 
 
-logger = logging.getLogger(__name__)
+def _read_dist_file(filename: str, content_type: str, headers: dict[str, str] | None = None) -> HttpResponse:
+    file_path = settings.FRONTEND_DIST_DIR / filename
+    try:
+        content = file_path.read_text(encoding="utf-8")
+    except OSError:
+        return HttpResponseServerError(
+            "<h1>Frontend build not available</h1><p>Run <code>make frontend</code> to build the SPA.</p>"
+        )
+
+    response = HttpResponse(content, content_type=content_type)
+    if headers:
+        for key, value in headers.items():
+            response[key] = value
+    return response
 
 
 def index_view(request: HttpRequest) -> HttpResponse:
-    if not (context := get_cached_index_context()):
-        context = update_index_context_cache()
-    return render(request, "index.html", context=context)
+    return _read_dist_file("index.html", "text/html")
+
+
+def service_worker_view(request: HttpRequest) -> HttpResponse:
+    return _read_dist_file(
+        "sw.js",
+        "application/javascript",
+        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"},
+    )
+
+
+def manifest_view(request: HttpRequest) -> HttpResponse:
+    return _read_dist_file("manifest.webmanifest", "application/manifest+json")
