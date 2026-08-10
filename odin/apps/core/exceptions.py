@@ -4,3 +4,7 @@ class OdinException(Exception):
 
 class KafkaReadError(OdinException):
     pass
+
+
+class RedisReadError(OdinException):
+    pass
