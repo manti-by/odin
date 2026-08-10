@@ -40,7 +40,7 @@ class RedisBus:
         return cls._client
 
     @classmethod
-    def publish_message(cls, channel: str, payload: dict[str, Any]) -> bool:
+    def publish_message(cls, stream: str, payload: dict[str, Any]) -> bool:
         try:
             client = cls.get_redis()
         except (RedisError, ValueError) as e:
@@ -49,9 +49,9 @@ class RedisBus:
 
         try:
             data = json.dumps(payload).encode("utf-8")
-            count = client.publish(channel, data)
+            message_id = client.xadd(stream, {"data": data}, maxlen=10000, approximate=True)
 
-            logger.info(f"Published message to channel {channel} (subscribers: {count})")
+            logger.info(f"Published message {message_id} to stream {stream}")
             return True
 
         except RedisError as e:

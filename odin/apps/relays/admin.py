@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from odin.apps.core.kafka import KafkaService
+from odin.apps.core.redis_bus import RedisBus
 
 from .models import Relay, RelayState, RelayType
 
@@ -87,7 +87,7 @@ class RelayAdmin(admin.ModelAdmin):
 
         super().save_model(request, obj, form, change)
 
-        KafkaService.send_relay_update(
+        RedisBus.publish_relay_control(
             relay_id=obj.relay_id,
             target_state=obj.target_state,
         )
