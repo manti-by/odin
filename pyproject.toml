@@ -1,6 +1,6 @@
 [project]
 name = "odin"
-version = "1.19.0"
+version = "1.20.0"
 description = "Django application that provides several IoT dashboards and services for Coruscant and Centax projects."
 readme = "README.md"
 requires-python = ">=3.13.6,<3.14.0"
@@ -17,7 +17,6 @@ dependencies = [
     "djangorestframework>=3.17.1,<4.0.0",
     "gunicorn>=25.3.0,<26",
     "ipython>=9.15.0",
-    "kafka-python>=2.3.2,<3",
     "pillow>=12.3.0,<13",
     "pre-commit>=4.6.0",
     "psycopg2-binary>=2.9.12,<3",

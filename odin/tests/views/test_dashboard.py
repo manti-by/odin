@@ -13,8 +13,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from odin.apps.core.kafka import KafkaService
 from odin.apps.core.models import Log
+from odin.apps.core.redis_bus import RedisBus
 from odin.apps.currency.models import Currency
 from odin.apps.provider.models import Traffic
 from odin.apps.sensors.models import SensorType
@@ -134,7 +134,7 @@ class TestDashboardAPI:
             is_visible=True,
         )
 
-        with patch.object(KafkaService, "get_relay_data", return_value={"state": "ON"}):
+        with patch.object(RedisBus, "get_relay_state", return_value={"state": "ON"}):
             response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
 

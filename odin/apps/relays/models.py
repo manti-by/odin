@@ -9,8 +9,8 @@ from django.db.models import query
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
-from odin.apps.core.exceptions import KafkaReadError
-from odin.apps.core.kafka import KafkaService
+from odin.apps.core.exceptions import RedisReadError
+from odin.apps.core.redis_bus import RedisBus
 
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ class RelayState(models.TextChoices):
 
 
 class RelayStateError(Exception):
-    """Raised when relay state cannot be retrieved from Kafka."""
+    """Raised when relay state cannot be retrieved from Redis."""
 
 
 class RelayQuerySet(query.QuerySet):
@@ -95,13 +95,15 @@ class Relay(models.Model):
 
         return RelayTargetStateService(self).get_target_state()
 
-    def refresh_state_from_kafka(self) -> str | None:
+    def refresh_state(self) -> str | None:
         try:
-            if not (data := KafkaService.get_relay_data(self.relay_id)):
-                logger.error(f"There are no messages for relay {self.relay_id}")
-                return None
-        except KafkaReadError:
-            logger.error(f"Failed to get state from Kafka for relay {self.relay_id}")
+            data = RedisBus.get_relay_state(self.relay_id)
+        except RedisReadError:
+            logger.error(f"Failed to get state from Redis for relay {self.relay_id}")
+            return None
+
+        if data is None:
+            logger.error(f"There are no messages for relay {self.relay_id}")
             return None
 
         self.context["state"] = data.get("state")
