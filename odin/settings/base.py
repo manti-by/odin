@@ -140,6 +140,7 @@ EBUSD_HOST = os.getenv("EBUSD_HOST", "localhost")
 EBUSD_PORT = int(os.getenv("EBUSD_PORT", 8888))
 # Shared with /usr/local/bin/boiler-set and boiler-refresh.timer
 BOILER_STATE_FILE = os.getenv("BOILER_STATE_FILE", "/var/lib/boiler-set/state")
+BOILER_LOCK_FILE = os.getenv("BOILER_LOCK_FILE", "/var/lib/boiler-set/state.lock")
 
 
 # Password validation

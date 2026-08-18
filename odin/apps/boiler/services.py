@@ -12,8 +12,12 @@ boiler-refresh.timer systemd unit) keeps long-running heating overrides applied.
 
 from __future__ import annotations
 
+import fcntl
 import logging
+import os
 import socket
+import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 from django.conf import settings
@@ -49,6 +53,18 @@ class EbusdError(Exception):
     """ebusd returned an error or could not be reached."""
 
 
+@contextmanager
+def lock_state(lock_path: Path):
+    """Hold an exclusive interprocess lock shared with /usr/local/bin/boiler-set."""
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+") as fh:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+
+
 class EbusdClient:
     """Minimal client for ebusd's TCP text protocol (one command per connection)."""
 
@@ -66,7 +82,7 @@ class EbusdClient:
                 while not raw.endswith(b"\n\n"):
                     chunk = conn.recv(4096)
                     if not chunk:
-                        break
+                        raise EbusdError(f"{command!r} got EOF before the response terminated")
                     raw += chunk
         except OSError as e:
             raise EbusdError(f"cannot talk to ebusd at {self.host}:{self.port}: {e}") from e
@@ -95,6 +111,7 @@ class BoilerService:
     def __init__(self, client: EbusdClient | None = None):
         self.client = client or EbusdClient()
         self.state_file = Path(settings.BOILER_STATE_FILE)
+        self.lock_file = Path(settings.BOILER_LOCK_FILE)
 
     def set_boiling(self, hwc_temp: int) -> str:
         """Hot water only: SetMode water (the flow field is ignored by the boiler in this mode)."""
@@ -114,18 +131,20 @@ class BoilerService:
 
     def refresh(self) -> str | None:
         """Re-send the last override (called by boiler-refresh.timer); None when no override is active."""
-        try:
-            values = self.state_file.read_text().strip()
-        except FileNotFoundError:
-            return None
-        if not values:
-            return None
-        self._write(values)
-        return values
+        with lock_state(self.lock_file):
+            try:
+                values = self.state_file.read_text().strip()
+            except FileNotFoundError:
+                return None
+            if not values:
+                return None
+            self._write(values)
+            return values
 
     def clear_override(self) -> None:
         """Drop the override; the boiler falls back to its panel settings within a few minutes."""
-        self.state_file.unlink(missing_ok=True)
+        with lock_state(self.lock_file):
+            self.state_file.unlink(missing_ok=True)
         logger.info("Boiler override cleared")
 
     def current_override(self) -> str | None:
@@ -158,15 +177,26 @@ class BoilerService:
                 "0;0;0",  # remotecontrolhcpump / releasebackup / releasecooling
             )
         )
-        self._write(values)
-        self.state_file.parent.mkdir(parents=True, exist_ok=True)
-        self.state_file.write_text(f"{values}\n")
+        with lock_state(self.lock_file):
+            self._write(values)
+            self._save_state(values)
         logger.info(f"Boiler SetMode sent and saved as override: {values}")
         return values
 
     def _write(self, values: str) -> None:
         # SETMODE_DEF and values contain no spaces, so no quoting is needed.
         self.client.command(f"write -def {SETMODE_DEF} {values}")
+
+    def _save_state(self, values: str) -> None:
+        self.state_file.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=self.state_file.parent, prefix=self.state_file.name, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w") as fh:
+                fh.write(f"{values}\n")
+            os.replace(tmp, self.state_file)
+        except Exception:
+            os.unlink(tmp)
+            raise
 
     @staticmethod
     def _temp(value: int | None) -> str:

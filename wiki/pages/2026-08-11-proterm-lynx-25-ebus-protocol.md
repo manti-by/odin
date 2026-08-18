@@ -42,6 +42,24 @@ CRC itself. A `boiler-refresh.timer` (disabled by default) can re-send the last 
 minute; in a 10-minute test the HWC override held with **no** refresh, so the timer is only a
 safety net for long-running heating overrides.
 
+### Shared interprocess lock
+
+All state transitions and ebusd writes — the Django `BoilerService`, `boiler-set panel`,
+and the refresh timer — are serialized with an exclusive `flock` on the shared lock file
+`/var/lib/boiler-set/state.lock` (setting `BOILER_LOCK_FILE`). The state file
+`/var/lib/boiler-set/state` is replaced atomically (temp file + `rename`); readers always
+see a complete file. `boiler-set` must hold the same lock before touching ebusd or the
+state file:
+
+```bash
+#!/bin/bash
+# /usr/local/bin/boiler-set (excerpt) — lock before any write
+exec 9>/var/lib/boiler-set/state.lock
+flock -x 9
+# ... ebusctl write -def ... and state file updates ...
+flock -u 9
+```
+
 ## Resolution details (2026-08-18)
 
 - Root cause of 2026-08-11 "rejection": frames like `08b510070300000000000000` decode as
