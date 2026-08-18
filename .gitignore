@@ -27,3 +27,5 @@ frontend/dist/
 frontend/.env
 frontend/.env.local
 frontend/bun-debug.log*
+
+.DS_Store
