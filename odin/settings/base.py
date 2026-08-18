@@ -40,6 +40,7 @@ CSRF_TRUSTED_ORIGINS = tuple(
 INSTALLED_APPS = [
     "odin.apps.sensors",
     "odin.apps.relays",
+    "odin.apps.boiler",
     "odin.apps.core",
     "odin.apps.currency",
     "odin.apps.electricity",
@@ -131,6 +132,14 @@ RQ_QUEUES = {
 }
 
 QUEUE_SCHEDULED_TASKS = True
+
+
+# ebusd daemon — Protherm Lynx 25 boiler control over eBus (odin.apps.boiler)
+
+EBUSD_HOST = os.getenv("EBUSD_HOST", "localhost")
+EBUSD_PORT = int(os.getenv("EBUSD_PORT", 8888))
+# Shared with /usr/local/bin/boiler-set and boiler-refresh.timer
+BOILER_STATE_FILE = os.getenv("BOILER_STATE_FILE", "/var/lib/boiler-set/state")
 
 
 # Password validation
