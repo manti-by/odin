@@ -50,6 +50,12 @@ Fix: add `unittest.mock.patch` to the test class.
 Full suite: 7 failed → 0 failed     ✓
 ```
 
+> **Note 2026-08-24:** Kafka has since been removed from odin entirely (Redis
+> pub/sub cutover). The `KafkaService.get_relay_data` mock no longer exists;
+> the equivalent CI mock now patches `RedisBus.get_relay_state` in the same
+> test (`odin/tests/views/test_dashboard.py:137`). The class-level
+> `systemd_status` mock is unchanged.
+
 ---
 
 ## Follow-ups

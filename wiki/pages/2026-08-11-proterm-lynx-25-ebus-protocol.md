@@ -453,6 +453,11 @@ string `Vaillant;BAI00;0712;1303`).
 - Once a write path is chosen, add a manual physical-confirmation step (user changes mode/temp
   on the boiler, agent re-reads and compares) before any automated `SetMode` write.
 
+> **Note 2026-08-24 (Consistency Agent):** the Python-service follow-up above has since been
+> implemented: `odin/apps/boiler/services.py` (`BoilerService`, flock on `BOILER_LOCK_FILE`)
+> plus the `boiler_set` / `boiler_status` management commands, sharing state with
+> `/usr/local/bin/boiler-set` via `BOILER_STATE_FILE`.
+
 ## References
 
 - `/etc/default/ebusd` — daemon options (`--scanconfig -d ens:192.168.1.108:9999`).

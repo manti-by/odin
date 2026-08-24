@@ -48,6 +48,10 @@ Changed `QuerySet[Sensor]` return annotations to `Self` on filter methods
 chaining is properly typed. Added `SensorQuerySet` return type on
 `SensorManager` proxies.
 
+> **Note 2026-08-24:** `all_with_relations()` has since been removed from
+> `SensorQuerySet`; the remaining `Self` annotations and manager proxies are
+> still in place (`odin/apps/sensors/models.py:25-47`).
+
 ## Fix 3 — Unused type: ignore
 
 **File:** odin/apps/core/admin.py

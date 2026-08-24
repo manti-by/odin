@@ -47,7 +47,7 @@ The diff scope was the full React frontend migration: a new `frontend/` Vite+Rea
 **Files:** `odin/tests/factories.py`, `odin/tests/views/test_dashboard.py`, `odin/tests/views/test_index.py`, `odin/tests/views/test_views.py`
 
 - `WeatherDataFactory.temp = {"avg": "22.50"}` (mutable class default) → wrapped in `factory.LazyFunction`.
-- `test_dashboard.py`: added type hints to `setup_method`, `teardown_method`, `_make_fake_context` (this file was previously touched in [[2026-07-17-mock-kafka-systemctl-in-tests.md]] to mock Kafka/systemd — same class, no behavior change here, just hints).
+- `test_dashboard.py`: added type hints to `setup_method`, `teardown_method`, `_make_fake_context` (this file was previously touched in [[2026-07-17-mock-kafka-systemctl-in-tests]] to mock Kafka/systemd — same class, no behavior change here, just hints).
 - `test_index.py`: added the missing success-case test (`test_index__returns_spa_shell_when_build_exists` — build present → 200 + SPA shell content); renamed all tests to the double-underscore convention already established in `test_dashboard.py` (e.g. `test_index_returns_spa_error_when_build_missing` → `test_index__returns_spa_error_when_build_missing`).
 - `test_views.py`: consolidated 3 duplicate deep-link tests into one `@pytest.mark.parametrize("url", (...))` test; renamed `test_admin_route_still_works` → `test_admin_route__still_works`.
 
@@ -92,5 +92,5 @@ bun run build (tsc -b && vite build)                      → succeeds, dist/ ge
 
 ## References
 
-- Related: [[2026-07-17-mock-kafka-systemctl-in-tests.md]]
+- Related: [[2026-07-17-mock-kafka-systemctl-in-tests]]
 - External: https://github.com/manti-by/odin/pull/14

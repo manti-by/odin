@@ -8,7 +8,9 @@ services: []
 branch: -
 tickets: []
 tags: [github, webhooks, notifications, search]
-related: [2026-07-16-merge-rebase-pr-comment-handlers.md]
+related:
+  - 2026-07-16-merge-rebase-pr-comment-handlers.md
+  - 2026-07-16-merge-rebase-pr-comment-listener.md
 ---
 
 # Codebase search — GitHub/PR webhooks and notifications
@@ -47,5 +49,6 @@ The project (Odin — IoT dashboard for sensor management/weather/home-automatio
 
 ## References
 
-- Related: [[2026-07-16-merge-rebase-pr-comment-handlers.md]] — sibling investigations from a related session
+- Related: [[2026-07-16-merge-rebase-pr-comment-handlers]] — sibling investigations from a related session
+- Related: [[2026-07-16-merge-rebase-pr-comment-listener]] — sibling investigations from a related session
 - External: None

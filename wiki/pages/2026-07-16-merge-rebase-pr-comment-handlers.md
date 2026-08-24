@@ -8,7 +8,9 @@ services: []
 branch: -
 tickets: []
 tags: [github, pr, webhooks, notifications, pr-comments]
-related: []
+related:
+  - 2026-07-16-github-pr-webhooks-search.md
+  - 2026-07-16-merge-rebase-pr-comment-listener.md
 ---
 
 # Merge/Rebase PR Comment Handlers — Not Found
@@ -70,4 +72,6 @@ Searched for `mark_read`, `mark_as_read`, notification read-state models, and vi
 
 ## References
 
+- Related: [[2026-07-16-github-pr-webhooks-search]]
+- Related: [[2026-07-16-merge-rebase-pr-comment-listener]]
 - External: Search performed per user request to locate merge/rebase PR comment processing code.
