@@ -10,8 +10,12 @@ It uses Django 5.2.7 with Django REST Framework, PostgreSQL, Redis, and modern P
 - All REST API related code placed in `./odin/api/`
 - Django apps with models, admin classes, migrations and management commands in `./odin/apps/`
 - Tests in `./odin/tests/`
-- Static files like images, CSS and JS in `./odin/static/`
-- Django templates in `./odin/templates/`
+- React + TypeScript SPA (Vite + Bun + Biome) in `./frontend/` — dashboard UI, built to `frontend/dist/`
+- Public-facing Django templates/static JS/CSS were retired; only the Django admin
+  assets remain under `./odin/templates/admin/`, `./odin/static/css/admin/`, and
+  `./odin/static/js/admin/`
+- Shared static assets (favicons, images, fonts) live in `./odin/static/`
+- Nginx configuration in `./configs/`
 
 ## Git Workflow
 
@@ -65,6 +69,38 @@ uv run manage.py makemessages -l ru         # Create translation files
 uv run manage.py compilemessages -l ru      # Compile translation files
 ```
 
+### Frontend (React SPA)
+
+The dashboard SPA lives in `./frontend/`. Run `make frontend` (or `make
+frontend-install && make frontend`) before the first `collectstatic` /
+`runserver` so the build output exists; otherwise the index view returns a
+500 with a hint to build.
+
+```bash
+cd frontend
+bun install                  # Install JS dependencies
+bun run dev                  # Vite dev server on http://localhost:5173
+                             # (proxies /api, /admin, /static to Django)
+bun run build                # Type-check + production build to frontend/dist
+bun run typecheck            # tsc --noEmit only
+bun run lint                 # Biome check
+bun run format               # Biome format --write
+```
+
+Makefile shortcuts (run from the project root):
+
+```bash
+make frontend-install        # bun install --cwd frontend
+make frontend                # install + build (run by `make deploy`)
+make frontend-lint           # biome check
+make frontend-typecheck      # tsc -b --noEmit
+make frontend-check          # lint + typecheck (run by `make check` / `make ci`)
+```
+
+`make static` depends on `make frontend`, so `collectstatic` always sees the
+latest build. See [`frontend/README.md`](frontend/README.md) for the
+component layout, API client, PWA configuration, and session/CSRF details.
+
 ### Database Operations
 
 ```bash
@@ -103,9 +139,10 @@ uv run pytest --cov=odin --cov-report=term-missing odin/
 uv run pre-commit run
 
 # Individual tools
-uv run ruff check .                 # Lint
-uv run ruff format .                # Format
-uv run bandit -c pyproject.toml .   # Security analysis
+uv run ruff check .                 # Backend lint
+uv run ruff format .                # Backend format
+uv run bandit -c pyproject.toml .   # Backend security analysis
+make frontend-check                 # Frontend lint (Biome) + typecheck (tsc)
 ```
 
 ## Language & Environment
@@ -269,7 +306,9 @@ class Sensor(models.Model):
 
 ## Dependency Management
 
-- Manage dependencies via **[uv](https://github.com/astral-sh/uv)** and **virtual environments**.
+- Manage Python dependencies via **[uv](https://github.com/astral-sh/uv)** and **virtual environments**.
+- Manage frontend (JS/TS) dependencies via **[Bun](https://bun.sh/)** — `bun install` in `./frontend/`.
+- The pinned Bun version lives in `frontend/package.json` (`packageManager`); CI uses the same version.
 
 ## Testing
 
@@ -392,18 +431,23 @@ class SensorConnectionError(SensorError):
 
 ## Pre-commit Hooks
 
-The project uses pre-commit hooks for code quality:
+Python-only pre-commit hooks are configured in `.pre-commit-config.yaml`:
 
 - Ruff (linting and formatting)
 - Bandit (security analysis)
 - pyupgrade (Python 3.13+ syntax)
 - validate-pyproject (checks on pyproject.toml)
-- curlylint (HTML linting)
+- curlylint (HTML linting for the Django admin templates)
+
+Frontend checks are not part of pre-commit; they run via `make frontend-check`
+(`biome check` + `tsc -b --noEmit`) and the `frontend-checks` job in CI.
 
 ## Deployment
 
-- Services: gunicorn, worker, scheduler, nginx
+- Services: gunicorn, worker, scheduler, sensor-consumer, nginx
 - Use systemd for service management
+- `make deploy` builds the SPA (`make frontend`) before `collectstatic` and
+  reloads nginx, so the React build artifacts are always served fresh
 
 ## Common Issues
 

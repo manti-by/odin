@@ -1,6 +1,6 @@
 [project]
 name = "odin"
-version = "1.21.0"
+version = "1.21.1"
 description = "Django application that provides several IoT dashboards and services for Coruscant and Centax projects."
 readme = "README.md"
 requires-python = ">=3.13.6,<3.14.0"
@@ -9,36 +9,36 @@ license-files = ["LICENSE"]
 authors = [{ name = "Alexander Chaika", email = "manti.by@gmail.com" }]
 
 dependencies = [
-    "django>=6.0.7,<6.1.0",
+    "django>=6.0.8,<6.1.0",
     "django-apscheduler>=0.7.0,<1.0.0",
     "django-command-log>=2.3.0,<2.4.0",
     "django-redis>=6.0.0,<7.0.0",
     "django-rq>=4.1.1,<5.0.0",
-    "djangorestframework>=3.17.1,<4.0.0",
+    "djangorestframework>=3.18.0,<4.0.0",
     "gunicorn>=25.3.0,<26",
-    "ipython>=9.15.0",
+    "ipython>=9.16.1",
     "pillow>=12.3.0,<13",
-    "pre-commit>=4.6.0",
+    "pre-commit>=4.6.2",
     "psycopg2-binary>=2.9.12,<3",
-    "pytz>=2026.2",
-    "pywebpush>=2.3.0,<3",
-    "redis>=5,<6",
+    "pytz>=2026.3.post1",
+    "pywebpush>=2.4.0,<3",
+    "redis>=5.3.1,<6",
     "requests>=2.34.2,<3",
-    "ruff>=0.15.21",
-    "selenium>=4.46.0,<5",
-    "setuptools>=83.0.0",
-    "tinytag>=2.2.1,<3",
-    "ty>=0.0.59",
-    "uvicorn[standard]>=0.51.0,<1",
+    "ruff>=0.16.4",
+    "selenium>=4.47.0,<5",
+    "setuptools>=84.0.0",
+    "tinytag>=2.3.0,<3",
+    "ty>=0.0.74",
+    "uvicorn[standard]>=0.52.4,<1",
 ]
 
 [dependency-groups]
 dev = [
     "debugpy>=1.8.21",
     "pytest>=9.1.1",
-    "pytest-django>=4.12.0",
+    "pytest-django>=4.14.0",
     "pytest-factoryboy>=2.8.1",
-    "uv-bump>=0.5.0",
+    "uv-bump>=0.6.0",
 ]
 
 [tool.pytest.ini_options]
@@ -155,3 +155,6 @@ exclude = [
     "odin/settings/",
     "odin/tests/"
 ]
+
+[tool.ty.rules]
+invalid-type-form = "ignore"

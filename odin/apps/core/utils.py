@@ -58,7 +58,7 @@ def create_gauge_chart(
     min_green_value: int = 35,
     max_green_value: int = 65,
     size: int = 70,
-    stroke_width: int = 4,
+    stroke_width: int = 3,
     fill_color: str = GREEN_COLOR,
     value_color: str = GREEN_COLOR,
     text_color: str = LIGHT_GREY_COLOR,

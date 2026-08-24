@@ -25,19 +25,13 @@ function formatLogTime(asctime: string): string {
   return asctime;
 }
 
-function formatTrafficValue(value: string): string {
-  const num = Number.parseFloat(value);
-  if (Number.isNaN(num)) return "-";
-  return Math.round(num).toString();
-}
-
 function formatVoltage(value: string): string {
   const num = Number.parseFloat(value);
   if (Number.isNaN(num)) return "-";
   return Math.round(num).toString();
 }
 
-export function SystemErrorsTile({ traffic, voltage, systemdStatus, errorLogs, loading }: SystemErrorsTileProps) {
+export function SystemErrorsTile({ voltage, systemdStatus, errorLogs, loading }: SystemErrorsTileProps) {
   const systemdEntries = Object.entries(systemdStatus);
 
   return (
@@ -46,14 +40,6 @@ export function SystemErrorsTile({ traffic, voltage, systemdStatus, errorLogs, l
         <p className="tile__loading">Loading...</p>
       ) : (
         <>
-          {traffic && (
-            <div className="system-traffic">
-              <span className="label">traffic</span>
-              <span className="value">
-                {formatTrafficValue(traffic.value)} {traffic.unit}
-              </span>
-            </div>
-          )}
           {voltage && (
             <div className="system-voltage">
               <span className="label">Voltage</span>

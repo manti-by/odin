@@ -3,8 +3,8 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-export default defineConfig({
-  base: "/static/",
+export default defineConfig(({ mode }) => ({
+  base: mode === "production" ? "/static/" : "/",
   plugins: [
     react(),
     VitePWA({
@@ -41,12 +41,36 @@ export default defineConfig({
           { sizes: "32x32", src: "/static/favicon/32.png", type: "image/png" },
           { sizes: "72x72", src: "/static/favicon/72.png", type: "image/png" },
           { sizes: "96x96", src: "/static/favicon/96.png", type: "image/png" },
-          { sizes: "128x128", src: "/static/favicon/128.png", type: "image/png" },
-          { sizes: "144x144", src: "/static/favicon/144.png", type: "image/png" },
-          { sizes: "152x152", src: "/static/favicon/152.png", type: "image/png" },
-          { sizes: "192x192", src: "/static/favicon/192.png", type: "image/png" },
-          { sizes: "384x384", src: "/static/favicon/384.png", type: "image/png" },
-          { sizes: "512x512", src: "/static/favicon/512.png", type: "image/png" },
+          {
+            sizes: "128x128",
+            src: "/static/favicon/128.png",
+            type: "image/png",
+          },
+          {
+            sizes: "144x144",
+            src: "/static/favicon/144.png",
+            type: "image/png",
+          },
+          {
+            sizes: "152x152",
+            src: "/static/favicon/152.png",
+            type: "image/png",
+          },
+          {
+            sizes: "192x192",
+            src: "/static/favicon/192.png",
+            type: "image/png",
+          },
+          {
+            sizes: "384x384",
+            src: "/static/favicon/384.png",
+            type: "image/png",
+          },
+          {
+            sizes: "512x512",
+            src: "/static/favicon/512.png",
+            type: "image/png",
+          },
         ],
       },
     }),
@@ -68,4 +92,7 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: true,
   },
-});
+  css: {
+    devSourcemap: true,
+  },
+}));

@@ -14,7 +14,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.6rem 0;
+  padding: 0.25rem 0;
   margin: 0;
   list-style: none;
   border-bottom: 1px solid var(--color-border);
@@ -66,7 +66,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 0.25rem 0 0.25rem 1rem;
   display: inline-flex;
   align-items: center;
   color: var(--color-text-tertiary);
@@ -84,7 +84,7 @@
   display: flex;
   padding: 0.5rem 0;
   margin: 0;
-  gap: 0.5rem;
+  gap: 0;
 }
 
 .sensor-card {
@@ -100,11 +100,11 @@
   display: block;
   position: relative;
   left: -5px;
-  height: 150px;
+  height: 140px;
 }
 
 .sensor-card__value img {
-  width: 160px;
+  width: 155px;
 }
 
 .sensor-card__attrs {
@@ -146,7 +146,7 @@
 
 /* ----- Weather tile ----- */
 .weather-temp {
-  margin-top: 0.75rem;
+  margin-top: 2.5rem;
   font-size: 3.5rem;
   font-weight: 600;
   font-family: var(--font-mono);
@@ -320,7 +320,7 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  margin-bottom: 1rem;
+  margin: 1rem 0;
   font-size: 0.875rem;
 }
 
@@ -341,6 +341,10 @@
 
 .system-systemd {
   margin-bottom: 1rem;
+}
+
+.system-systemd ul {
+  padding: 0;
 }
 
 .systemd-entry {

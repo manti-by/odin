@@ -9,6 +9,7 @@ by the plugin.
 
 _Newest first._
 
+- [Fix React SPA dev-mode issues: docs, proxy, base path, StrictMode Loading bug](pages/2026-08-24-react-spa-dev-mode-debug.md) — Synced docs with the React SPA migration; fixed Vite `base: "/static/"` redirecting dev `/` → `/static/` 404; removed broken `isMountedRef` in `useDashboardData` so tiles load data under StrictMode (2026-08-24)
 - [Proterm Lynx 25 eBus Protocol Investigation](pages/2026-08-11-proterm-lynx-25-ebus-protocol.md) —
   eBus protocol investigation of the Vaillant BAI boiler: reads mapped; the 2026-08-11 write
   failures were traced to malformed `SetMode` frames (NN=07, missing leading submessage ID), and
@@ -39,6 +40,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 ### React frontend migration review
 
 - [React frontend PR review — apply CodeRabbit + coding-guideline fixes](pages/2026-07-21-react-frontend-pr-review-fixes.md)
+- [Fix React SPA dev-mode issues: docs, proxy, base path, StrictMode Loading bug](pages/2026-08-24-react-spa-dev-mode-debug.md)
 
 _Also belongs to "Type checking & CI flow" (wired frontend checks into Makefile/CI)._
 

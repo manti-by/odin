@@ -21,8 +21,9 @@ Version: v1.6.0
 
 ## Quick Start
 
-1. Install [Python 3.13](https://www.python.org/downloads/release/python-3120/) and
-   [UV tool](https://docs.astral.sh/uv/getting-started/installation/)
+1. Install [Python 3.13](https://www.python.org/downloads/release/python-3136/),
+   [UV tool](https://docs.astral.sh/uv/getting-started/installation/) and
+   [Bun](https://bun.sh/) (the version pinned in `frontend/package.json`).
 
 2. Clone sources, switch to working directory and setup environment:
 
@@ -32,7 +33,14 @@ cd odin/
 uv sync --all-extras
 ```
 
-3. Collect static, run migrations and create superuser:
+3. Install frontend dependencies and build the SPA:
+
+```shell
+make frontend-install
+make frontend
+```
+
+4. Collect static, run migrations and create superuser:
 
 ```shell
 uv run python manage.py collectstatic --no-input
@@ -40,7 +48,7 @@ uv run python manage.py createsuperuser
 uv run python manage.py migrate
 ```
 
-4. Run development server:
+5. Run development server:
 
 ```shell
 uv run python manage.py runserver
@@ -55,9 +63,14 @@ uv run python manage.py runserver
 | `make migrate`| Run database migrations                    |
 | `make messages`| Generate translation files (ru)           |
 | `make locale` | Compile translation files (ru)             |
-| `make static` | Collect static files                       |
+| `make static` | Collect static files (depends on `frontend`) |
+| `make frontend-install` | Install frontend dependencies (bun) |
+| `make frontend` | Install + build the React SPA (bun)     |
+| `make frontend-lint` | Lint frontend (Biome)              |
+| `make frontend-typecheck` | Type-check frontend (tsc)       |
+| `make frontend-check` | Lint + type-check frontend (run by `make check`) |
 | `make test`   | Run test suite                             |
-| `make check`  | Run pre-commit hooks                       |
+| `make check`  | Run frontend checks + pre-commit hooks     |
 | `make django-checks` | Run Django checks                  |
 | `make pip`    | Install dev dependencies                   |
 | `make update` | Update dependencies and pre-commit hooks   |
@@ -107,8 +120,8 @@ odin/
 ├── api/              # REST API endpoints
 ├── apps/             # Django apps (core, relays, sensors, weather)
 ├── tests/            # Test suite
-├── static/           # Static files (CSS, JS, images)
-├── templates/        # Django templates
+├── static/           # Admin assets, favicons, images, fonts (no public CSS/JS)
+├── templates/admin/  # Django admin templates only
 ├── locale/           # Translation files
 ├── settings/         # Django settings (base, dev, prod, test, sqlite)
 ├── configs/          # Nginx and other configs
@@ -120,8 +133,21 @@ odin/
 
 ## Frontend (React SPA)
 
-The dashboard UI is being migrated to a React SPA under `frontend/`. See
-[`frontend/README.md`](frontend/README.md) for setup and scripts. Quick start:
+The dashboard UI is a React + TypeScript SPA under `frontend/`, built with
+[Vite](https://vitejs.dev/), bundled by [Bun](https://bun.sh/), and
+linted/formatted with [Biome](https://biomejs.dev/). It replaces the previous
+Django-rendered dashboard (`index.html`, `chart.html`, `header.html`,
+`modal.html`).
+
+- Built artifacts (`frontend/dist/`) are picked up by `collectstatic` and
+  served at `/` by Django. `/sw.js` and `/manifest.webmanifest` are served
+  by dedicated views (see `odin/apps/core/views.py`).
+- The SPA is served same-origin and uses Django session cookies
+  (`sessionid`) plus the `csrftoken` cookie for write endpoints.
+- See [`frontend/README.md`](frontend/README.md) for component layout,
+  API client, PWA configuration, and session/CSRF details.
+
+Quick start:
 
 ```shell
 cd frontend
@@ -129,3 +155,15 @@ bun install
 bun run dev      # http://localhost:5173, proxies /api, /admin, /static to Django
 bun run build    # type-checks and emits static assets to frontend/dist
 ```
+
+Or from the project root:
+
+```shell
+make frontend-install   # bun install
+make frontend           # install + build
+make frontend-check     # biome lint + tsc typecheck
+```
+
+The Django dev server (`uv run manage.py runserver`) serves the SPA at `/`
+once `frontend/dist/` is built; otherwise it returns a 500 with a hint to
+run `make frontend`.
