@@ -189,6 +189,17 @@ class TestSensorsModelProperties:
         sensor: Sensor = SensorFactory()  # noqa
         assert sensor.humidity is None
 
+    def test_sensors__humidity_returns_none_when_latest_log_humidity_is_null(self):
+        """Test that humidity returns None when the latest log has humidity=NULL.
+
+        DS18B20 sensors and some ESP8266 nodes report temperature only;
+        `SensorLog.humidity` is nullable, so the property must not add the
+        offset to `None` (regression: MNT-185).
+        """
+        sensor: Sensor = SensorFactory(humidity_offset=Decimal("5.0"))  # noqa
+        SensorLogFactory(sensor_id=sensor.sensor_id, humidity=None)  # noqa
+        assert sensor.humidity is None
+
     def test_sensors__humidity_returns_latest_log_humidity(self):
         """Test that humidity returns humidity from latest log."""
         sensor: Sensor = SensorFactory()  # noqa
