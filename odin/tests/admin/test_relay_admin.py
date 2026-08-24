@@ -40,7 +40,7 @@ class TestRelayAdminSaveModel:
 
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
     def test_save_model_publishes_relay_control_on_change(self, mock_publish_relay_control: MagicMock) -> None:
-        """Test that saving relay sends Redis message with relay_id and target_state."""
+        """Test that saving relay sends Redis message with relay_id and state."""
         self.relay.force_state = "OFF"
         self.relay.save()
 
@@ -49,7 +49,7 @@ class TestRelayAdminSaveModel:
         form.data = {}
 
         admin_instance.save_model(None, self.relay, form, change=True)
-        mock_publish_relay_control.assert_called_once_with(relay_id=self.relay.relay_id, target_state="OFF")
+        mock_publish_relay_control.assert_called_once_with(relay_id=self.relay.relay_id, state="OFF")
 
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
     def test_save_model_publishes_relay_control_on_add(self, mock_publish_relay_control):
@@ -68,7 +68,7 @@ class TestRelayAdminSaveModel:
 
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
     def test_save_model_publishes_relay_control_with_correct_target_state(self, mock_publish_relay_control):
-        """Test that Redis message contains correct target_state."""
+        """Test that Redis message contains correct state."""
         self.relay.type = RelayType.PUMP
         self.relay.force_state = "OFF"
         self.relay.save()
@@ -80,7 +80,7 @@ class TestRelayAdminSaveModel:
         admin_instance.save_model(None, self.relay, form, change=True)
 
         call_args = mock_publish_relay_control.call_args
-        assert call_args.kwargs["target_state"] == "OFF"
+        assert call_args.kwargs["state"] == "OFF"
 
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
     def test_save_model_publishes_relay_control_when_force_state_cleared(self, mock_publish_relay_control):
@@ -116,5 +116,5 @@ class TestRelayAdminSaveModel:
         mock_publish_relay_control.assert_called_once()
         call_kwargs = mock_publish_relay_control.call_args.kwargs
         assert call_kwargs["relay_id"] == self.relay.relay_id
-        # Just check that target_state is sent (could be ON or UNKNOWN depending on current time)
-        assert call_kwargs["target_state"] in ["ON", "UNKNOWN"]
+        # Just check that state is sent (could be ON or UNKNOWN depending on current time)
+        assert call_kwargs["state"] in ["ON", "UNKNOWN"]
