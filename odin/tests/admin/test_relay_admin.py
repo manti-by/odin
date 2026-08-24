@@ -117,4 +117,4 @@ class TestRelayAdminSaveModel:
         call_kwargs = mock_publish_relay_control.call_args.kwargs
         assert call_kwargs["relay_id"] == self.relay.relay_id
         # Just check that state is sent (could be ON or UNKNOWN depending on current time)
-        assert call_kwargs["state"] in ["ON", "UNKNOWN"]
+        assert call_kwargs["state"] in ("ON", "UNKNOWN")
