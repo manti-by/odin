@@ -131,7 +131,7 @@ class Sensor(models.Model):
 
     @property
     def humidity(self) -> Decimal | None:
-        if self.latest_log:
+        if self.latest_log and self.latest_log.humidity is not None:
             return self.latest_log.humidity + self.humidity_offset
         return None
 
