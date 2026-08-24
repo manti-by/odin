@@ -288,11 +288,14 @@ CHART_OPTIONS = {
     },
 }
 
-# Kafka settings
+# Redis bus settings
 
-KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "192.168.1.100:9092").split(",")
-KAFKA_CORUSCANT_TOPIC = os.getenv("KAFKA_CORUSCANT_TOPIC", "coruscant")
-KAFKA_ODIN_TOPIC = os.getenv("KAFKA_ODIN_TOPIC", "odin")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_RELAYS_CHANNEL = os.getenv("REDIS_RELAYS_CHANNEL", "relays:control")
+REDIS_SENSORS_CHANNEL = os.getenv("REDIS_SENSORS_CHANNEL", "sensors:telemetry")
+REDIS_RELAY_STATE_KEY_PREFIX = os.getenv("REDIS_RELAY_STATE_KEY_PREFIX", "relays:state:")
+REDIS_SOCKET_TIMEOUT = float(os.getenv("REDIS_SOCKET_TIMEOUT", "2"))
+REDIS_SOCKET_CONNECT_TIMEOUT = float(os.getenv("REDIS_SOCKET_CONNECT_TIMEOUT", "2"))
 
 # Web Push settings
 

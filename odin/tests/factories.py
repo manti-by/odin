@@ -49,7 +49,7 @@ class LogDataFactory(DictFactory):
 
 
 class RelayFactory(DjangoModelFactory):
-    relay_id = factory.Faker("word")
+    relay_id = factory.Sequence(lambda n: f"relay_{n}")
     type = SensorType.ESP8266
     name = factory.Faker("name")
     is_active = True
@@ -59,7 +59,7 @@ class RelayFactory(DjangoModelFactory):
 
 
 class SensorFactory(DjangoModelFactory):
-    sensor_id = factory.Faker("word")
+    sensor_id = factory.Sequence(lambda n: f"sensor_{n}")
     type = SensorType.ESP8266
     name = factory.Faker("name")
     is_active = True
@@ -69,7 +69,7 @@ class SensorFactory(DjangoModelFactory):
 
 
 class SensorLogFactory(DjangoModelFactory):
-    sensor_id = factory.Faker("word")
+    sensor_id = factory.Sequence(lambda n: f"sensor_{n}")
     temp = FuzzyDecimal(low=-10, high=40, precision=2)
     humidity = FuzzyDecimal(low=0, high=100, precision=2)
     created_at = factory.Faker("date_time")
