@@ -8,9 +8,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", end: true },
-  { to: "/sensors/home", label: "Home (chart)" },
-  { to: "/sensors/boiler", label: "Boiler (chart)" },
-  { to: "/styleguide", label: "Styleguide" },
+  { to: "/sensors/home", label: "Rooms" },
+  { to: "/sensors/boiler", label: "Circuits" },
 ];
 
 export function Header() {
