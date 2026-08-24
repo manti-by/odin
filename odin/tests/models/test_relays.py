@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from datetime import timezone as dt_timezone
 from decimal import Decimal
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -305,8 +305,8 @@ class TestRelaysRefreshState:
         mock_get_state.assert_called_once_with(self.relay.relay_id)
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_relay_state")
-    def test_relays__get_relay_data_raises_error_when_not_found(self, mock_get_state):
-        """Test that refresh_state raises RelayStateError when state not found."""
+    def test_relays__get_relay_data_raises_error_when_not_found(self, mock_get_state: MagicMock) -> None:
+        """Test that refresh_state returns None when relay state is missing."""
         mock_get_state.return_value = None
         assert self.relay.refresh_state() is None
 

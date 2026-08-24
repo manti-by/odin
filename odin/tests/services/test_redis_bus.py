@@ -13,11 +13,11 @@ from odin.apps.core.redis_bus import RedisBus
 
 
 class TestRedisBus:
-    def setup_method(self):
+    def setup_method(self) -> None:
         RedisBus._client = None
 
     @patch("odin.apps.core.redis_bus.redis.Redis")
-    def test_get_redis_singleton(self, mock_redis_class):
+    def test_get_redis_singleton(self, mock_redis_class: MagicMock) -> None:
         """Test that get_redis returns the same instance."""
         client1 = RedisBus.get_redis()
         client2 = RedisBus.get_redis()
@@ -26,13 +26,13 @@ class TestRedisBus:
         assert mock_redis_class.from_url.call_count == 1
 
     @patch("odin.apps.core.redis_bus.redis.Redis")
-    def test_get_redis_initializes_from_url(self, mock_redis_class):
+    def test_get_redis_initializes_from_url(self, mock_redis_class: MagicMock) -> None:
         """Test that redis client is initialized from REDIS_URL."""
         RedisBus.get_redis()
 
         mock_redis_class.from_url.assert_called_once()
         call_args = mock_redis_class.from_url.call_args
-        assert call_args.args[0] == "redis://localhost:6379/0"
+        assert call_args.args[0] == settings.REDIS_URL
 
     def test_get_redis_is_thread_safe(self):
         """Test that concurrent get_redis calls create a single client."""

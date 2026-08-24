@@ -14,17 +14,17 @@ from odin.tests.factories import DjangoAdminUserFactory, RelayFactory
 @pytest.mark.django_db
 @pytest.mark.views
 class TestRelayAdmin:
-    def setup_method(self):
+    def setup_method(self) -> None:
         self.user = DjangoAdminUserFactory()
         self.relay = RelayFactory()
 
-    def test_relay_changelist(self, client):
+    def test_relay_changelist(self, client: MagicMock) -> None:
         """Test relay changelist page loads."""
         client.force_login(self.user)
         response = client.get(reverse(admin_urlname(Relay._meta, "changelist")), follow=True)
         assert response.status_code == status.HTTP_200_OK
 
-    def test_relay_change(self, client):
+    def test_relay_change(self, client: MagicMock) -> None:
         """Test relay change page loads."""
         client.force_login(self.user)
         response = client.get(reverse(admin_urlname(Relay._meta, "change"), args=[self.relay.id]), follow=True)
@@ -34,12 +34,12 @@ class TestRelayAdmin:
 @pytest.mark.django_db
 @pytest.mark.views
 class TestRelayAdminSaveModel:
-    def setup_method(self):
+    def setup_method(self) -> None:
         self.user = DjangoAdminUserFactory()
         self.relay = RelayFactory()
 
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
-    def test_save_model_publishes_relay_control_on_change(self, mock_publish_relay_control):
+    def test_save_model_publishes_relay_control_on_change(self, mock_publish_relay_control: MagicMock) -> None:
         """Test that saving relay sends Redis message with relay_id and target_state."""
         self.relay.force_state = "OFF"
         self.relay.save()

@@ -96,6 +96,15 @@ class Relay(models.Model):
         return RelayTargetStateService(self).get_target_state()
 
     def refresh_state(self) -> str | None:
+        """Refresh relay state from Redis and persist it.
+
+        Fetches the latest state for this relay from Redis, updates the
+        model context, and saves the change. Returns None when Redis is
+        unavailable or no state is stored for the relay.
+
+        Returns:
+            The state value from Redis if available, otherwise None.
+        """
         try:
             data = RedisBus.get_relay_state(self.relay_id)
         except RedisReadError:

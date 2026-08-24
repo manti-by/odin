@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Any
 
 from django.contrib import admin
+from django.db import transaction
 from django.forms import ModelForm
 from django.http import HttpRequest
 from django.template.loader import render_to_string
@@ -85,9 +86,12 @@ class RelayAdmin(admin.ModelAdmin):
         if periods:
             obj.context.update({"schedule": {"periods": periods}})
 
-        super().save_model(request, obj, form, change)
+        with transaction.atomic():
+            super().save_model(request, obj, form, change)
 
-        RedisBus.publish_relay_control(
-            relay_id=obj.relay_id,
-            target_state=obj.target_state,
-        )
+            published = RedisBus.publish_relay_control(
+                relay_id=obj.relay_id,
+                target_state=obj.target_state,
+            )
+            if not published:
+                raise RuntimeError("Failed to publish relay control message to Redis")

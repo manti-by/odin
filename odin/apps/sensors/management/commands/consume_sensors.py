@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import json
 import logging
 import signal
 import sys
 from datetime import datetime
+from typing import Any
 
 from redis.exceptions import RedisError, ResponseError
 
@@ -27,12 +30,12 @@ DEAD_LETTER_SUFFIX = ":dead"
 class Command(LoggedCommand):
     help = "Runs a Redis stream consumer to listen for sensor data updates."
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.running = True
-        self.client = None
+        self.running: bool = True
+        self.client: Any | None = None
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
 
@@ -41,13 +44,17 @@ class Command(LoggedCommand):
         stream = settings.REDIS_SENSORS_CHANNEL
         try:
             self.client.xgroup_create(stream, CONSUMER_GROUP, id="0", mkstream=True)
-        except ResponseError:
+        except ResponseError as e:
+            if "BUSYGROUP" not in str(e):
+                raise
             logger.info(f"Consumer group {CONSUMER_GROUP} already exists for stream {stream}")
         logger.info(f"Consuming stream: {stream}")
 
         try:
             self.drain_pending(stream)
             while self.running:
+                if self.client is None:
+                    raise RuntimeError("Redis client not initialized")
                 self.reclaim_pending(stream)
                 entries = self.client.xreadgroup(
                     groupname=CONSUMER_GROUP,
@@ -68,6 +75,8 @@ class Command(LoggedCommand):
 
     def drain_pending(self, stream: str) -> None:
         """Process messages left unacked in the group before reading new ones."""
+        if self.client is None:
+            raise RuntimeError("Redis client not initialized")
         while self.running:
             entries = self.client.xreadgroup(
                 groupname=CONSUMER_GROUP,
@@ -75,11 +84,17 @@ class Command(LoggedCommand):
                 streams={stream: "0"},
                 count=10,
             )
-            if not entries or not self.process_entries(stream, entries):
+            if not entries:
+                return
+            if all(len(messages) == 0 for _, messages in entries):
+                return
+            if not self.process_entries(stream, entries):
                 return
 
     def reclaim_pending(self, stream: str) -> None:
         """Retry messages that failed processing and are idle in the PEL."""
+        if self.client is None:
+            raise RuntimeError("Redis client not initialized")
         _next_id, messages, _deleted = self.client.xautoclaim(
             stream,
             CONSUMER_GROUP,
@@ -91,8 +106,10 @@ class Command(LoggedCommand):
         if messages:
             self.process_entries(stream, [[stream, messages]])
 
-    def process_entries(self, stream: str, entries) -> bool:
+    def process_entries(self, stream: str, entries: Any) -> bool:
         """Process a batch of messages. Returns False if any entry was left pending."""
+        if self.client is None:
+            raise RuntimeError("Redis client not initialized")
         all_acked = True
         for _stream, messages in entries:
             for message_id, fields in messages:
@@ -107,6 +124,7 @@ class Command(LoggedCommand):
                     self.client.xack(stream, CONSUMER_GROUP, message_id)
                     continue
                 if payload.get("type") != MessageType.SENSOR_DATA_UPDATE.value:
+                    logger.warning(f"Skipping sensor message {message_id} with unexpected type {payload.get('type')!r}")
                     self.client.xack(stream, CONSUMER_GROUP, message_id)
                     continue
                 try:
@@ -119,8 +137,12 @@ class Command(LoggedCommand):
                 self.client.xack(stream, CONSUMER_GROUP, message_id)
         return all_acked
 
-    def dead_letter_or_retry(self, stream: str, message_id, fields, error: Exception) -> None:
+    def dead_letter_or_retry(
+        self, stream: str, message_id: bytes, fields: dict[bytes, bytes], error: Exception
+    ) -> None:
         """Ack a permanently failing message to the dead-letter stream, else leave it pending."""
+        if self.client is None:
+            raise RuntimeError("Redis client not initialized")
         attempts = self.increment_attempts(stream, message_id)
         if attempts < MAX_PROCESS_ATTEMPTS:
             logger.error(
@@ -140,13 +162,17 @@ class Command(LoggedCommand):
         )
         self.clear_attempts(stream, message_id)
 
-    def increment_attempts(self, stream: str, message_id) -> int:
+    def increment_attempts(self, stream: str, message_id: bytes) -> int:
+        if self.client is None:
+            raise RuntimeError("Redis client not initialized")
         return self.client.hincrby(f"{stream}{DEAD_LETTER_SUFFIX}:attempts", message_id, 1)
 
-    def clear_attempts(self, stream: str, message_id) -> None:
+    def clear_attempts(self, stream: str, message_id: bytes) -> None:
+        if self.client is None:
+            raise RuntimeError("Redis client not initialized")
         self.client.hdel(f"{stream}{DEAD_LETTER_SUFFIX}:attempts", message_id)
 
-    def process_message(self, message: dict) -> None:
+    def process_message(self, message: dict[str, Any]) -> None:
         data = message.get("data")
         if not isinstance(data, dict):
             logger.warning("Received sensor update message without a dict data payload")
@@ -166,10 +192,10 @@ class Command(LoggedCommand):
             f"Created SensorLog for sensor {sensor_id}: temp={temp}, humidity={humidity}, created_at={created_at}"
         )
 
-    def signal_handler(self, signum, frame):
+    def signal_handler(self, signum: int, frame: Any) -> None:
         logger.info("\nShutting down consumer...")
         self.running = False
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self.client = None
         logger.info("Consumer closed.")
