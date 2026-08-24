@@ -91,7 +91,7 @@ class RelayAdmin(admin.ModelAdmin):
 
             published = RedisBus.publish_relay_control(
                 relay_id=obj.relay_id,
-                target_state=obj.target_state,
+                state=obj.target_state,
             )
             if not published:
                 raise RuntimeError("Failed to publish relay control message to Redis")

@@ -66,61 +66,63 @@ class TestRedisBus:
         assert clients[0] is clients[1]
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_publish_message_success(self, mock_get_redis):
+    def test_publish_message_success(self, mock_get_redis: MagicMock) -> None:
         """Test successful message publishing."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
-        mock_client.xadd.return_value = b"1-0"
 
-        assert RedisBus.publish_message("test_stream", {"key": "value"})
-        assert mock_client.xadd.call_count == 1
+        assert RedisBus.publish_message("test_channel", {"key": "value"})
+        mock_client.publish.assert_called_once()
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_publish_message_redis_error(self, mock_get_redis):
+    def test_publish_message_redis_error(self, mock_get_redis: MagicMock) -> None:
         """Test that RedisError is handled on failure."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
-        mock_client.xadd.side_effect = RedisError("Connection failed")
+        mock_client.publish.side_effect = RedisError("Connection failed")
 
-        assert not RedisBus.publish_message("test_stream", {"key": "value"})
+        assert not RedisBus.publish_message("test_channel", {"key": "value"})
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_publish_message_serialization_error(self, mock_get_redis):
+    def test_publish_message_serialization_error(self, mock_get_redis: MagicMock) -> None:
         """Test that non-serializable payload returns False."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
 
-        assert not RedisBus.publish_message("test_stream", {"key": object()})
-        mock_client.xadd.assert_not_called()
+        assert not RedisBus.publish_message("test_channel", {"key": object()})
+        mock_client.publish.assert_not_called()
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_publish_message_circular_reference_error(self, mock_get_redis):
+    def test_publish_message_circular_reference_error(self, mock_get_redis: MagicMock) -> None:
         """Test that circular reference payload returns False."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
         payload = {}
         payload["self"] = payload
 
-        assert not RedisBus.publish_message("test_stream", payload)
-        mock_client.xadd.assert_not_called()
+        assert not RedisBus.publish_message("test_channel", payload)
+        mock_client.publish.assert_not_called()
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_publish_message_initialization_error(self, mock_get_redis):
+    def test_publish_message_initialization_error(self, mock_get_redis: MagicMock) -> None:
         """Test that client initialization failure returns False."""
         mock_get_redis.side_effect = ValueError("Invalid REDIS_URL")
 
-        assert not RedisBus.publish_message("test_stream", {"key": "value"})
+        assert not RedisBus.publish_message("test_channel", {"key": "value"})
 
     @patch("odin.apps.core.redis_bus.RedisBus.publish_message")
-    def test_publish_relay_control(self, mock_publish_message):
-        """Test publish_relay_control formats message correctly."""
-        RedisBus.publish_relay_control(relay_id="relay_1", target_state="ON")
+    def test_publish_relay_control(self, mock_publish_message: MagicMock) -> None:
+        """Test publish_relay_control formats the canonical envelope correctly."""
+        RedisBus.publish_relay_control(relay_id="relay_1", state="ON")
         assert mock_publish_message.call_count == 1
         assert mock_publish_message.call_args.args[0] == settings.REDIS_RELAYS_CHANNEL
-        assert mock_publish_message.call_args.kwargs["payload"] == {"relay_id": "relay_1", "target_state": "ON"}
+        payload = mock_publish_message.call_args.kwargs["payload"]
+        assert payload["type"] == "RELAY_STATE_UPDATE"
+        assert payload["data"] == {"relay_id": "relay_1", "state": "ON"}
+        assert "timestamp" in payload
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_returns_data(self, mock_get_redis):
+    def test_get_relay_state_returns_data(self, mock_get_redis: MagicMock) -> None:
         """Test that get_relay_state returns data when found."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
@@ -130,7 +132,7 @@ class TestRedisBus:
         assert result == {"relay_id": "relay_1", "state": "ON"}
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_returns_none_when_not_found(self, mock_get_redis):
+    def test_get_relay_state_returns_none_when_not_found(self, mock_get_redis: MagicMock) -> None:
         """Test that get_relay_state returns None when relay not found."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
@@ -139,7 +141,7 @@ class TestRedisBus:
         assert RedisBus.get_relay_state("relay_1") is None
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_raises_redis_error(self, mock_get_redis):
+    def test_get_relay_state_raises_redis_error(self, mock_get_redis: MagicMock) -> None:
         """Test that get_relay_state raises RedisReadError on failure."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
@@ -149,7 +151,7 @@ class TestRedisBus:
             RedisBus.get_relay_state("relay_1")
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_raises_redis_error_on_initialization(self, mock_get_redis):
+    def test_get_relay_state_raises_redis_error_on_initialization(self, mock_get_redis: MagicMock) -> None:
         """Test that get_relay_state raises RedisReadError when client init fails."""
         mock_get_redis.side_effect = ValueError("Invalid REDIS_URL")
 
@@ -157,7 +159,7 @@ class TestRedisBus:
             RedisBus.get_relay_state("relay_1")
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_raises_redis_error_on_invalid_json(self, mock_get_redis):
+    def test_get_relay_state_raises_redis_error_on_invalid_json(self, mock_get_redis: MagicMock) -> None:
         """Test that get_relay_state raises RedisReadError on malformed JSON."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
@@ -167,7 +169,7 @@ class TestRedisBus:
             RedisBus.get_relay_state("relay_1")
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_raises_redis_error_on_non_dict_payload(self, mock_get_redis):
+    def test_get_relay_state_raises_redis_error_on_non_dict_payload(self, mock_get_redis: MagicMock) -> None:
         """Test that get_relay_state raises RedisReadError on non-dict payload."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client

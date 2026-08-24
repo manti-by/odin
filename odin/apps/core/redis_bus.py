@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+from datetime import datetime
 from enum import Enum
 from typing import Any, cast
 
@@ -31,9 +32,9 @@ class RedisBus:
     """Shared Redis client and helpers for publishing and reading bus messages.
 
     Provides lazy singleton Redis client creation and convenience methods
-    for publishing messages to streams and reading relay state. Publish
-    methods return False on Redis or serialization failures instead of
-    raising, while read methods raise RedisReadError on failures.
+    for publishing messages to pub/sub channels and reading relay state.
+    Publish methods return False on Redis or serialization failures instead
+    of raising, while read methods raise RedisReadError on failures.
     """
 
     _client: redis.Redis | None = None
@@ -60,11 +61,11 @@ class RedisBus:
         return cls._client
 
     @classmethod
-    def publish_message(cls, stream: str, payload: dict[str, Any]) -> bool:
-        """Publish a JSON payload to a Redis stream.
+    def publish_message(cls, channel: str, payload: dict[str, Any]) -> bool:
+        """Publish a JSON payload to a Redis pub/sub channel.
 
         Args:
-            stream: Name of the Redis stream to publish to.
+            channel: Name of the Redis channel to publish to.
             payload: JSON-serializable dictionary to publish.
 
         Returns:
@@ -79,9 +80,9 @@ class RedisBus:
 
         try:
             data = json.dumps(payload).encode("utf-8")
-            message_id = client.xadd(stream, {"data": data}, maxlen=10000, approximate=True)
+            client.publish(channel, data)
 
-            logger.info(f"Published message {message_id} to stream {stream}")
+            logger.info(f"Published message to channel {channel}")
             return True
 
         except RedisError as e:
@@ -92,17 +93,25 @@ class RedisBus:
         return False
 
     @classmethod
-    def publish_relay_control(cls, relay_id: str, target_state: str) -> bool:
-        """Publish a relay control command to the relays stream.
+    def publish_relay_control(cls, relay_id: str, state: str) -> bool:
+        """Publish a relay control command to the relays channel.
+
+        Publishes the canonical envelope
+        {type, data: {relay_id, state}, timestamp} where state is "ON" or
+        "OFF".
 
         Args:
             relay_id: Identifier of the relay to control.
-            target_state: Desired relay state value.
+            state: Desired relay state value ("ON" or "OFF").
 
         Returns:
             True if the control message was published, False otherwise.
         """
-        message = {"relay_id": relay_id, "target_state": target_state}
+        message = {
+            "type": MessageType.RELAY_STATE_UPDATE.value,
+            "data": {"relay_id": relay_id, "state": state},
+            "timestamp": datetime.now().isoformat(),
+        }
         return cls.publish_message(settings.REDIS_RELAYS_CHANNEL, payload=message)
 
     @classmethod

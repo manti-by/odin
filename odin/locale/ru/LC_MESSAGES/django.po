@@ -482,3 +482,7 @@ msgstr "Закрыть"
 #: odin/templates/modal.html:16
 msgid "Send"
 msgstr "Отправить"
+
+#: odin/apps/sensors/management/commands/consume_sensors.py:25
+msgid "Runs a Redis pub/sub consumer to listen for sensor data updates."
+msgstr "Запускает pub/sub потребителя Redis для прослушивания обновлений данных датчиков."
