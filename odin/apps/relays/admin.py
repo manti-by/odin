@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from typing import Any
 
@@ -8,11 +9,15 @@ from django.http import HttpRequest
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from odin.apps.core.redis_bus import RedisBus
 
 from .models import Relay, RelayState, RelayType
+
+
+logger = logging.getLogger(__name__)
 
 
 @admin.register(Relay)
@@ -38,7 +43,9 @@ class RelayAdmin(admin.ModelAdmin):
         js = ("js/admin/schedule.js",)
 
     @admin.display(description=_("sensor"))
-    def sensor(self, obj: Relay) -> str:
+    def sensor(self, obj: Relay | None) -> str:
+        if obj is None or obj.pk is None:
+            return "-"
         if not (sensor := obj.sensor):
             return "-"
 
@@ -46,17 +53,24 @@ class RelayAdmin(admin.ModelAdmin):
         return format_html('<a href="{}">{}</a>', url, sensor)
 
     @admin.display(description=_("schedule"))
-    def schedule(self, obj: Relay) -> str:
-        schedule = obj.context.get("schedule")
-        html = render_to_string("admin/schedule.html", {"schedule": schedule, "relay_type": obj.type})
-        return format_html(html)
+    def schedule(self, obj: Relay | None) -> str:
+        if obj is None:
+            schedule = None
+            relay_type = ""
+        else:
+            schedule = obj.context.get("schedule") if isinstance(obj.context, dict) else None
+            relay_type = obj.type
+        html = render_to_string("admin/schedule.html", {"schedule": schedule, "relay_type": relay_type})
+        return mark_safe(html)  # noqa: S308
 
     @admin.display(description=f"{_('Forced')}?", boolean=True)
     def is_forced(self, obj: Relay) -> bool:
         return obj.force_state in (RelayState.ON, RelayState.OFF)
 
     @admin.display(description=_("state"))
-    def state(self, obj: Relay) -> str:
+    def state(self, obj: Relay | None) -> str:
+        if obj is None:
+            return RelayState.UNKNOWN
         return obj.state
 
     def save_model(self, request: HttpRequest, obj: Relay, form: ModelForm, change: bool):
@@ -94,4 +108,4 @@ class RelayAdmin(admin.ModelAdmin):
                 state=obj.target_state,
             )
             if not published:
-                raise RuntimeError("Failed to publish relay control message to Redis")
+                logger.error(f"Failed to publish relay control message to Redis for relay {obj.relay_id}")
