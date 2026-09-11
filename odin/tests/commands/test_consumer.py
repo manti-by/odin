@@ -30,8 +30,11 @@ class TestConsumeSensorsCommand:
         assert log.temp == 21.5
         assert log.humidity == 40
 
-    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_state", return_value={"state": RelayState.ON.value})
-    def test_process_message__refreshes_relay_state(self, mock_get_relay_state: MagicMock):
+    @patch(
+        "odin.apps.core.redis_bus.RedisBus.get_relay_latest_message",
+        return_value={"data": {"state": RelayState.ON.value}},
+    )
+    def test_process_message__refreshes_relay_state(self, mock_get_relay_latest_message: MagicMock):
         RelayFactory(relay_id="PUMP-1")
         message = {
             "type": "RELAY_STATE_UPDATE",
@@ -41,10 +44,10 @@ class TestConsumeSensorsCommand:
 
         self.command.process_message(json.dumps(message).encode())
 
-        mock_get_relay_state.assert_called_once_with("PUMP-1")
+        mock_get_relay_latest_message.assert_called_once_with("PUMP-1")
 
-    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_state")
-    def test_process_message__ignores_unknown_relay(self, mock_get_relay_state: MagicMock):
+    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_latest_message")
+    def test_process_message__ignores_unknown_relay(self, mock_get_relay_latest_message: MagicMock):
         message = {
             "type": "RELAY_STATE_UPDATE",
             "data": {"relay_id": "unknown", "state": RelayState.ON.value},
@@ -53,7 +56,7 @@ class TestConsumeSensorsCommand:
 
         self.command.process_message(json.dumps(message).encode())
 
-        mock_get_relay_state.assert_not_called()
+        mock_get_relay_latest_message.assert_not_called()
 
     def test_process_message__relay_missing_relay_id(self):
         message = {"type": "RELAY_STATE_UPDATE", "data": {"state": RelayState.ON.value}}

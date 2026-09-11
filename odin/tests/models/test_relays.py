@@ -358,10 +358,10 @@ class TestRelaysRefreshState:
     def setup_method(self):
         self.relay: Relay = RelayFactory(type=RelayType.PUMP)
 
-    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_state")
+    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_latest_message")
     def test_relays__get_relay_data_updates_context(self, mock_get_state):
         """Test that refresh_state updates context with state from Redis."""
-        mock_get_state.return_value = {"state": "ON"}
+        mock_get_state.return_value = {"data": {"state": "ON"}}
 
         state = self.relay.refresh_state()
 
@@ -371,16 +371,16 @@ class TestRelaysRefreshState:
         assert self.relay.context["state"] == "ON"
         mock_get_state.assert_called_once_with(self.relay.relay_id)
 
-    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_state")
+    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_latest_message")
     def test_relays__get_relay_data_raises_error_when_not_found(self, mock_get_state: MagicMock) -> None:
         """Test that refresh_state returns None when relay state is missing."""
         mock_get_state.return_value = None
         assert self.relay.refresh_state() is None
 
-    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_state")
+    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_latest_message")
     def test_relays__get_relay_data_returns_state_value(self, mock_get_state):
         """Test that refresh_state returns the state value."""
-        mock_get_state.return_value = {"state": "OFF"}
+        mock_get_state.return_value = {"data": {"state": "OFF"}}
 
         state = self.relay.refresh_state()
         assert state == "OFF"

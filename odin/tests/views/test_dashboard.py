@@ -134,7 +134,7 @@ class TestDashboardAPI:
             is_visible=True,
         )
 
-        with patch.object(RedisBus, "get_relay_state", return_value={"state": "ON"}):
+        with patch.object(RedisBus, "get_relay_latest_message", return_value={"data": {"state": "ON"}}):
             response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
 

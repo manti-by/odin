@@ -122,58 +122,58 @@ class TestRedisBus:
         assert "timestamp" in payload
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_returns_data(self, mock_get_redis: MagicMock) -> None:
-        """Test that get_relay_state returns data when found."""
+    def test_get_relay_latest_message_returns_data(self, mock_get_redis: MagicMock) -> None:
+        """Test that get_relay_latest_message returns data when found."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
-        mock_client.get.return_value = b'{"relay_id": "relay_1", "state": "ON"}'
+        mock_client.get.return_value = b'{"type": "RELAY_STATE_UPDATE", "data": {"relay_id": "relay_1", "state": "ON"}}'
 
-        result = RedisBus.get_relay_state("relay_1")
-        assert result == {"relay_id": "relay_1", "state": "ON"}
+        result = RedisBus.get_relay_latest_message("relay_1")
+        assert result == {"type": "RELAY_STATE_UPDATE", "data": {"relay_id": "relay_1", "state": "ON"}}
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_returns_none_when_not_found(self, mock_get_redis: MagicMock) -> None:
-        """Test that get_relay_state returns None when relay not found."""
+    def test_get_relay_latest_message_returns_none_when_not_found(self, mock_get_redis: MagicMock) -> None:
+        """Test that get_relay_latest_message returns None when relay not found."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
         mock_client.get.return_value = None
 
-        assert RedisBus.get_relay_state("relay_1") is None
+        assert RedisBus.get_relay_latest_message("relay_1") is None
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_raises_redis_error(self, mock_get_redis: MagicMock) -> None:
-        """Test that get_relay_state raises RedisReadError on failure."""
+    def test_get_relay_latest_message_raises_redis_error(self, mock_get_redis: MagicMock) -> None:
+        """Test that get_relay_latest_message raises RedisReadError on failure."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
         mock_client.get.side_effect = RedisError("Connection failed")
 
         with pytest.raises(RedisReadError):
-            RedisBus.get_relay_state("relay_1")
+            RedisBus.get_relay_latest_message("relay_1")
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_raises_redis_error_on_initialization(self, mock_get_redis: MagicMock) -> None:
-        """Test that get_relay_state raises RedisReadError when client init fails."""
+    def test_get_relay_latest_message_raises_redis_error_on_initialization(self, mock_get_redis: MagicMock) -> None:
+        """Test that get_relay_latest_message raises RedisReadError when client init fails."""
         mock_get_redis.side_effect = ValueError("Invalid REDIS_URL")
 
         with pytest.raises(RedisReadError):
-            RedisBus.get_relay_state("relay_1")
+            RedisBus.get_relay_latest_message("relay_1")
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_raises_redis_error_on_invalid_json(self, mock_get_redis: MagicMock) -> None:
-        """Test that get_relay_state raises RedisReadError on malformed JSON."""
+    def test_get_relay_latest_message_raises_redis_error_on_invalid_json(self, mock_get_redis: MagicMock) -> None:
+        """Test that get_relay_latest_message raises RedisReadError on malformed JSON."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
         mock_client.get.return_value = b"{invalid json"
 
         with pytest.raises(RedisReadError):
-            RedisBus.get_relay_state("relay_1")
+            RedisBus.get_relay_latest_message("relay_1")
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
-    def test_get_relay_state_raises_redis_error_on_non_dict_payload(self, mock_get_redis: MagicMock) -> None:
-        """Test that get_relay_state raises RedisReadError on non-dict payload."""
+    def test_get_relay_latest_message_raises_redis_error_on_non_dict_payload(self, mock_get_redis: MagicMock) -> None:
+        """Test that get_relay_latest_message raises RedisReadError on non-dict payload."""
         mock_client = MagicMock()
         mock_get_redis.return_value = mock_client
         mock_client.get.return_value = b'"ON"'
 
         with pytest.raises(RedisReadError):
-            RedisBus.get_relay_state("relay_1")
+            RedisBus.get_relay_latest_message("relay_1")

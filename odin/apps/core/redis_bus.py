@@ -115,7 +115,7 @@ class RedisBus:
         return cls.publish_message(settings.REDIS_RELAYS_CHANNEL, payload=message)
 
     @classmethod
-    def get_relay_state(cls, relay_id: str) -> dict[str, Any] | None:
+    def get_relay_latest_message(cls, relay_id: str) -> dict[str, Any] | None:
         """Fetch and decode relay state from Redis.
 
         Args:

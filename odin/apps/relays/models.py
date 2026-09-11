@@ -118,15 +118,16 @@ class Relay(models.Model):
             The state value from Redis if available, otherwise None.
         """
         try:
-            data = RedisBus.get_relay_state(self.relay_id)
+            message = RedisBus.get_relay_latest_message(self.relay_id)
         except RedisReadError:
             logger.error(f"Failed to get state from Redis for relay {self.relay_id}")
             return None
 
-        if data is None:
+        if message is None:
             logger.error(f"There are no messages for relay {self.relay_id}")
             return None
 
-        self.context["state"] = data.get("state")
-        self.save(update_fields=["context", "updated_at"])
-        return data.get("state")
+        if state := message.get("data", {}).get("state"):
+            self.context["state"] = state
+            self.save(update_fields=["context", "updated_at"])
+            return state

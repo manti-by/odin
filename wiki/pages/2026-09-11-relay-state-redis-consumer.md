@@ -54,6 +54,7 @@ Before:
 def changelist_view(self, request: HttpRequest, extra_context: dict | None = None) -> TemplateResponse:
     return super().changelist_view(request, extra_context)
 
+
 def change_view(
     self, request: HttpRequest, object_id: int, form_url: str = "", extra_context: dict | None = None
 ) -> TemplateResponse:
@@ -67,6 +68,7 @@ def changelist_view(self, request: HttpRequest, extra_context: dict | None = Non
     for relay in self.get_queryset(request):
         relay.refresh_state()
     return super().changelist_view(request, extra_context)
+
 
 def change_view(
     self, request: HttpRequest, object_id: int, form_url: str = "", extra_context: dict | None = None
