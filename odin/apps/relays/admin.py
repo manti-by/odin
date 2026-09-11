@@ -27,18 +27,19 @@ class RelayAdmin(admin.ModelAdmin):
         "relay_id",
         "name",
         "type",
-        "is_active",
-        "related_relay",
         "sensor",
-        "state",
+        "related_relay",
+        "is_active",
         "force_state",
+        "target_state",
+        "state",
         "schedule",
         "updated_at",
         "created_at",
     )
-    list_display = ("relay_id", "name", "type", "is_active", "force_state", "state", "updated_at")
+    list_display = ("relay_id", "name", "type", "is_active", "forced_state", "target_state", "state", "updated_at")
     list_filter = ("type",)
-    readonly_fields = ("sensor", "state", "schedule", "updated_at", "created_at")
+    readonly_fields = ("sensor", "target_state", "state", "schedule", "updated_at", "created_at")
 
     class Media:
         css = {"all": ("css/admin/schedule.css",)}
@@ -65,20 +66,20 @@ class RelayAdmin(admin.ModelAdmin):
         html = render_to_string("admin/schedule.html", {"schedule": schedule, "relay_type": relay_type})
         return mark_safe(html)  # noqa: S308
 
-    @admin.display(description=f"{_('force state')}")
-    def force_state(self, obj: Relay | None) -> RelayState | None:
+    @admin.display(description=_("forced"))
+    def forced_state(self, obj: Relay | None) -> RelayState | None:
         if obj is None:
             return RelayState.UNKNOWN
         return obj.force_state
 
-    @admin.display(description=f"{_('target state')}")
+    @admin.display(description=_("target"))
     def target_state(self, obj: Relay | None) -> RelayState | None:
         if obj is None:
             return RelayState.UNKNOWN
         return obj.target_state
 
-    @admin.display(description=_("state"))
-    def state(self, obj: Relay | None) -> str:
+    @admin.display(description=_("current"))
+    def state(self, obj: Relay | None) -> RelayState | None:
         if obj is None:
             return RelayState.UNKNOWN
         return obj.state

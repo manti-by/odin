@@ -45,7 +45,7 @@ deploy: frontend
 	sudo systemctl restart worker.service
 	sudo systemctl restart gunicorn.service
 	sudo systemctl restart scheduler.service
-	sudo systemctl restart sensor-consumer.service
+	sudo systemctl restart consumer.service
 	sudo service nginx reload
 
 test:

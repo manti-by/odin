@@ -84,8 +84,10 @@ class Relay(models.Model):
         return f"Relay {self.relay_id}"
 
     @property
-    def state(self) -> str:
-        return self.context.get("state", RelayState.UNKNOWN.value)
+    def state(self) -> RelayState:
+        if state := self.context.get("state"):
+            return RelayState.__members__.get(state, RelayState.UNKNOWN)
+        return RelayState.UNKNOWN
 
     @property
     def is_on(self) -> bool:

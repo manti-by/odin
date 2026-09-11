@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ODIN\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-09 21:42+0300\n"
+"POT-Creation-Date: 2026-09-11 16:29+0300\n"
 "PO-Revision-Date: 2025-12-15 14:34+0300\n"
 "Last-Translator: Alexander Chaika <manti.by@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,26 +20,37 @@ msgstr ""
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
 "(n%100>=11 && n%100<=14)? 2 : 3);\n"
 
-#: odin/api/v1/core/serializers.py:22
+#: odin/api/v1/core/serializers.py:30
 msgid "Temp"
 msgstr "Температура"
 
-#: odin/api/v1/core/serializers.py:23 odin/templates/index.html:132
+#: odin/api/v1/core/serializers.py:31
 msgid "Humidity"
 msgstr "Влажность"
 
-#: odin/api/v1/core/serializers.py:24 odin/templates/index.html:138
+#: odin/api/v1/core/serializers.py:32
 msgid "Pressure"
 msgstr "Давление"
 
-#: odin/api/v1/core/serializers.py:25 odin/apps/electricity/models.py:18
-#: odin/templates/index.html:208
+#: odin/api/v1/core/serializers.py:33 odin/apps/electricity/models.py:18
 msgid "Voltage"
 msgstr "Напряжение"
+
+#: odin/apps/boiler/apps.py:7
+msgid "boiler"
+msgstr ""
 
 #: odin/apps/core/apps.py:7
 msgid "core"
 msgstr "ядро"
+
+#: odin/apps/core/management/commands/consumer.py:27
+#, fuzzy
+#| msgid "Runs a Redis pub/sub consumer to listen for sensor data updates."
+msgid "Runs a Redis pub/sub consumer to listen for sensor and relay updates."
+msgstr ""
+"Запускает pub/sub потребителя Redis для прослушивания обновлений данных "
+"датчиков."
 
 #: odin/apps/core/models.py:12
 msgid "Chrome"
@@ -57,7 +68,7 @@ msgstr ""
 msgid "Edge"
 msgstr ""
 
-#: odin/apps/core/models.py:16 odin/templates/index.html:199
+#: odin/apps/core/models.py:16
 msgid "Other"
 msgstr "Разное"
 
@@ -69,7 +80,7 @@ msgstr "Данные подписки на пуш"
 msgid "Browser"
 msgstr "Браузер"
 
-#: odin/apps/core/models.py:40 odin/apps/relays/models.py:48
+#: odin/apps/core/models.py:40 odin/apps/relays/models.py:59
 #: odin/apps/sensors/models.py:59
 msgid "Is active"
 msgstr "Активный"
@@ -78,13 +89,13 @@ msgstr "Активный"
 msgid "Is admin"
 msgstr "Админ"
 
-#: odin/apps/core/models.py:42 odin/apps/electricity/models.py:19
-#: odin/apps/provider/models.py:21 odin/apps/relays/models.py:55
-#: odin/apps/sensors/models.py:71
+#: odin/apps/core/models.py:42 odin/apps/core/models.py:103
+#: odin/apps/electricity/models.py:19 odin/apps/provider/models.py:21
+#: odin/apps/relays/models.py:74 odin/apps/sensors/models.py:71
 msgid "Created at"
 msgstr "Создан"
 
-#: odin/apps/core/models.py:43 odin/apps/relays/models.py:56
+#: odin/apps/core/models.py:43 odin/apps/relays/models.py:75
 #: odin/apps/sensors/models.py:72
 msgid "Updated at"
 msgstr "Обновлен"
@@ -97,13 +108,25 @@ msgstr "устройство"
 msgid "devices"
 msgstr "устройства"
 
-#: odin/apps/core/models.py:79
+#: odin/apps/core/models.py:81
 msgid "log"
 msgstr "лог"
 
-#: odin/apps/core/models.py:80
+#: odin/apps/core/models.py:82
 msgid "logs"
 msgstr "логи"
+
+#: odin/apps/core/models.py:100
+msgid "User"
+msgstr ""
+
+#: odin/apps/core/models.py:102
+msgid "Token"
+msgstr ""
+
+#: odin/apps/core/models.py:110 odin/apps/core/models.py:111
+msgid "auth"
+msgstr ""
 
 #: odin/apps/currency/apps.py:7
 msgid "currency"
@@ -170,69 +193,81 @@ msgstr "Единица"
 msgid "traffic"
 msgstr "трафик"
 
-#: odin/apps/relays/admin.py:39 odin/apps/sensors/models.py:77
+#: odin/apps/relays/admin.py:47 odin/apps/sensors/models.py:77
 msgid "sensor"
 msgstr "датчик"
 
-#: odin/apps/relays/admin.py:47
+#: odin/apps/relays/admin.py:57
 msgid "schedule"
 msgstr "расписание"
 
-#: odin/apps/relays/admin.py:53
-msgid "state"
-msgstr "состояние"
+#: odin/apps/relays/admin.py:68
+msgid "forced"
+msgstr "принудительно"
 
-#: odin/apps/relays/apps.py:7 odin/apps/relays/models.py:62
+#: odin/apps/relays/admin.py:74
+msgid "target"
+msgstr "заданное"
+
+#: odin/apps/relays/admin.py:80
+msgid "current"
+msgstr "текущее"
+
+#: odin/apps/relays/apps.py:7 odin/apps/relays/models.py:81
 msgid "relays"
 msgstr "реле"
 
-#: odin/apps/relays/models.py:16
+#: odin/apps/relays/models.py:23
 msgid "Pump"
 msgstr "Насос"
 
-#: odin/apps/relays/models.py:17
+#: odin/apps/relays/models.py:24
 msgid "Servo"
 msgstr "Сервопривод"
 
-#: odin/apps/relays/models.py:18
+#: odin/apps/relays/models.py:25
 msgid "Valve"
 msgstr "Клапан"
 
-#: odin/apps/relays/models.py:22 odin/templates/admin/schedule.html:21
+#: odin/apps/relays/models.py:29 odin/templates/admin/schedule.html:21
 #: odin/templates/admin/schedule.html:54
 msgid "ON"
 msgstr ""
 
-#: odin/apps/relays/models.py:23 odin/templates/admin/schedule.html:24
+#: odin/apps/relays/models.py:30 odin/templates/admin/schedule.html:24
 #: odin/templates/admin/schedule.html:55
 msgid "OFF"
 msgstr ""
 
-#: odin/apps/relays/models.py:24
+#: odin/apps/relays/models.py:31
 msgid "UNKNOWN"
 msgstr ""
 
-#: odin/apps/relays/models.py:45 odin/apps/sensors/models.py:55
+#: odin/apps/relays/models.py:56 odin/apps/sensors/models.py:55
 msgid "Relay ID"
 msgstr "Реле #"
 
-#: odin/apps/relays/models.py:46 odin/apps/sensors/models.py:57
+#: odin/apps/relays/models.py:57 odin/apps/sensors/models.py:57
 msgid "Name"
 msgstr "Имя"
 
-#: odin/apps/relays/models.py:47 odin/apps/sensors/models.py:58
+#: odin/apps/relays/models.py:58 odin/apps/sensors/models.py:58
 msgid "Type"
 msgstr "Тип"
 
-#: odin/apps/relays/models.py:51
+#: odin/apps/relays/models.py:62
 msgid "Force relay state"
 msgstr "Принудительное состояние"
 
-#: odin/apps/relays/models.py:53 odin/apps/sensors/models.py:62
+#: odin/apps/relays/models.py:70
+msgid "Related relay"
+msgstr "Связанное реле"
+
+#: odin/apps/relays/models.py:72 odin/apps/sensors/models.py:62
 msgid "Context"
 msgstr "Контекст"
 
-#: odin/apps/relays/models.py:61
+#: odin/apps/relays/models.py:80
 msgid "relay"
 msgstr "реле"
 
@@ -276,14 +311,6 @@ msgstr "лог датчика"
 msgid "sensor logs"
 msgstr "логи датчиков"
 
-#: odin/apps/sensors/views.py:15
-msgid "Boiler Temperatures"
-msgstr "Температуры бойлерной"
-
-#: odin/apps/sensors/views.py:20
-msgid "Home Temperatures"
-msgstr "Температуры дома"
-
 #: odin/apps/weather/apps.py:7 odin/apps/weather/models.py:36
 #: odin/apps/weather/models.py:37
 msgid "weather"
@@ -321,11 +348,11 @@ msgstr "западный"
 msgid "north-west"
 msgstr "северо-западный"
 
-#: odin/settings/base.py:159
+#: odin/settings/base.py:175
 msgid "Russian"
 msgstr "Русский"
 
-#: odin/settings/base.py:242 odin/settings/base.py:250
+#: odin/settings/base.py:277 odin/settings/base.py:285
 msgid "Time"
 msgstr "Время"
 
@@ -403,74 +430,6 @@ msgstr ""
 msgid "Apply"
 msgstr "Применить"
 
-#: odin/templates/index.html:14
-msgid "Welcome to ODIN server"
-msgstr "Добро пожаловать на сервер ODIN"
-
-#: odin/templates/index.html:44
-msgid "Sensors"
-msgstr "Датчики"
-
-#: odin/templates/index.html:83
-msgid "Boiler Room"
-msgstr "Бойлерная"
-
-#: odin/templates/index.html:115
-msgid "Weather"
-msgstr "Погода"
-
-#: odin/templates/index.html:123
-msgid "max"
-msgstr "макс"
-
-#: odin/templates/index.html:124
-msgid "min"
-msgstr "мин"
-
-#: odin/templates/index.html:147
-msgid "Wind"
-msgstr "Ветер"
-
-#: odin/templates/index.html:149 odin/templates/index.html:152
-msgid "m/s"
-msgstr "м/с"
-
-#: odin/templates/index.html:152
-msgid "Gusts up to"
-msgstr "Порывы до"
-
-#: odin/templates/index.html:158
-msgid "Attributes"
-msgstr "Атрибуты"
-
-#: odin/templates/index.html:161
-msgid "Fog"
-msgstr "Туман"
-
-#: odin/templates/index.html:164
-msgid "Snow"
-msgstr "Снег"
-
-#: odin/templates/index.html:167
-msgid "Thunderstorm"
-msgstr "Гроза"
-
-#: odin/templates/index.html:170
-msgid "Black Ice"
-msgstr "Гололед"
-
-#: odin/templates/index.html:176 odin/templates/index.html:194
-msgid "No Data"
-msgstr "Нет данных"
-
-#: odin/templates/index.html:181
-msgid "Exchange Rates"
-msgstr "Курсы валют"
-
-#: odin/templates/index.html:226 odin/templates/index.html:240
-msgid "No errors for the last 24 hours"
-msgstr "За последние 24 часа ошибок не обнаружено."
-
 #: odin/templates/modal.html:6
 msgid "Set temp"
 msgstr "Установить"
@@ -482,7 +441,3 @@ msgstr "Закрыть"
 #: odin/templates/modal.html:16
 msgid "Send"
 msgstr "Отправить"
-
-#: odin/apps/sensors/management/commands/consume_sensors.py:25
-msgid "Runs a Redis pub/sub consumer to listen for sensor data updates."
-msgstr "Запускает pub/sub потребителя Redis для прослушивания обновлений данных датчиков."
