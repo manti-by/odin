@@ -1,5 +1,5 @@
 [Unit]
-Description=Sensor consumer for ODIN server
+Description=Sensor and relay consumer for ODIN server
 After=network.target
 
 [Service]
@@ -8,7 +8,7 @@ Group=manti
 Restart=always
 WorkingDirectory=/home/manti/www/odin
 EnvironmentFile=/home/manti/www/odin/.env
-ExecStart=/home/manti/www/odin/.venv/bin/python /home/manti/www/odin/manage.py consume_sensors
+ExecStart=/home/manti/www/odin/.venv/bin/python /home/manti/www/odin/manage.py consumer
 StandardOutput=file:/var/log/odin/sensor-consumer-access.log
 StandardError=file:/var/log/odin/sensor-consumer-error.log
 KillSignal=SIGTERM

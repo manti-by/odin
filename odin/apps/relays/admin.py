@@ -7,6 +7,7 @@ from django.db import transaction
 from django.forms import ModelForm
 from django.http import HttpRequest
 from django.template.loader import render_to_string
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -70,11 +71,29 @@ class RelayAdmin(admin.ModelAdmin):
             return RelayState.UNKNOWN
         return obj.force_state
 
+    @admin.display(description=f"{_('target state')}")
+    def target_state(self, obj: Relay | None) -> RelayState | None:
+        if obj is None:
+            return RelayState.UNKNOWN
+        return obj.target_state
+
     @admin.display(description=_("state"))
     def state(self, obj: Relay | None) -> str:
         if obj is None:
-            return RelayState.UNKNOWN.value
+            return RelayState.UNKNOWN
         return obj.state
+
+    def changelist_view(self, request: HttpRequest, extra_context: dict | None = None) -> TemplateResponse:
+        for relay in self.get_queryset(request):
+            relay.refresh_state()
+        return super().changelist_view(request, extra_context)
+
+    def change_view(
+        self, request: HttpRequest, object_id: int, form_url: str = "", extra_context: dict | None = None
+    ) -> TemplateResponse:
+        if relay := self.get_object(request, object_id):
+            relay.refresh_state()
+        return super().change_view(request, object_id, form_url, extra_context)
 
     def save_model(self, request: HttpRequest, obj: Relay, form: ModelForm, change: bool):
         period_data: dict[int, dict[str, Any]] = defaultdict(dict)

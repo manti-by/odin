@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from odin.apps.core.redis_bus import MessageType, RedisBus
+from odin.apps.relays.models import Relay
 from odin.apps.sensors.models import SensorLog
 
 
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(LoggedCommand):
-    help = _("Runs a Redis pub/sub consumer to listen for sensor data updates.")
+    help = _("Runs a Redis pub/sub consumer to listen for sensor and relay updates.")
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize consumer state.
@@ -37,9 +38,9 @@ class Command(LoggedCommand):
         self.pubsub: Any | None = None
 
     def handle(self, *args: Any, **options: Any) -> None:
-        """Run the sensor pub/sub consumer until a shutdown signal arrives.
+        """Run the pub/sub consumer until a shutdown signal arrives.
 
-        Subscribes to the sensors channel and polls for messages on a
+        Subscribes to the sensor and relay channels and polls for messages on a
         bounded timeout so the loop can observe ``self.running`` during quiet
         periods. Redis setup and the receive loop share the same error path,
         and cleanup always runs.
@@ -47,13 +48,13 @@ class Command(LoggedCommand):
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
 
-        logger.info("Starting Redis sensor consumer...")
+        logger.info("Starting Redis consumer...")
         try:
             self.client = RedisBus.get_redis()
-            channel = settings.REDIS_SENSORS_CHANNEL
+            channels = (settings.REDIS_SENSORS_CHANNEL, settings.REDIS_RELAYS_CHANNEL)
             self.pubsub = self.client.pubsub()
-            self.pubsub.subscribe(channel)
-            logger.info(f"Subscribed to channel: {channel}")
+            self.pubsub.subscribe(*channels)
+            logger.info(f"Subscribed to channels: {', '.join(channels)}")
 
             while self.running:
                 message = self.pubsub.get_message(timeout=settings.REDIS_SOCKET_TIMEOUT)
@@ -68,23 +69,31 @@ class Command(LoggedCommand):
             self.cleanup()
 
     def process_message(self, raw: Any) -> None:
-        """Decode, validate, and dispatch a raw sensor pub/sub message.
+        """Decode, validate, and dispatch a raw pub/sub message.
 
-        Decodes the JSON payload, rejects malformed or unexpected messages,
-        and requires a dict ``data`` with a non-empty ``sensor_id`` and a string
-        ``timestamp`` before delegating to ``process_envelope``.
+        Decodes the JSON envelope and routes it by ``type``. Malformed or
+        unknown messages are skipped so the consumer tolerates new envelope
+        types and duplicate deliveries.
         """
         try:
             message = json.loads(raw)
         except (json.JSONDecodeError, ValueError, TypeError) as e:
-            logger.warning(f"Skipping malformed sensor message: {e}")
+            logger.warning(f"Skipping malformed bus message: {e}")
             return
         if not isinstance(message, dict):
-            logger.warning("Skipping sensor message with non-dict payload")
+            logger.warning("Skipping bus message with non-dict payload")
             return
-        if message.get("type") != MessageType.SENSOR_DATA_UPDATE.value:
-            logger.warning(f"Skipping sensor message with unexpected type {message.get('type')!r}")
-            return
+
+        match message.get("type"):
+            case MessageType.SENSOR_DATA_UPDATE.value:
+                self.process_sensor_message(message)
+            case MessageType.RELAY_STATE_UPDATE.value:
+                self.process_relay_message(message)
+            case other:
+                logger.warning(f"Skipping bus message with unexpected type {other!r}")
+
+    def process_sensor_message(self, message: dict[str, Any]) -> None:
+        """Validate and persist a sensor data update message."""
         data = message.get("data")
         timestamp = message.get("timestamp")
         if not isinstance(data, dict) or not data.get("sensor_id") or not isinstance(timestamp, str):
@@ -94,6 +103,27 @@ class Command(LoggedCommand):
             self.process_envelope(message=message)
         except (ValueError, TypeError, AttributeError, DatabaseError) as e:
             logger.error(f"Failed to process sensor message: {e}")
+
+    def process_relay_message(self, message: dict[str, Any]) -> None:
+        """Refresh a relay from its persisted state when a relay update arrives.
+
+        The persisted ``relays:state:<relay_id>`` key written by Coruscant is
+        the source of truth, so the message is treated as a wake-up signal and
+        duplicates (including ODIN's own control echoes) are harmless. Unknown
+        relay ids are ignored.
+        """
+        data = message.get("data")
+        relay_id = data.get("relay_id") if isinstance(data, dict) else None
+        if not relay_id:
+            logger.warning("Skipping relay message with missing relay_id")
+            return
+
+        relay = Relay.objects.filter(relay_id=relay_id).first()
+        if relay is None:
+            logger.warning(f"Skipping relay message for unknown relay {relay_id!r}")
+            return
+
+        relay.refresh_state()
 
     def process_envelope(self, message: dict[str, Any]) -> None:
         data = message.get("data")

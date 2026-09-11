@@ -101,7 +101,7 @@ class Relay(models.Model):
 
         return Sensor.objects.filter(relay_id=self.relay_id).order_by("created_at").last()
 
-    @property
+    @cached_property
     def target_state(self) -> str:
         from odin.apps.relays.services import RelayTargetStateService
 
