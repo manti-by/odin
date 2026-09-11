@@ -58,8 +58,16 @@ class Relay(models.Model):
     type: models.CharField[str] = models.CharField(max_length=32, choices=RelayType.choices, verbose_name=_("Type"))
     is_active: models.BooleanField[bool] = models.BooleanField(default=True, verbose_name=_("Is active"))
 
-    force_state: models.CharField[str] | None = models.CharField(
+    force_state: models.CharField[RelayState] | None = models.CharField(
         choices=RelayState.active_choices(), null=True, blank=True, max_length=32, verbose_name=_("Force relay state")
+    )
+    related_relay: models.ForeignKey[Relay] | None = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="related_relays",
+        verbose_name=_("Related relay"),
     )
     context: models.JSONField[dict] = models.JSONField(default=dict, verbose_name=_("Context"))
 
@@ -77,11 +85,15 @@ class Relay(models.Model):
 
     @property
     def state(self) -> str:
-        return self.context.get("state", RelayState.UNKNOWN)
+        return self.context.get("state", RelayState.UNKNOWN.value)
 
     @property
     def is_on(self) -> bool:
         return self.state == RelayState.ON
+
+    @property
+    def is_pump(self) -> bool:
+        return self.type == RelayType.PUMP
 
     @cached_property
     def sensor(self) -> Sensor | None:

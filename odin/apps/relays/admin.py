@@ -27,6 +27,7 @@ class RelayAdmin(admin.ModelAdmin):
         "name",
         "type",
         "is_active",
+        "related_relay",
         "sensor",
         "state",
         "force_state",
@@ -34,7 +35,7 @@ class RelayAdmin(admin.ModelAdmin):
         "updated_at",
         "created_at",
     )
-    list_display = ("relay_id", "name", "type", "is_active", "is_forced", "state", "updated_at")
+    list_display = ("relay_id", "name", "type", "is_active", "force_state", "state", "updated_at")
     list_filter = ("type",)
     readonly_fields = ("sensor", "state", "schedule", "updated_at", "created_at")
 
@@ -63,14 +64,16 @@ class RelayAdmin(admin.ModelAdmin):
         html = render_to_string("admin/schedule.html", {"schedule": schedule, "relay_type": relay_type})
         return mark_safe(html)  # noqa: S308
 
-    @admin.display(description=f"{_('Forced')}?", boolean=True)
-    def is_forced(self, obj: Relay) -> bool:
-        return obj.force_state in (RelayState.ON, RelayState.OFF)
+    @admin.display(description=f"{_('force state')}")
+    def force_state(self, obj: Relay | None) -> RelayState | None:
+        if obj is None:
+            return RelayState.UNKNOWN
+        return obj.force_state
 
     @admin.display(description=_("state"))
     def state(self, obj: Relay | None) -> str:
         if obj is None:
-            return RelayState.UNKNOWN
+            return RelayState.UNKNOWN.value
         return obj.state
 
     def save_model(self, request: HttpRequest, obj: Relay, form: ModelForm, change: bool):

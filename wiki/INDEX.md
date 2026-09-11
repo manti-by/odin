@@ -9,6 +9,7 @@ by the plugin.
 
 _Newest first._
 
+- [Add self-referential related_relay field to Relay](pages/2026-09-11-add-related-relay-field.md) — Added a nullable self-FK `related_relay` + migration 0006 and surfaced it in the relay admin as a select dropdown; groundwork for the servo→pump TODO (2026-09-11)
 - [Fix React SPA dev-mode issues: docs, proxy, base path, StrictMode Loading bug](pages/2026-08-24-react-spa-dev-mode-debug.md) — Synced docs with the React SPA migration; fixed Vite `base: "/static/"` redirecting dev `/` → `/static/` 404; removed broken `isMountedRef` in `useDashboardData` so tiles load data under StrictMode (2026-08-24)
 - [Proterm Lynx 25 eBus Protocol Investigation](pages/2026-08-11-proterm-lynx-25-ebus-protocol.md) —
   eBus protocol investigation of the Vaillant BAI boiler: reads mapped; the 2026-08-11 write

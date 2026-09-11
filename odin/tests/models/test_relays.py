@@ -1,13 +1,15 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from datetime import timezone as dt_timezone
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from django.utils import timezone
+
 from odin.apps.relays.models import Relay, RelayState, RelayType
 from odin.apps.sensors.models import Sensor
-from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory
+from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory, WeatherFactory
 
 
 @pytest.mark.django_db
@@ -38,18 +40,18 @@ class TestRelaysPeriodicSchedule:
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
             assert self.relay.target_state == RelayState.OFF
 
-    def test_relays__periodic_schedule_returns_state_when_no_periods(self):
-        """Test that periodic schedule returns relay state when no periods are defined."""
+    def test_relays__periodic_schedule_returns_on_when_no_periods(self):
+        """Test that periodic schedule defaults to ON when no periods are defined."""
         self.relay.context = {"schedule": {"periods": []}}
         self.relay.context["state"] = "OFF"  # Set current state
         self.relay.save()
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.target_state == RelayState.OFF
+            assert self.relay.target_state == RelayState.ON
 
-    def test_relays__periodic_schedule_returns_unknown_when_no_matching_period(self):
-        """Test that periodic schedule returns UNKNOWN when current time doesn't match any period."""
+    def test_relays__periodic_schedule_returns_on_when_no_matching_period(self):
+        """Test that periodic schedule defaults to ON when current time doesn't match any period."""
         self.relay.context = {
             "schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_temp": 25.0}]}
         }
@@ -59,7 +61,7 @@ class TestRelaysPeriodicSchedule:
         # Outside the period (after 18:00)
         local_time = datetime(2025, 1, 6, 20, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.target_state == RelayState.UNKNOWN
+            assert self.relay.target_state == RelayState.ON
 
     def test_relays__periodic_schedule_handles_overnight_periods(self):
         """Test that periodic schedule handles periods that span midnight."""
@@ -120,7 +122,7 @@ class TestServoPeriodOverride:
         # Set sensor target_temp to 20.0
         self.sensor.context = {"target_temp": "20.0", "hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("22.0"))
+        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("22.0"), created_at=timezone.now())
 
         # Set period with different target_temp
         self.relay.context = {
@@ -163,54 +165,62 @@ class TestRelaysServoTargetState:
         self.relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
         self.sensor: Sensor = SensorFactory(relay_id=self.relay.relay_id)  # noqa
 
-    def test_relays__servo_target_state_returns_unknown_when_no_sensor(self):
-        """Test that target_state returns UNKNOWN when no linked sensor."""
+    def test_relays__servo_target_state_returns_off_when_no_sensor(self):
+        """Test that target_state opens the circuit when there is no linked sensor."""
         self.relay.relay_id = "nonexistent"
         self.relay.save()
-        assert self.relay.target_state == RelayState.UNKNOWN
+        assert self.relay.target_state == RelayState.OFF
+
+    def test_relays__servo_target_state_returns_off_when_sensor_is_stale(self):
+        """Test that target_state opens the circuit when the latest log is stale."""
+        self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        self.sensor.save()
+        SensorLogFactory(
+            sensor_id=self.sensor.sensor_id,
+            temp=Decimal("23.0"),
+            created_at=timezone.now() - timedelta(minutes=30),
+        )
+
+        assert self.relay.target_state == RelayState.OFF
 
     def test_relays__servo_target_state_returns_on_when_temp_below_min(self):
         """Test that servo turns ON when temp is below target - hysteresis."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("23.0"))
+        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
 
         assert self.relay.target_state == RelayState.ON
 
-    def test_relays__servo_target_state_returns_on_when_temp_above_max(self):
-        """Test that servo turns ON when temp is above target plus hysteresis."""
+    def test_relays__servo_target_state_returns_off_when_temp_above_max(self):
+        """Test that servo turns OFF when temp is above target plus hysteresis."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("27.0"))
+        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("27.0"), created_at=timezone.now())
 
         assert self.relay.target_state == RelayState.OFF
 
-    def test_relays__servo_target_state_returns_off_when_temp_below_min(self):
-        """Test that servo turns OFF when temp is below target - hysteresis."""
-        self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
-        self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("23.0"))
-
-        assert self.relay.target_state == RelayState.ON
-
-    def test_relays__servo_target_state_returns_the_same_when_temp_in_range(self):
+    def test_relays__servo_target_state_returns_off_when_temp_in_range(self):
         """Test that servo turns OFF when temp is within hysteresis range."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("25.0"))
+        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("25.0"), created_at=timezone.now())
 
-        self.relay.context["state"] = RelayState.OFF
         assert self.relay.target_state == RelayState.OFF
 
-        self.relay.context["state"] = RelayState.ON
-        assert self.relay.target_state == RelayState.ON
-
-    def test_relays__servo_target_state_returns_unknown_when_no_temp(self):
-        """Test that target_state returns UNKNOWN when sensor has no temperature reading."""
+    def test_relays__servo_target_state_returns_off_when_no_temp(self):
+        """Test that target_state opens the circuit when sensor has no temperature reading."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
 
-        assert self.relay.target_state == RelayState.UNKNOWN
+        assert self.relay.target_state == RelayState.OFF
+
+    def test_relays__servo_target_state_returns_off_when_no_target_temp(self):
+        """Test that target_state opens the circuit when no target_temp is configured (no crash)."""
+        self.sensor.context = {"hysteresis": "1.0"}
+        self.sensor.save()
+        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+
+        assert self.relay.target_state == RelayState.OFF
 
 
 @pytest.mark.django_db
@@ -234,7 +244,7 @@ class TestRelaysTargetStateDispatch:
         sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
-        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"))
+        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
 
         assert relay.target_state == RelayState.ON
 
@@ -242,6 +252,63 @@ class TestRelaysTargetStateDispatch:
         """Test that target_state returns UNKNOWN for unknown relay types."""
         relay: Relay = RelayFactory(type=RelayType.VALVE)  # noqa
         assert relay.target_state == RelayState.UNKNOWN
+
+
+@pytest.mark.django_db
+class TestRelaysWeatherModes:
+    def test_relays__pump_is_off_in_summer(self):
+        """Test that a PUMP is off when outside temperature is 15°C or higher."""
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "20.0"}})
+
+        assert relay.target_state == RelayState.OFF
+
+    def test_relays__pump_is_on_in_antifreeze(self):
+        """Test that a PUMP runs continuously below -8°C."""
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "-10.0"}})
+
+        assert relay.target_state == RelayState.ON
+
+    def test_relays__pump_runs_first_ten_minutes_in_midseason(self):
+        """Test that a PUMP runs for the first 10 minutes of every hour in midseason."""
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+
+        local_time = datetime(2025, 1, 6, 10, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            assert relay.target_state == RelayState.ON
+
+    def test_relays__pump_is_off_outside_first_ten_minutes_in_midseason(self):
+        """Test that a PUMP is off for the rest of the hour in midseason."""
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+
+        local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            assert relay.target_state == RelayState.OFF
+
+    def test_relays__servo_stays_open_in_summer(self):
+        """Test that a SERVO stays open (OFF) when outside temperature is 15°C or higher."""
+        relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
+        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "20.0"}})
+
+        assert relay.target_state == RelayState.OFF
+
+    def test_relays__servo_stays_open_in_antifreeze(self):
+        """Test that a SERVO stays open (OFF) below -8°C."""
+        relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
+        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "-10.0"}})
+
+        assert relay.target_state == RelayState.OFF
 
 
 @pytest.mark.django_db
