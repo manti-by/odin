@@ -17,10 +17,17 @@ import logging
 import os
 import socket
 import tempfile
+from collections.abc import Callable
 from contextlib import contextmanager
+from decimal import Decimal
 from pathlib import Path
 
 from django.conf import settings
+from django.db import models
+
+from odin.apps.relays.models import Relay, RelayState, RelayType
+from odin.apps.relays.services import RelayTargetStateService
+from odin.apps.weather.models import Weather
 
 
 logger = logging.getLogger(__name__)
@@ -205,3 +212,116 @@ class BoilerService:
         if not 0 <= value <= MAX_TEMP:
             raise ValueError(f"temperature {value} out of range 0..{MAX_TEMP} °C")
         return str(int(value))
+
+
+SUMMER_TEMP_THRESHOLD = Decimal("15")
+ANTIFREEZE_TEMP_THRESHOLD = Decimal("-8")
+MIDSEASON_TEMP_LOWER = Decimal("8")
+DEFAULT_HEATING_FLOW_TEMP = 55
+DEFAULT_HWC_TEMP = 45
+
+
+class BoilerMode(models.TextChoices):
+    HEATING = "heating", "Heating"
+    MIXED = "mixed", "Mixed"
+    OFF = "off", "Off"
+    CLEAR_OVERRIDE = "clear_override", "Clear override"
+
+
+class BoilerModeController:
+    """Map aggregated pump/servo states and outside temperature onto boiler modes.
+
+    Cross-cutting service between the relays/weather domain and :class:`BoilerService`.
+    On every run it yields to an active boiling override, skips when no outside
+    temperature is available, aggregates the target state of every active pump and
+    servo through :class:`~odin.apps.relays.services.RelayTargetStateService`, and
+    applies the boiler mode for the current weather band.
+
+    Decision matrix (``t`` is the current outside temperature, °C):
+
+    * ``t >= 15`` (summer) -> ``set_off``: the relay service's "disable everything" band;
+    * ``t < -8`` (anti-freeze) -> ``set_heating``: keep the system above freezing;
+    * ``-8 <= t < 8`` with pump and servo on -> ``set_mixed``: heating plus hot water;
+    * ``8 <= t < 15`` with pump and servo on -> ``set_heating``: heating only;
+    * no heating demand -> ``set_off``;
+    * unknown pump/servo state -> ``clear_override``: let the panel take over.
+
+    An active boiling override (``water`` mode in :meth:`BoilerService.current_override`)
+    always wins so the scheduled hot-water cycle is never fought.
+    """
+
+    def __init__(
+        self,
+        boiler_service: BoilerService | None = None,
+        relay_target_state_factory: Callable[[Relay], RelayTargetStateService] | None = None,
+    ) -> None:
+        self.boiler_service = boiler_service or BoilerService()
+        self.relay_target_state_factory = relay_target_state_factory or RelayTargetStateService
+
+    def run(self) -> str | None:
+        """Decide the boiler mode and apply it, returning the written values or None when skipped."""
+        if self._is_boil_override_active():
+            logger.info("Boiling override active, leaving the boiler mode untouched")
+            return None
+
+        outside_temp = self._outside_temp()
+        if outside_temp is None:
+            logger.info("No outside temperature available, leaving the boiler mode untouched")
+            return None
+
+        pump_state = self._aggregate_state(RelayType.PUMP)
+        servo_state = self._aggregate_state(RelayType.SERVO)
+
+        mode = self._decide_mode(pump_state, servo_state, outside_temp)
+        logger.info(f"Boiler mode decided: {mode} (outside {outside_temp} °C, pump {pump_state}, servo {servo_state})")
+        return self._apply(mode)
+
+    def _apply(self, mode: BoilerMode) -> str | None:
+        match mode:
+            case BoilerMode.HEATING:
+                return self.boiler_service.set_heating(DEFAULT_HEATING_FLOW_TEMP)
+            case BoilerMode.MIXED:
+                return self.boiler_service.set_mixed(DEFAULT_HEATING_FLOW_TEMP, DEFAULT_HWC_TEMP)
+            case BoilerMode.OFF:
+                return self.boiler_service.set_off()
+            case _:
+                self.boiler_service.clear_override()
+                return None
+
+    def _decide_mode(self, pump_state: RelayState, servo_state: RelayState, outside_temp: Decimal) -> BoilerMode:
+        if pump_state == RelayState.UNKNOWN or servo_state == RelayState.UNKNOWN:
+            return BoilerMode.CLEAR_OVERRIDE
+
+        if outside_temp >= SUMMER_TEMP_THRESHOLD:
+            return BoilerMode.OFF
+
+        if outside_temp < ANTIFREEZE_TEMP_THRESHOLD:
+            return BoilerMode.HEATING
+
+        if pump_state == RelayState.ON and servo_state == RelayState.ON:
+            if outside_temp < MIDSEASON_TEMP_LOWER:
+                return BoilerMode.MIXED
+            return BoilerMode.HEATING
+
+        return BoilerMode.OFF
+
+    def _aggregate_state(self, relay_type: RelayType) -> RelayState:
+        states = [
+            RelayState(self.relay_target_state_factory(relay).get_target_state())
+            for relay in Relay.objects.active().filter(type=relay_type)
+        ]
+        if any(state == RelayState.ON for state in states):
+            return RelayState.ON
+        if states and all(state == RelayState.OFF for state in states):
+            return RelayState.OFF
+        return RelayState.UNKNOWN
+
+    def _outside_temp(self) -> Decimal | None:
+        weather = Weather.objects.current()
+        if weather is None:
+            return None
+        return weather.temp
+
+    def _is_boil_override_active(self) -> bool:
+        override = self.boiler_service.current_override()
+        return bool(override and override.split(";", 1)[0] == "water")
