@@ -35,6 +35,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [Codebase search — GitHub/PR webhooks and notifications](pages/2026-07-16-github-pr-webhooks-search.md)
 - [Merge/Rebase PR Comment Handlers — Not Found](pages/2026-07-16-merge-rebase-pr-comment-handlers.md)
 - [PR merge/rebase comment listener marks as read despite errors](pages/2026-07-16-merge-rebase-pr-comment-listener.md)
+- [MNT-206: Boiler mode controller](pages/2026-09-17-mnt-206-boiler-mode-controller.md) — 2026-09-17
 
 ### Type checking & CI flow
 

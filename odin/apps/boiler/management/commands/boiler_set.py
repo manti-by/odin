@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from odin.apps.boiler.services import BoilerService, EbusdError
+from odin.apps.boiler.services.ebusd import EbusdError
+from odin.apps.boiler.services.status import BoilerStatusService
 
 
 class Command(BaseCommand):
@@ -24,7 +25,7 @@ class Command(BaseCommand):
         subparsers.add_parser("refresh", help="re-send the last override (used by boiler-refresh.timer)")
 
     def handle(self, *args, **options):
-        service = BoilerService()
+        service = BoilerStatusService()
         action = options["action"]
 
         try:
