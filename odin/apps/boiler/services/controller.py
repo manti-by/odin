@@ -28,6 +28,7 @@ class BoilerModeController:
         mode_service: BoilerModeService | None = None,
         boiler_service: BoilerStatusService | None = None,
     ) -> None:
+        """Wire the decision service and the SetMode writer."""
         self.mode_service = mode_service or BoilerModeService()
         self.boiler_service = boiler_service or BoilerStatusService()
 
@@ -42,15 +43,16 @@ class BoilerModeController:
         return self.apply(mode)
 
     def apply(self, mode: BoilerMode) -> str | None:
+        """Write the decided mode, rechecking the water override under the lock; None when skipped."""
         match mode:
             case BoilerMode.HEATING:
-                return self.boiler_service.set_heating(DEFAULT_HEATING_FLOW_TEMP)
+                return self.boiler_service.apply_automatic("heat", DEFAULT_HEATING_FLOW_TEMP, None)
             case BoilerMode.MIXED:
-                return self.boiler_service.set_mixed(DEFAULT_HEATING_FLOW_TEMP, DEFAULT_HWC_TEMP)
+                return self.boiler_service.apply_automatic("auto", DEFAULT_HEATING_FLOW_TEMP, DEFAULT_HWC_TEMP)
             case BoilerMode.OFF:
-                return self.boiler_service.set_off()
+                return self.boiler_service.apply_automatic("off", 0, 0)
             case BoilerMode.CLEAR_OVERRIDE:
-                self.boiler_service.clear_override()
+                self.boiler_service.clear_automatic()
                 return None
             case _:
                 raise ValueError(f"Unsupported boiler mode: {mode}")

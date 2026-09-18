@@ -22,6 +22,7 @@ class BoilerMode(models.TextChoices):
 
 class BoilerModeService:
     def get_pumps_state(self) -> RelayState:
+        """Aggregate active pump relays to a single state."""
         states = [
             RelayTargetStateService(relay).get_target_state()[0]
             for relay in Relay.objects.active().filter(type=RelayType.PUMP)
@@ -35,6 +36,11 @@ class BoilerModeService:
         return RelayState.ON
 
     def get_target_mode(self) -> BoilerMode | None:
+        """Decide the boiler mode, or None to leave a water override untouched.
+
+        The water check here is a best-effort fast path; the atomic guarantee lives in
+        ``BoilerStatusService.apply_automatic``/``clear_automatic``, which recheck under the lock.
+        """
         boiler_override = BoilerStatusService().current_override()
         if boiler_override and boiler_override.split(";", 1)[0] == "water":
             logger.info("Boiling override active, leaving the boiler mode untouched")

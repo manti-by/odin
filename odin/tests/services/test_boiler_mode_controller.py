@@ -11,6 +11,7 @@ from odin.apps.boiler.services.controller import (
     run_boiler_mode_controller,
 )
 from odin.apps.boiler.services.mode import BoilerMode, BoilerModeService
+from odin.apps.boiler.services.status import BoilerStatusService
 from odin.apps.relays.models import RelayState, RelayType
 from odin.tests.factories import RelayFactory, WeatherFactory
 
@@ -116,37 +117,35 @@ class TestBoilerModeController:
         result = BoilerModeController(mode_service, boiler_service).run()
 
         assert result is None
-        boiler_service.set_heating.assert_not_called()
-        boiler_service.set_mixed.assert_not_called()
-        boiler_service.set_off.assert_not_called()
-        boiler_service.clear_override.assert_not_called()
+        boiler_service.apply_automatic.assert_not_called()
+        boiler_service.clear_automatic.assert_not_called()
 
     def test__heating__set_heating(self, mode_service, boiler_service):
         mode_service.get_target_mode.return_value = BoilerMode.HEATING
-        boiler_service.set_heating.return_value = "heat"
+        boiler_service.apply_automatic.return_value = "heat"
 
         result = BoilerModeController(mode_service, boiler_service).run()
 
         assert result == "heat"
-        boiler_service.set_heating.assert_called_once_with(DEFAULT_HEATING_FLOW_TEMP)
+        boiler_service.apply_automatic.assert_called_once_with("heat", DEFAULT_HEATING_FLOW_TEMP, None)
 
     def test__mixed__set_mixed(self, mode_service, boiler_service):
         mode_service.get_target_mode.return_value = BoilerMode.MIXED
-        boiler_service.set_mixed.return_value = "auto"
+        boiler_service.apply_automatic.return_value = "auto"
 
         result = BoilerModeController(mode_service, boiler_service).run()
 
         assert result == "auto"
-        boiler_service.set_mixed.assert_called_once_with(DEFAULT_HEATING_FLOW_TEMP, DEFAULT_HWC_TEMP)
+        boiler_service.apply_automatic.assert_called_once_with("auto", DEFAULT_HEATING_FLOW_TEMP, DEFAULT_HWC_TEMP)
 
     def test__off__set_off(self, mode_service, boiler_service):
         mode_service.get_target_mode.return_value = BoilerMode.OFF
-        boiler_service.set_off.return_value = "off"
+        boiler_service.apply_automatic.return_value = "off"
 
         result = BoilerModeController(mode_service, boiler_service).run()
 
         assert result == "off"
-        boiler_service.set_off.assert_called_once_with()
+        boiler_service.apply_automatic.assert_called_once_with("off", 0, 0)
 
     def test__clear_override__clear_override(self, mode_service, boiler_service):
         mode_service.get_target_mode.return_value = BoilerMode.CLEAR_OVERRIDE
@@ -154,7 +153,16 @@ class TestBoilerModeController:
         result = BoilerModeController(mode_service, boiler_service).run()
 
         assert result is None
-        boiler_service.clear_override.assert_called_once_with()
+        boiler_service.clear_automatic.assert_called_once_with()
+
+    def test__water_race__none_when_skipped(self, mode_service, boiler_service):
+        mode_service.get_target_mode.return_value = BoilerMode.MIXED
+        boiler_service.apply_automatic.return_value = None
+
+        result = BoilerModeController(mode_service, boiler_service).run()
+
+        assert result is None
+        boiler_service.apply_automatic.assert_called_once_with("auto", DEFAULT_HEATING_FLOW_TEMP, DEFAULT_HWC_TEMP)
 
     def test__unknown_mode__raises(self, mode_service, boiler_service):
         mode_service.get_target_mode.return_value = "bogus"
@@ -191,3 +199,40 @@ class TestSchedulerWiring:
         schedule_update_boiler_mode()
 
         mock_run.assert_called_once_with()
+
+
+class TestApplyAutomatic:
+    @pytest.fixture
+    def service(self, settings, tmp_path):
+        settings.BOILER_STATE_FILE = str(tmp_path / "state")
+        settings.BOILER_LOCK_FILE = str(tmp_path / "state.lock")
+        return BoilerStatusService(client=MagicMock())
+
+    def test__no_override__writes(self, service):
+        result = service.apply_automatic("auto", 55, 45)
+
+        assert result is not None
+        assert result.split(";")[0] == "auto"
+        service.client.command.assert_called_once()
+        assert service.current_override() == result
+
+    def test__water_override__skipped(self, service, tmp_path):
+        (tmp_path / "state").write_text("water;0;55;-;0;0;0;0;0;0\n")
+
+        result = service.apply_automatic("auto", 55, 45)
+
+        assert result is None
+        service.client.command.assert_not_called()
+        assert service.current_override().split(";")[0] == "water"
+
+    def test__clear_unless_water__clears(self, service, tmp_path):
+        (tmp_path / "state").write_text("auto;55;45;-;0;0;0;0;0;0\n")
+
+        assert service.clear_automatic() is True
+        assert service.current_override() is None
+
+    def test__clear_unless_water__skipped(self, service, tmp_path):
+        (tmp_path / "state").write_text("water;0;55;-;0;0;0;0;0;0\n")
+
+        assert service.clear_automatic() is False
+        assert service.current_override().split(";")[0] == "water"

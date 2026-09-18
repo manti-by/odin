@@ -63,7 +63,8 @@ The implementation plan for MNT-207 involves creating a periodic invocation of t
 - **Interval Trigger**: A 5-minute interval trigger will be used, which is DST-safe by construction.
 - **APScheduler Configuration**: The scheduler will be configured with `max_instances=1` and `replace_existing=True` to ensure an overlap-free single flight and to propagate code changes after a `scheduler.service` restart.
 - **Code Organization**: The new code will be kept in a sibling service module `odin/apps/boiler/services/controller.py`.
-- **Boiler Mode Mapping**: The `BoilerMode`…
+- **Boiler Mode Mapping**: The `BoilerMode` decision returns `HEATING` when the outside temperature is 15°C or higher
+  or all pumps are off, otherwise `MIXED` (including missing weather); an active water override yields `None` to skip.
 
 ## Test Results
 
