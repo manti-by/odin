@@ -1,17 +1,8 @@
-from unittest.mock import MagicMock, patch
-
 import pytest
 
 from django.utils import timezone
 
-from odin.apps.boiler.services.controller import (
-    DEFAULT_HEATING_FLOW_TEMP,
-    DEFAULT_HWC_TEMP,
-    BoilerModeController,
-    run_boiler_mode_controller,
-)
 from odin.apps.boiler.services.mode import BoilerMode, BoilerModeService
-from odin.apps.boiler.services.status import BoilerStatusService
 from odin.apps.relays.models import RelayState, RelayType
 from odin.tests.factories import RelayFactory, WeatherFactory
 
