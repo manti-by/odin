@@ -22,6 +22,9 @@ def get_next_boil_schedule() -> tuple[datetime, datetime]:
     now = timezone.localtime()
     days_ahead = (BOIL_WEEKDAY - now.weekday()) % 7
     boil = (now + timedelta(days=days_ahead)).replace(hour=BOIL_HOUR, minute=0, second=0, microsecond=0)
+    clear = boil + timedelta(hours=CLEAR_HOUR - BOIL_HOUR)
+    if clear <= now:
+        return boil + timedelta(days=7), clear + timedelta(days=7)
     if boil <= now:
-        boil += timedelta(days=7)
-    return boil, boil + timedelta(hours=CLEAR_HOUR - BOIL_HOUR)
+        return boil + timedelta(days=7), clear
+    return boil, clear

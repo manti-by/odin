@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -9,7 +10,10 @@ from rest_framework.test import APIClient
 
 from odin.apps.boiler.services.ebusd import EbusdError
 from odin.apps.boiler.services.mode import BoilerMode
-from odin.apps.boiler.services.schedule import BOIL_HOUR, CLEAR_HOUR
+from odin.apps.boiler.services.schedule import BOIL_HOUR, CLEAR_HOUR, get_next_boil_schedule
+
+
+MINSK = ZoneInfo("Europe/Minsk")
 
 
 @pytest.fixture
@@ -70,3 +74,29 @@ class TestBoilerStatusAPI:
         assert boil.weekday() == 5  # Saturday
         assert boil.hour == BOIL_HOUR
         assert clear - boil == timedelta(hours=CLEAR_HOUR - BOIL_HOUR)
+
+
+class TestGetNextBoilSchedule:
+    def test__before_boil__both_today(self, monkeypatch):
+        monkeypatch.setattr(timezone, "localtime", lambda *args, **kwargs: datetime(2026, 9, 19, 0, 30, tzinfo=MINSK))
+
+        boil, clear = get_next_boil_schedule()
+
+        assert boil == datetime(2026, 9, 19, BOIL_HOUR, 0, tzinfo=MINSK)
+        assert clear == datetime(2026, 9, 19, CLEAR_HOUR, 0, tzinfo=MINSK)
+
+    def test__inside_boil_window__clear_today_boil_next_week(self, monkeypatch):
+        monkeypatch.setattr(timezone, "localtime", lambda *args, **kwargs: datetime(2026, 9, 19, 1, 30, tzinfo=MINSK))
+
+        boil, clear = get_next_boil_schedule()
+
+        assert boil == datetime(2026, 9, 26, BOIL_HOUR, 0, tzinfo=MINSK)
+        assert clear == datetime(2026, 9, 19, CLEAR_HOUR, 0, tzinfo=MINSK)
+
+    def test__after_clear__both_next_week(self, monkeypatch):
+        monkeypatch.setattr(timezone, "localtime", lambda *args, **kwargs: datetime(2026, 9, 19, 2, 30, tzinfo=MINSK))
+
+        boil, clear = get_next_boil_schedule()
+
+        assert boil == datetime(2026, 9, 26, BOIL_HOUR, 0, tzinfo=MINSK)
+        assert clear == datetime(2026, 9, 26, CLEAR_HOUR, 0, tzinfo=MINSK)

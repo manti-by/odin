@@ -105,6 +105,23 @@ The backend changes include:
 * Modifying existing files:
 	…
 
+## Review fixes (PR #35)
+
+Cursor review requested changes on the initial implementation; both ERROR-level findings are fixed on the same branch:
+
+- `get_next_boil_schedule()` (`odin/apps/boiler/services/schedule.py`) — during the active Saturday 01:00–02:00 boil
+  window the clear time was pushed to next week along with the boil. Boil and clear are now computed independently:
+  before the window both point at today, inside the window `next_clear_at` stays today at 02:00 while `next_boil_at`
+  moves to next Saturday (so `next_clear_at` can precede `next_boil_at` there), and after the window both move to next
+  week.
+- `BoilerTile` (`frontend/src/components/tile/BoilerTile.tsx`) — poll failures after the first successful fetch were
+  hidden by the `error && !status` guard, leaving stale mode/`ebusd_alive` on screen with no alert. The error now
+  renders as an alert above the stale data whenever it is set.
+- The Biome lint failure on `BoilerTile.tsx` (formatter wanted the mode value span on one line) is fixed in the same
+  edit.
+- New `TestGetNextBoilSchedule` tests in `odin/tests/api/test_boiler.py` cover before-window, inside-window, and
+  after-window cases via a mocked `timezone.localtime`.
+
 ## Test Results
 
 - Session status: `resolved`

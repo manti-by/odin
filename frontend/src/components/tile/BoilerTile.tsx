@@ -56,10 +56,13 @@ export function BoilerTile({ status, loading, error }: BoilerTileProps) {
         <p className="tile__empty">No Data</p>
       ) : (
         <>
+          {error && (
+            <p className="tile__empty" role="alert">
+              {error}
+            </p>
+          )}
           <div className="boiler-mode">
-            <span className="boiler-mode__value">
-              {status.mode ? (MODE_LABELS[status.mode] ?? status.mode) : "—"}
-            </span>
+            <span className="boiler-mode__value">{status.mode ? (MODE_LABELS[status.mode] ?? status.mode) : "—"}</span>
             <span className={`boiler-override boiler-override--${status.override_active ? "on" : "off"}`}>
               {status.override_active ? "Override" : "Panel"}
             </span>
