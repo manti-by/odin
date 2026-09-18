@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import logging
+
 from django.db import models
 
 from odin.apps.boiler.services.status import BoilerStatusService
 from odin.apps.relays.models import Relay, RelayState, RelayType
 from odin.apps.relays.services import RelayTargetStateService
 from odin.apps.weather.models import Weather
+
+
+logger = logging.getLogger(__name__)
 
 
 class BoilerMode(models.TextChoices):
@@ -16,9 +21,6 @@ class BoilerMode(models.TextChoices):
 
 
 class BoilerModeService:
-    def __init__(self):
-        self.weather = Weather.objects.current()
-
     def get_pumps_state(self) -> RelayState:
         states = [
             RelayTargetStateService(relay).get_target_state()[0]
@@ -35,9 +37,11 @@ class BoilerModeService:
     def get_target_mode(self) -> BoilerMode | None:
         boiler_override = BoilerStatusService().current_override()
         if boiler_override and boiler_override.split(";", 1)[0] == "water":
+            logger.info("Boiling override active, leaving the boiler mode untouched")
             return None
 
-        if not self.weather or (outside_temp := self.weather.temp) is None:
+        weather = Weather.objects.current()
+        if not weather or (outside_temp := weather.temp) is None:
             return BoilerMode.MIXED
 
         if outside_temp >= 15:
