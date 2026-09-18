@@ -122,6 +122,7 @@ class BoilerStatusService:
         logger.info("Boiler override cleared")
 
     def current_override(self) -> str | None:
+        """Return the last saved SetMode values, or None when no override is active."""
         try:
             return self.state_file.read_text().strip() or None
         except FileNotFoundError:
@@ -156,25 +157,65 @@ class BoilerStatusService:
         return result
 
     def _set_mode(self, hcmode: str, flow_temp: int | None, hwc_temp: int | None) -> str:
-        values = ";".join(
-            (
-                hcmode,
-                self._temp(flow_temp),
-                self._temp(hwc_temp),
-                NOT_CONTROLLED,  # hwcflowtempdesired
-                "0;0;0",  # disablehc / disablehwctapping / disablehwcload
-                "0;0;0",  # remotecontrolhcpump / releasebackup / releasecooling
-            )
-        )
+        """Send a manual SetMode write, overwriting any active override."""
+        values = self._build_values(hcmode, flow_temp, hwc_temp)
         with lock_state(self.lock_file):
             self._write(values)
             self._save_state(values)
         logger.info(f"Boiler SetMode sent and saved as override: {values}")
         return values
 
+    def apply_automatic(self, hcmode: str, flow_temp: int | None, hwc_temp: int | None) -> str | None:
+        """Write an automatic mode unless a water override is active; None when skipped.
+
+        Holds ``BOILER_LOCK_FILE`` across the water-override recheck and the write,
+        so a concurrent manual ``boiler-set boiling`` cannot land in between.
+        """
+        values = self._build_values(hcmode, flow_temp, hwc_temp)
+        with lock_state(self.lock_file):
+            if self._is_water_override_unlocked():
+                logger.info("Boiling override active, skipping automatic boiler mode write")
+                return None
+            self._write(values)
+            self._save_state(values)
+        logger.info(f"Boiler SetMode sent and saved as override: {values}")
+        return values
+
+    def clear_automatic(self) -> bool:
+        """Clear the override unless water is active; True when cleared, False when skipped."""
+        with lock_state(self.lock_file):
+            if self._is_water_override_unlocked():
+                logger.info("Boiling override active, skipping automatic override clear")
+                return False
+            self.state_file.unlink(missing_ok=True)
+        logger.info("Boiler override cleared")
+        return True
+
     def _write(self, values: str) -> None:
         # SETMODE_DEF and values contain no spaces, so no quoting is needed.
         self.client.command(f"write -def {SETMODE_DEF} {values}")
+
+    def _is_water_override_unlocked(self) -> bool:
+        """Check for a water override; the caller must hold ``BOILER_LOCK_FILE``."""
+        try:
+            current = self.state_file.read_text().strip() or None
+        except FileNotFoundError:
+            return False
+        return bool(current and current.split(";", 1)[0] == "water")
+
+    @staticmethod
+    def _build_values(hcmode: str, flow_temp: int | None, hwc_temp: int | None) -> str:
+        """Build the SetModeOverride value string, validating temperatures."""
+        return ";".join(
+            (
+                hcmode,
+                BoilerStatusService._temp(flow_temp),
+                BoilerStatusService._temp(hwc_temp),
+                NOT_CONTROLLED,  # hwcflowtempdesired
+                "0;0;0",  # disablehc / disablehwctapping / disablehwcload
+                "0;0;0",  # remotecontrolhcpump / releasebackup / releasecooling
+            )
+        )
 
     def _save_state(self, values: str) -> None:
         self.state_file.parent.mkdir(parents=True, exist_ok=True)

@@ -1,3 +1,4 @@
+from odin.apps.boiler.services.controller import BoilerModeController
 from odin.apps.boiler.services.ebusd import EbusdClient, EbusdError, lock_state
 from odin.apps.boiler.services.mode import OVERRIDE_MODES, BoilerMode, BoilerModeService
 from odin.apps.boiler.services.schedule import BOIL_HOUR, BOIL_WEEKDAY, CLEAR_HOUR, get_next_boil_schedule
@@ -19,6 +20,7 @@ __all__ = (
     "OVERRIDE_MODES",
     "SETMODE_DEF",
     "BoilerMode",
+    "BoilerModeController",
     "BoilerModeService",
     "BoilerStatusService",
     "EbusdClient",

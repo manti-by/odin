@@ -37,6 +37,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [Merge/Rebase PR Comment Handlers — Not Found](pages/2026-07-16-merge-rebase-pr-comment-handlers.md)
 - [PR merge/rebase comment listener marks as read despite errors](pages/2026-07-16-merge-rebase-pr-comment-listener.md)
 - [MNT-206: Boiler mode controller](pages/2026-09-17-mnt-206-boiler-mode-controller.md) — 2026-09-17
+- [MNT-207: Wire boiler mode controller into scheduler tick / cron](pages/2026-09-18-mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron.md) — 2026-09-18
 
 ### Type checking & CI flow
 
