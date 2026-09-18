@@ -87,3 +87,35 @@ class TestGetTargetMode:
         create_weather("0.0")
 
         assert BoilerModeService().get_target_mode() is None
+
+
+@pytest.fixture
+def boiler_state(settings, tmp_path):
+    settings.BOILER_STATE_FILE = str(tmp_path / "state")
+    settings.BOILER_LOCK_FILE = str(tmp_path / "state.lock")
+    return tmp_path / "state"
+
+
+@pytest.mark.django_db
+class TestGetCurrentMode:
+    @pytest.mark.parametrize(
+        ("override", "expected"),
+        [
+            ("water;0;55;-;0;0;0;0;0;0", BoilerMode.BOILING),
+            ("heat;45;-;0;0;0;0;0;0;0", BoilerMode.HEATING),
+            ("auto;45;55;-;0;0;0;0;0;0", BoilerMode.MIXED),
+            ("off;0;0;-;0;0;0;0;0;0", BoilerMode.OFF),
+        ],
+    )
+    def test__override_wins(self, boiler_state, override, expected):
+        boiler_state.write_text(f"{override}\n")
+
+        assert BoilerModeService().get_current_mode() == expected
+
+    def test__no_override_falls_back_to_target(self, boiler_state):
+        create_weather("20.0")
+
+        assert BoilerModeService().get_current_mode() == BoilerMode.HEATING
+
+    def test__no_override_no_weather__mixed(self, boiler_state):
+        assert BoilerModeService().get_current_mode() == BoilerMode.MIXED

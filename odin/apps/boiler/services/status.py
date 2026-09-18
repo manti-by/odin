@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import os
 import tempfile
+from datetime import UTC, datetime
 from pathlib import Path
 
 from django.conf import settings
@@ -46,6 +47,24 @@ SETMODE_DEF = (
 NOT_CONTROLLED = "-"
 
 MAX_TEMP = 80
+
+
+def _parse_temp(value: str) -> int | None:
+    if value == NOT_CONTROLLED:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
+def parse_override(values: str) -> tuple[str, int | None, int | None]:
+    """Split a saved override into (hcmode, flow_temp, hwc_temp); missing/not-controlled temps become None."""
+    parts = values.split(";")
+    hcmode = parts[0] if parts else ""
+    flow_temp = _parse_temp(parts[1]) if len(parts) > 1 else None
+    hwc_temp = _parse_temp(parts[2]) if len(parts) > 2 else None
+    return hcmode, flow_temp, hwc_temp
 
 
 class BoilerStatusService:
@@ -107,6 +126,21 @@ class BoilerStatusService:
             return self.state_file.read_text().strip() or None
         except FileNotFoundError:
             return None
+
+    def override_updated_at(self) -> datetime | None:
+        """Last time an override was written (and thus the last SetMode call)."""
+        try:
+            return datetime.fromtimestamp(self.state_file.stat().st_mtime, tz=UTC)
+        except FileNotFoundError:
+            return None
+
+    def is_alive(self) -> bool:
+        """Cheap one-shot ping of the ebusd daemon."""
+        try:
+            self.client.command("info")
+        except EbusdError:
+            return False
+        return True
 
     def read_field(self, name: str) -> str:
         """Read a bai field fresh from the bus (not from ebusd's cache)."""
