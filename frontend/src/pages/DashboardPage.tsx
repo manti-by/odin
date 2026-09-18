@@ -1,16 +1,19 @@
 import { ResponsiveGrid } from "@/components/grid/ResponsiveGrid";
+import { BoilerTile } from "@/components/tile/BoilerTile";
 import { CurrencyTile } from "@/components/tile/CurrencyTile";
 import { Ds18b20SensorsTile } from "@/components/tile/Ds18b20SensorsTile";
 import { Esp8266SensorsTile } from "@/components/tile/Esp8266SensorsTile";
 import { SystemErrorsTile } from "@/components/tile/SystemErrorsTile";
 import { TargetTempModal } from "@/components/tile/TargetTempModal";
 import { WeatherTile } from "@/components/tile/WeatherTile";
+import { useBoilerStatus } from "@/hooks/useBoilerStatus";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import type { DashboardSensor } from "@/lib/api/dashboard";
 import { useState } from "react";
 
 export function DashboardPage() {
   const { data, loading, error, reload } = useDashboardData();
+  const { data: boiler, loading: boilerLoading, error: boilerError } = useBoilerStatus();
   const [selectedSensor, setSelectedSensor] = useState<DashboardSensor | null>(null);
 
   const handleEditSensor = (sensor: DashboardSensor) => {
@@ -58,6 +61,7 @@ export function DashboardPage() {
           loading={loading}
         />
         <WeatherTile weather={data?.weather ?? null} loading={loading} />
+        <BoilerTile status={boiler} loading={boilerLoading} error={boilerError} />
         <CurrencyTile rates={data?.exchange_rates ?? []} trends={data?.exchange_rates_trends ?? {}} loading={loading} />
         <SystemErrorsTile
           traffic={data?.traffic ?? null}
