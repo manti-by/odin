@@ -1,0 +1,8 @@
+[Unit]
+Description=Re-send last boiler SetMode override to Protherm Lynx 25 via ebusd
+After=ebusd.service
+Requisite=ebusd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/boiler-set refresh

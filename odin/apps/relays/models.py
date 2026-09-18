@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models import query
-from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from odin.apps.core.exceptions import RedisReadError
@@ -28,11 +27,24 @@ class RelayType(models.TextChoices):
 class RelayState(models.TextChoices):
     ON = "ON", _("ON")
     OFF = "OFF", _("OFF")
-    UNKNOWN = "UNKNOWN", _("UNKNOWN")
+    IGNORED = "IGNORED", _("Ignored")
+    UNKNOWN = "UNKNOWN", _("Unknown")
 
     @classmethod
     def active_choices(cls) -> list:
         return [(cls.ON.value, cls.ON.label), (cls.OFF.value, cls.OFF.label)]
+
+
+class RelayMode(models.TextChoices):
+    UNKNOWN = "UNKNOWN", _("Unknown")
+    FALLBACK = "FALLBACK", _("Fallback")
+    FORCED = "FORCED", _("Forced")
+    IGNORED = "IGNORED", _("Ignored")
+
+    SUMMER = "SUMMER", _("Summer")
+    MIDSEASON = "MIDSEASON", _("Midseason")
+    BASIC = "BASIC", _("Basic")
+    ANTIFREEZE = "ANTIFREEZE", _("Antifreeze")
 
 
 class RelayStateError(Exception):
@@ -58,9 +70,16 @@ class Relay(models.Model):
     type: models.CharField[str] = models.CharField(max_length=32, choices=RelayType.choices, verbose_name=_("Type"))
     is_active: models.BooleanField[bool] = models.BooleanField(default=True, verbose_name=_("Is active"))
 
+    state: models.CharField[RelayState] | None = models.CharField(
+        choices=RelayState.choices, null=True, blank=True, max_length=32, verbose_name=_("Relay state")
+    )
+    mode: models.CharField[RelayMode] | None = models.CharField(
+        choices=RelayMode.choices, null=True, blank=True, max_length=32, verbose_name=_("Relay mode")
+    )
     force_state: models.CharField[RelayState] | None = models.CharField(
         choices=RelayState.active_choices(), null=True, blank=True, max_length=32, verbose_name=_("Force relay state")
     )
+
     related_relay: models.ForeignKey[Relay] | None = models.ForeignKey(
         "self",
         null=True,
@@ -84,12 +103,6 @@ class Relay(models.Model):
         return f"Relay {self.relay_id}"
 
     @property
-    def state(self) -> RelayState:
-        if state := self.context.get("state"):
-            return RelayState.__members__.get(state, RelayState.UNKNOWN)
-        return RelayState.UNKNOWN
-
-    @property
     def is_on(self) -> bool:
         return self.state == RelayState.ON
 
@@ -97,17 +110,20 @@ class Relay(models.Model):
     def is_pump(self) -> bool:
         return self.type == RelayType.PUMP
 
-    @cached_property
+    @property
     def sensor(self) -> Sensor | None:
         from odin.apps.sensors.models import Sensor
 
         return Sensor.objects.filter(relay_id=self.relay_id).order_by("created_at").last()
 
-    @cached_property
-    def target_state(self) -> str:
+    @property
+    def target_state(self) -> RelayState:
         from odin.apps.relays.services import RelayTargetStateService
 
-        return RelayTargetStateService(self).get_target_state()
+        self.state, self.mode = RelayTargetStateService(self).get_target_state()
+        self.save()
+
+        return self.state
 
     def refresh_state(self) -> str | None:
         """Refresh relay state from Redis and persist it.
@@ -130,6 +146,6 @@ class Relay(models.Model):
             return None
 
         if state := message.get("data", {}).get("state"):
-            self.context["state"] = state
-            self.save(update_fields=["context", "updated_at"])
+            self.state = state
+            self.save(update_fields=["state", "updated_at"])
             return state

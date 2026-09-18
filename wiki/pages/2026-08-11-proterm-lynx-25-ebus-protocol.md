@@ -9,7 +9,7 @@ services: [ebusd, boiler]
 branch: -
 tickets: []
 tags: [ebus, vaillant, proterm, icar, boiler, protocol]
-related: []
+related: [2026-09-11-ebusd-config-load-boiler-refresh.md]
 ---
 
 # Proterm Lynx 25 eBus Protocol Investigation
@@ -80,6 +80,14 @@ flock -u 9
   `boiler-set panel` clears the override and stops re-sending).
 - Daemon opts now: `EBUSD_OPTS="--enabledefine --scanconfig -d ens:192.168.1.108:9999"`
   (`--enablehex` was removed again after testing).
+
+> **Note 2026-09-11:** two facts above are now stale — see
+> [[2026-09-11-ebusd-config-load-boiler-refresh]]. The daemon opts are now
+> `--scanconfig=08` (the broadcast startup scan stalls on a phantom address `05` and never reaches
+> the boiler, so the config silently fails to load), and `boiler-refresh.timer` is **enabled**
+> (`enable --now`), not "disabled by default". That session also confirmed the inline `SETMODE_DEF`
+> is byte-identical to the official `08.bai.csv` definition and traced a "reads all fail with
+> `element not found`" outage to the long-running ebusd process losing outbound HTTPS.
 
 Original (partly superseded) investigation below.
 

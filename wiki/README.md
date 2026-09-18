@@ -14,6 +14,7 @@ keeping the index current). Pages are plain Markdown so they stay human-readable
 - `TEMPLATE.md` - The one unified page template. Copy it to start a page.
 - `INDEX.md` - Catalog of every page with a one-line summary. Kept current on each new page.
 - `QUESTIONS.md` - Open questions from the Consistency Agent about wiki discrepancies, awaiting a human answer.
+- `.sessions.json` - Maps session IDs to the wiki page each agent session produced.
 - `pages/YYYY-MM-DD-<topic>.md` - The pages themselves.
 
 ## Naming convention

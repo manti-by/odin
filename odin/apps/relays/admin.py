@@ -30,16 +30,25 @@ class RelayAdmin(admin.ModelAdmin):
         "sensor",
         "related_relay",
         "is_active",
-        "force_state",
-        "target_state",
         "state",
+        "mode",
+        "force_state",
         "schedule",
         "updated_at",
         "created_at",
     )
-    list_display = ("relay_id", "name", "type", "is_active", "forced_state", "target_state", "state", "updated_at")
+    list_display = (
+        "relay_id",
+        "name",
+        "type",
+        "is_active",
+        "state",
+        "mode",
+        "forced_state",
+        "updated_at",
+    )
     list_filter = ("type",)
-    readonly_fields = ("sensor", "target_state", "state", "schedule", "updated_at", "created_at")
+    readonly_fields = ("sensor", "schedule", "updated_at", "created_at")
 
     class Media:
         css = {"all": ("css/admin/schedule.css",)}
@@ -52,7 +61,7 @@ class RelayAdmin(admin.ModelAdmin):
         if not (sensor := obj.sensor):
             return "-"
 
-        url = reverse("admin:sensors_sensor_change", args=[sensor.id])  #
+        url = reverse("admin:sensors_sensor_change", args=[sensor.pk])
         return format_html('<a href="{}">{}</a>', url, sensor)
 
     @admin.display(description=_("schedule"))
@@ -71,18 +80,6 @@ class RelayAdmin(admin.ModelAdmin):
         if obj is None:
             return RelayState.UNKNOWN
         return obj.force_state
-
-    @admin.display(description=_("target"))
-    def target_state(self, obj: Relay | None) -> RelayState | None:
-        if obj is None:
-            return RelayState.UNKNOWN
-        return obj.target_state
-
-    @admin.display(description=_("current"))
-    def state(self, obj: Relay | None) -> RelayState | None:
-        if obj is None:
-            return RelayState.UNKNOWN
-        return obj.state
 
     def changelist_view(self, request: HttpRequest, extra_context: dict | None = None) -> TemplateResponse:
         for relay in self.get_queryset(request):

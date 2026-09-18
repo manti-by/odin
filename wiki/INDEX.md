@@ -9,6 +9,8 @@ by the plugin.
 
 _Newest first._
 
+- [Relay state/mode refactor — review, test sync, and fixes](pages/2026-09-18-relay-state-mode-refactor.md) — Reviewed the relay `state`/`mode` column refactor (29 broken tests), synced the suite to the single-value `target_state`, fixed API update not populating the `state` column and API reads overwriting actual state with the computed target; 259 tests green (2026-09-18)
+- [ebusd lost its device config + refresh timer disabled](pages/2026-09-11-ebusd-config-load-boiler-refresh.md) — Boiler writes worked but reads all returned `element not found`: the long-running ebusd lost outbound HTTPS for a week+ (no Vaillant config loaded) and `boiler-refresh.timer` was disabled; fixed via restart, `--scanconfig=08`, and enabling the timer (2026-09-11)
 - [Relay state sync — admin refresh and Redis consumer](pages/2026-09-11-relay-state-redis-consumer.md) — Refreshed relay state on admin list/detail load and extended `consume_sensors` to also subscribe to `relays:control`, refreshing relays on `RELAY_STATE_UPDATE`; no new systemd service needed (2026-09-11)
 - [Add self-referential related_relay field to Relay](pages/2026-09-11-add-related-relay-field.md) — Added a nullable self-FK `related_relay` + migration 0006 and surfaced it in the relay admin as a select dropdown; groundwork for the servo→pump TODO (2026-09-11)
 - [Fix React SPA dev-mode issues: docs, proxy, base path, StrictMode Loading bug](pages/2026-08-24-react-spa-dev-mode-debug.md) — Synced docs with the React SPA migration; fixed Vite `base: "/static/"` redirecting dev `/` → `/static/` 404; removed broken `isMountedRef` in `useDashboardData` so tiles load data under StrictMode (2026-08-24)
@@ -52,4 +54,5 @@ _Also belongs to "Type checking & CI flow" (wired frontend checks into Makefile/
 
 ### Boiler eBus control
 
+- [ebusd lost its device config + refresh timer disabled](pages/2026-09-11-ebusd-config-load-boiler-refresh.md)
 - [Proterm Lynx 25 eBus Protocol Investigation](pages/2026-08-11-proterm-lynx-25-ebus-protocol.md)

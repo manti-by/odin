@@ -175,8 +175,8 @@ class TestDashboardAPI:
         fake_context = self._make_fake_context(
             systemd_status={"scheduler.service": {"status": "active"}, "worker.service": {"error": "test error"}},
         )
-        with patch("odin.api.v1.core.views.update_index_context_cache") as mock_update:
-            mock_update.return_value = fake_context
+        with patch("odin.api.v1.core.views.build_index_context") as mock_build:
+            mock_build.return_value = fake_context
             response = self.client.get(self.url, format="json")
 
         assert response.status_code == status.HTTP_200_OK
@@ -200,10 +200,10 @@ class TestDashboardAPI:
         assert len(response.data["error_logs"]) >= 1
         assert response.data["error_logs"][0]["msg"] == "Test error message"
 
-    def test_dashboard__uses_cached_context(self):
+    def test_dashboard__renders_built_context(self):
         fake_context = self._make_fake_context(boiler_sensors_is_alive=False)
-        with patch.object(cache, "get") as mock_get:
-            mock_get.return_value = fake_context
+        with patch("odin.api.v1.core.views.build_index_context") as mock_build:
+            mock_build.return_value = fake_context
             response = self.client.get(self.url, format="json")
 
         assert response.status_code == status.HTTP_200_OK

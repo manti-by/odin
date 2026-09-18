@@ -16,7 +16,7 @@ function windDirectionAbbr(degrees: number | null): string {
 
 export function WeatherTile({ weather, loading }: WeatherTileProps) {
   return (
-    <Tile title="Weather">
+    <Tile title="Weather" className="weather">
       {loading ? (
         <p className="tile__loading">Loading...</p>
       ) : !weather ? (
@@ -31,7 +31,7 @@ export function WeatherTile({ weather, loading }: WeatherTileProps) {
               <span>min</span> {weather.temp_min_display}°C
             </span>
           </div>
-          <div className="row attr">
+          <div className="row weather-charts">
             <div className="weather-humidity">
               <span className="weather-humidity__chart">
                 <img

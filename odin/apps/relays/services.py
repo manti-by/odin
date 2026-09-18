@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from django.utils import timezone
 
-from odin.apps.relays.models import RelayState, RelayType
+from odin.apps.relays.models import RelayMode, RelayState, RelayType
 from odin.apps.weather.models import Weather
 
 
@@ -39,57 +39,54 @@ class RelayTargetStateService:
 
         return None
 
-    def get_pump_target_state(self) -> str:
+    def get_pump_target_state(self) -> tuple[RelayState, RelayMode]:
         # Check outside temp to decide what mode to use
         if self.weather and (outside_temp := self.weather.temp) is not None:
             # Summer mode, disable everything
             if outside_temp >= 15:
                 # Summer mode, always off
-                return RelayState.OFF
+                return RelayState.OFF, RelayMode.SUMMER
             elif outside_temp < -8:
                 # Anti freeze mode, always on
-                return RelayState.ON
+                return RelayState.ON, RelayMode.ANTIFREEZE
             elif 8 < outside_temp < 15:
                 # Midseason mode, should work for 10 mins every hour
                 if self.now.minute < 10:
-                    return RelayState.ON
-                return RelayState.OFF
+                    return RelayState.ON, RelayMode.MIDSEASON
+                return RelayState.OFF, RelayMode.MIDSEASON
 
         # Default target state from schedule
         if period := self.get_current_period_from_schedule():
             if "target_state" in period:
-                return period["target_state"]
+                return period["target_state"], RelayMode.BASIC
 
-        return RelayState.ON
+        return RelayState.ON, RelayMode.FALLBACK
 
-    def get_servo_target_state(self) -> str:
+    def get_servo_target_state(self) -> tuple[RelayState, RelayMode]:
         # Open circuit if no sensor data
         sensor = self.relay.sensor
         if not sensor or not sensor.is_alive or sensor.temp is None:
-            return RelayState.OFF
+            return RelayState.OFF, RelayMode.UNKNOWN
 
-        # Check forced state
-        if self.relay.force_state is not None:
-            return self.relay.force_state
-
-        # If related pump is OFF also switch off a servo
+        # If related pump is OFF also do not close a servo
         if related_relay := self.relay.related_relay:
             if related_relay.is_pump and not related_relay.is_on:
-                return RelayState.OFF
+                return RelayState.OFF, RelayMode.IGNORED
 
         # Check outside temp to decide what mode to use
         if self.weather and (outside_temp := self.weather.temp) is not None:
             # Summer mode, disable everything
             if outside_temp >= 15:
                 # Summer mode, do not close
-                return RelayState.OFF
+                return RelayState.OFF, RelayMode.SUMMER
             elif outside_temp < -8:
                 # Anti freeze mode, do not close
-                return RelayState.OFF
+                return RelayState.OFF, RelayMode.ANTIFREEZE
             elif 8 < outside_temp < 15:
                 # Midseason mode, must work for 10 mins every hour
                 if self.now.minute < 10:
-                    return RelayState.OFF
+                    return RelayState.OFF, RelayMode.MIDSEASON
+                return RelayState.ON, RelayMode.MIDSEASON
 
         # Get target temp from schedule
         target_temp = sensor.target_temp
@@ -98,20 +95,20 @@ class RelayTargetStateService:
                 target_temp = Decimal(str(period["target_temp"]))
 
         # No target temperature configured, nothing to regulate against
-        if target_temp is None:
-            return RelayState.OFF
+        if target_temp is None or sensor.temp_hysteresis is None:
+            return RelayState.OFF, RelayMode.UNKNOWN
 
         if sensor.temp < target_temp - sensor.temp_hysteresis:
-            return RelayState.ON
+            return RelayState.ON, RelayMode.BASIC
 
         if sensor.temp > target_temp + sensor.temp_hysteresis:
-            return RelayState.OFF
+            return RelayState.OFF, RelayMode.BASIC
 
-        return RelayState.OFF
+        return RelayState.OFF, RelayMode.FALLBACK
 
-    def get_target_state(self) -> str:
+    def get_target_state(self) -> tuple[RelayState, RelayMode]:
         if self.relay.force_state is not None:
-            return str(self.relay.force_state)
+            return self.relay.force_state, RelayMode.FORCED
 
         match self.relay.type:
             case RelayType.PUMP:
@@ -119,4 +116,4 @@ class RelayTargetStateService:
             case RelayType.SERVO:
                 return self.get_servo_target_state()
             case _:
-                return RelayState.UNKNOWN
+                return RelayState.UNKNOWN, RelayMode.FALLBACK

@@ -8,7 +8,8 @@ from rest_framework.viewsets import GenericViewSet
 
 from odin.api.authentication import TokenAuthentication
 from odin.api.v1.relays.serializers import RelaySerializer, RelayUpdateSerializer
-from odin.apps.relays.models import Relay
+from odin.apps.relays.models import Relay, RelayState
+from odin.apps.relays.services import RelayTargetStateService
 
 
 class RelaysBaseView(GenericViewSet):
@@ -49,13 +50,18 @@ class RelayRetrieveUpdateView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin
 
         update_fields = []
         item: Relay = serializer.instance
-        if item and "context" in data:
+        if "context" in data:
             item.context.update(**data["context"])
             update_fields.append("context")
 
+            if (state := data["context"].get("state")) is not None:
+                item.state = RelayState.__members__.get(state, RelayState.UNKNOWN)
+                update_fields.append("state")
+
         if "force_state" in data:
             item.force_state = data["force_state"]
-            update_fields.append("force_state")
+            item.state, item.mode = RelayTargetStateService(item).get_target_state()
+            update_fields.extend(["force_state", "state", "mode"])
 
         if update_fields:
             item.save(update_fields=update_fields)

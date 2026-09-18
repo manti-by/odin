@@ -6,7 +6,7 @@
 /* ----- Sensor list (ESP8266 tile) ----- */
 .sensor-list {
   display: block;
-  padding: 1.25rem 0;
+  padding: 2.5rem 0;
   margin: 0;
 }
 
@@ -79,6 +79,11 @@
   background: var(--color-surface-1);
 }
 
+.sensor-row__mode {
+  font-family: var(--font-mono), monospace;
+  color: var(--color-text-tertiary);
+}
+
 /* ----- DS18B20 / Boiler Room tile ----- */
 .sensor-row-group {
   display: flex;
@@ -145,6 +150,16 @@
 }
 
 /* ----- Weather tile ----- */
+
+.weather .tile__body {
+  padding: 0 3.5rem;
+}
+
+.weather .row {
+  display: flex;
+  margin: .5rem 0;
+}
+
 .weather-temp {
   margin-top: 2.5rem;
   font-size: 3.5rem;
@@ -173,6 +188,10 @@
   display: flex;
   flex-flow: row wrap;
   align-content: center;
+}
+
+.weather-humidity {
+  margin-right: 2rem;
 }
 
 .weather-humidity .tile-label,
@@ -224,20 +243,6 @@
 .weather-wind .gusts {
   font-size: 0.8rem;
   color: var(--color-text-tertiary);
-}
-
-.weather .attr {
-  padding: 0.25rem 0;
-  line-height: 1.5;
-}
-
-.weather .attr .tile-label {
-  margin: 0;
-  font-weight: 500;
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 
 /* ----- Currency tile ----- */

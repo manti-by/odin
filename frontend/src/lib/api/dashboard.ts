@@ -5,6 +5,7 @@ export interface DashboardRelay {
   name: string;
   type: string;
   state: string;
+  mode: string;
   is_on: boolean;
 }
 

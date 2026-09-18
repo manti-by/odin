@@ -35,7 +35,7 @@ export function Esp8266SensorsTile({ sensors, isAlive, onEditSensor, loading }: 
   );
 
   return (
-    <Tile title={title} iconLink={iconLink}>
+    <Tile title={title} iconLink={iconLink} className="esp8266">
       {loading ? (
         <p className="tile__loading">Loading...</p>
       ) : sensors.length === 0 ? (
@@ -54,13 +54,18 @@ export function Esp8266SensorsTile({ sensors, isAlive, onEditSensor, loading }: 
               <span className="sensor-row__relay">
                 {sensor.relay ? (
                   <span
-                    className={`alive-indicator alive-indicator--${sensor.relay.is_on ? "heating" : "cooling"}`}
-                    aria-label={sensor.relay.is_on ? "heating" : "cooling"}
+                    className={`alive-indicator alive-indicator--${sensor.relay.is_on ? "cooling" : "heating"}`}
+                    aria-label={sensor.relay.is_on ? "cooling" : "heating"}
                   />
                 ) : (
                   <span className="info">nc</span>
                 )}
               </span>
+              {sensor.relay ? (
+                <span className="sensor-row__mode">{sensor.relay.mode ? sensor.relay.mode[0] : "-"}</span>
+              ) : (
+                <span className="info">--</span>
+              )}
               <span className="sensor-row__temp">
                 {formatValue(sensor.temp)}
                 <span>°C</span>

@@ -3,14 +3,15 @@ import type { ReactNode } from "react";
 
 interface TileProps {
   title: ReactNode;
+  children: ReactNode;
   status?: AliveState;
   iconLink?: ReactNode;
-  children: ReactNode;
+  className?: string;
 }
 
-export function Tile({ title, status, iconLink, children }: TileProps) {
+export function Tile({ title, status, iconLink, children, className }: TileProps) {
   return (
-    <section className="tile">
+    <section className={`tile ${className ? className : ""}`}>
       <h2 className="tile__title">
         {status && <AliveIndicator state={status} />}
         <span className="tile__title-text">{title}</span>

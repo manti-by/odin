@@ -1,11 +1,13 @@
 from .base import *  # noqa
 
-ALLOWED_HOSTS = ("odin.manti.by", "192.168.1.100", "146.120.14.192")
+DEBUG = False
+
+ALLOWED_HOSTS = ("odin.manti.by", "192.168.1.100")
 
 # HTTPS cookie hardening for production
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-CSRF_TRUSTED_ORIGINS = ("https://odin.manti.by",)
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+CSRF_TRUSTED_ORIGINS = ("https://odin.manti.by", "http://192.168.1.100")
 
 LOGGING = {
     "version": 1,

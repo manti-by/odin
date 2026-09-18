@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
-from odin.apps.relays.models import Relay, RelayType
+from odin.apps.relays.models import Relay, RelayState, RelayType
 from odin.tests.factories import RelayFactory
 
 
@@ -155,12 +155,12 @@ class TestRelaysUpdateAPI:
         assert self.relay.context["state"] == "OFF"
         assert self.relay.state == "OFF"
 
-        # Test custom state
+        # Test custom state (not a valid RelayState, mapped to UNKNOWN)
         response = self.client.patch(self.url, data={"context": {"state": "STANDBY"}}, format="json")
         assert response.status_code == status.HTTP_200_OK
         self.relay.refresh_from_db()
         assert self.relay.context["state"] == "STANDBY"
-        assert self.relay.state == "STANDBY"
+        assert self.relay.state == RelayState.UNKNOWN
 
     def test_relays__update_non_existent_relay(self):
         """Test that update returns 404 for non-existent relay."""

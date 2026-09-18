@@ -113,6 +113,26 @@ make restore    # Restore database from odin.sql
 ```
 
 
+## Boiler Control (eBus)
+
+The boiler (Protherm Lynx 25 / Vaillant BAI00) is controlled through the local `ebusd` daemon
+(TCP `localhost:8888`), which talks to the bus via the ICAR eBus adapter. Django side:
+
+```shell
+uv run manage.py boiler_set <boiling|heating|mixed|off|panel|refresh> ...  # SetMode over eBus
+uv run manage.py boiler_status                                             # read live values
+```
+
+Systemd services that must be running:
+
+- `ebusd` — eBUS daemon; loads the device config at startup (options in `/etc/default/ebusd`:
+  `--enabledefine --scanconfig=08 -d ens:192.168.1.108:9999`).
+- `boiler-refresh.timer` — re-sends the last override every 60 s (must be enabled; the boiler
+  reverts to its panel settings without it).
+
+Details: [`wiki/pages/2026-09-11-ebusd-config-load-boiler-refresh.md`](wiki/pages/2026-09-11-ebusd-config-load-boiler-refresh.md).
+
+
 ## Project Structure
 
 ```

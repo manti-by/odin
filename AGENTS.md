@@ -9,6 +9,8 @@ It uses Django 5.2.7 with Django REST Framework, PostgreSQL, Redis, and modern P
 
 - All REST API related code placed in `./odin/api/`
 - Django apps with models, admin classes, migrations and management commands in `./odin/apps/`
+- eBus boiler control in `./odin/apps/boiler/` — `BoilerService` + `boiler_set` /
+  `boiler_status` management commands (no models/API; talks to the local `ebusd` daemon)
 - Tests in `./odin/tests/`
 - React + TypeScript SPA (Vite + Bun + Biome) in `./frontend/` — dashboard UI, built to `frontend/dist/`
 - Public-facing Django templates/static JS/CSS were retired; only the Django admin
@@ -445,6 +447,8 @@ Frontend checks are not part of pre-commit; they run via `make frontend-check`
 ## Deployment
 
 - Services: gunicorn, worker, scheduler, sensor-consumer, nginx
+- Boiler/eBUS services: `ebusd` (must run with `--enabledefine --scanconfig=08`) and
+  `boiler-refresh.timer` (must be **enabled**; re-sends the last boiler override every 60 s)
 - Use systemd for service management
 - `make deploy` builds the SPA (`make frontend`) before `collectstatic` and
   reloads nginx, so the React build artifacts are always served fresh
@@ -460,6 +464,16 @@ Frontend checks are not part of pre-commit; they run via `make frontend-check`
 
 - Check for pending migrations: `make django-checks`
 - Create migrations after model changes
+
+### Boiler (eBUS)
+
+- `boiler_status`/`boiler_set` failing with `ERR: element not found` for every field = the ebusd
+  daemon lost its device config (drops from ~230 to ~12-13 loaded messages — see `ebusctl info`).
+  Fix: `sudo systemctl restart ebusd`.
+- `boiler-refresh.timer` must be enabled, otherwise the boiler reverts to its panel settings a few
+  minutes after the last SetMode write.
+- ebusd options live in `/etc/default/ebusd`; the boiler address (08) is pinned via
+  `--scanconfig=08`, and `--enabledefine` is required for `boiler_set`'s `write -def`.
 
 ## Performance Optimization
 
