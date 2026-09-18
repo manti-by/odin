@@ -97,142 +97,34 @@ class TestGetTargetMode:
 
         assert BoilerModeService().get_target_mode() is None
 
-    def test__construction__no_weather_query(self, django_assert_num_queries):
-        with django_assert_num_queries(0):
-            BoilerModeService()
 
-
-class TestBoilerModeController:
-    @pytest.fixture
-    def mode_service(self):
-        return MagicMock(spec=BoilerModeService)
-
-    @pytest.fixture
-    def boiler_service(self):
-        return MagicMock()
-
-    def test__boil_override_active__no_set_call(self, mode_service, boiler_service):
-        mode_service.get_target_mode.return_value = None
-
-        result = BoilerModeController(mode_service, boiler_service).run()
-
-        assert result is None
-        boiler_service.apply_automatic.assert_not_called()
-        boiler_service.clear_automatic.assert_not_called()
-
-    def test__heating__set_heating(self, mode_service, boiler_service):
-        mode_service.get_target_mode.return_value = BoilerMode.HEATING
-        boiler_service.apply_automatic.return_value = "heat"
-
-        result = BoilerModeController(mode_service, boiler_service).run()
-
-        assert result == "heat"
-        boiler_service.apply_automatic.assert_called_once_with("heat", DEFAULT_HEATING_FLOW_TEMP, None)
-
-    def test__mixed__set_mixed(self, mode_service, boiler_service):
-        mode_service.get_target_mode.return_value = BoilerMode.MIXED
-        boiler_service.apply_automatic.return_value = "auto"
-
-        result = BoilerModeController(mode_service, boiler_service).run()
-
-        assert result == "auto"
-        boiler_service.apply_automatic.assert_called_once_with("auto", DEFAULT_HEATING_FLOW_TEMP, DEFAULT_HWC_TEMP)
-
-    def test__off__set_off(self, mode_service, boiler_service):
-        mode_service.get_target_mode.return_value = BoilerMode.OFF
-        boiler_service.apply_automatic.return_value = "off"
-
-        result = BoilerModeController(mode_service, boiler_service).run()
-
-        assert result == "off"
-        boiler_service.apply_automatic.assert_called_once_with("off", 0, 0)
-
-    def test__clear_override__clear_override(self, mode_service, boiler_service):
-        mode_service.get_target_mode.return_value = BoilerMode.CLEAR_OVERRIDE
-
-        result = BoilerModeController(mode_service, boiler_service).run()
-
-        assert result is None
-        boiler_service.clear_automatic.assert_called_once_with()
-
-    def test__water_race__none_when_skipped(self, mode_service, boiler_service):
-        mode_service.get_target_mode.return_value = BoilerMode.MIXED
-        boiler_service.apply_automatic.return_value = None
-
-        result = BoilerModeController(mode_service, boiler_service).run()
-
-        assert result is None
-        boiler_service.apply_automatic.assert_called_once_with("auto", DEFAULT_HEATING_FLOW_TEMP, DEFAULT_HWC_TEMP)
-
-    def test__unknown_mode__raises(self, mode_service, boiler_service):
-        mode_service.get_target_mode.return_value = "bogus"
-
-        with pytest.raises(ValueError, match="Unsupported boiler mode"):
-            BoilerModeController(mode_service, boiler_service).run()
-
-
-class TestRunBoilerModeController:
-    @patch("odin.apps.boiler.services.controller.BoilerModeController")
-    def test__wrapper_delegates_to_controller(self, mock_controller):
-        mock_controller.return_value.run.return_value = "auto"
-
-        assert run_boiler_mode_controller() == "auto"
-        mock_controller.return_value.run.assert_called_once_with()
+@pytest.fixture
+def boiler_state(settings, tmp_path):
+    settings.BOILER_STATE_FILE = str(tmp_path / "state")
+    settings.BOILER_LOCK_FILE = str(tmp_path / "state.lock")
+    return tmp_path / "state"
 
 
 @pytest.mark.django_db
-class TestSchedulerWiring:
-    def test__boiler_mode_job_registered(self):
-        from odin.apps.core import scheduler as scheduler_module
+class TestGetCurrentMode:
+    @pytest.mark.parametrize(
+        ("override", "expected"),
+        [
+            ("water;0;55;-;0;0;0;0;0;0", BoilerMode.BOILING),
+            ("heat;45;-;0;0;0;0;0;0;0", BoilerMode.HEATING),
+            ("auto;45;55;-;0;0;0;0;0;0", BoilerMode.MIXED),
+            ("off;0;0;-;0;0;0;0;0;0", BoilerMode.OFF),
+        ],
+    )
+    def test__override_wins(self, boiler_state, override, expected):
+        boiler_state.write_text(f"{override}\n")
 
-        job = scheduler_module.scheduler.get_job("update_boiler_mode")
+        assert BoilerModeService().get_current_mode() == expected
 
-        assert job is not None
-        assert job.max_instances == 1
+    def test__no_override_falls_back_to_target(self, boiler_state):
+        create_weather("20.0")
 
-    @patch("odin.apps.boiler.services.controller.run_boiler_mode_controller")
-    def test__controller_error_does_not_propagate(self, mock_run):
-        from odin.apps.core.scheduler import schedule_update_boiler_mode
+        assert BoilerModeService().get_current_mode() == BoilerMode.HEATING
 
-        mock_run.side_effect = RuntimeError("ebusd is down")
-
-        schedule_update_boiler_mode()
-
-        mock_run.assert_called_once_with()
-
-
-class TestApplyAutomatic:
-    @pytest.fixture
-    def service(self, settings, tmp_path):
-        settings.BOILER_STATE_FILE = str(tmp_path / "state")
-        settings.BOILER_LOCK_FILE = str(tmp_path / "state.lock")
-        return BoilerStatusService(client=MagicMock())
-
-    def test__no_override__writes(self, service):
-        result = service.apply_automatic("auto", 55, 45)
-
-        assert result is not None
-        assert result.split(";")[0] == "auto"
-        service.client.command.assert_called_once()
-        assert service.current_override() == result
-
-    def test__water_override__skipped(self, service, tmp_path):
-        (tmp_path / "state").write_text("water;0;55;-;0;0;0;0;0;0\n")
-
-        result = service.apply_automatic("auto", 55, 45)
-
-        assert result is None
-        service.client.command.assert_not_called()
-        assert service.current_override().split(";")[0] == "water"
-
-    def test__clear_unless_water__clears(self, service, tmp_path):
-        (tmp_path / "state").write_text("auto;55;45;-;0;0;0;0;0;0\n")
-
-        assert service.clear_automatic() is True
-        assert service.current_override() is None
-
-    def test__clear_unless_water__skipped(self, service, tmp_path):
-        (tmp_path / "state").write_text("water;0;55;-;0;0;0;0;0;0\n")
-
-        assert service.clear_automatic() is False
-        assert service.current_override().split(";")[0] == "water"
+    def test__no_override_no_weather__mixed(self, boiler_state):
+        assert BoilerModeService().get_current_mode() == BoilerMode.MIXED

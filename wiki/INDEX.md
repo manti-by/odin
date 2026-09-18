@@ -9,7 +9,7 @@ by the plugin.
 
 _Newest first._
 
-- [MNT-207: Wire boiler mode controller into scheduler tick / cron](pages/2026-09-18-mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron.md) — Implementation of MNT-207: Wire boiler mode controller into scheduler tick / cron (2026-09-18)
+- [MNT-208: Boiler dashboard](pages/2026-09-18-mnt-208-boiler-dashboard.md) — Implementation of MNT-208: Boiler dashboard (2026-09-18)
 - [Relay state/mode refactor — review, test sync, and fixes](pages/2026-09-18-relay-state-mode-refactor.md) — Reviewed the relay `state`/`mode` column refactor (29 broken tests), synced the suite to the single-value `target_state`, fixed API update not populating the `state` column and API reads overwriting actual state with the computed target; 259 tests green (2026-09-18)
 - [ebusd lost its device config + refresh timer disabled](pages/2026-09-11-ebusd-config-load-boiler-refresh.md) — Boiler writes worked but reads all returned `element not found`: the long-running ebusd lost outbound HTTPS for a week+ (no Vaillant config loaded) and `boiler-refresh.timer` was disabled; fixed via restart, `--scanconfig=08`, and enabling the timer (2026-09-11)
 - [Relay state sync — admin refresh and Redis consumer](pages/2026-09-11-relay-state-redis-consumer.md) — Refreshed relay state on admin list/detail load and extended `consume_sensors` to also subscribe to `relays:control`, refreshing relays on `RELAY_STATE_UPDATE`; no new systemd service needed (2026-09-11)
@@ -50,6 +50,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [Fix React SPA dev-mode issues: docs, proxy, base path, StrictMode Loading bug](pages/2026-08-24-react-spa-dev-mode-debug.md)
 
 _Also belongs to "Type checking & CI flow" (wired frontend checks into Makefile/CI)._
+- [MNT-208: Boiler dashboard](pages/2026-09-18-mnt-208-boiler-dashboard.md) — 2026-09-18
 
 ### Sensor data model
 

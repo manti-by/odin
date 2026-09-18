@@ -17,7 +17,17 @@ class BoilerMode(models.TextChoices):
     HEATING = "heating", "Heating"
     MIXED = "mixed", "Mixed"
     OFF = "off", "Off"
+    BOILING = "boiling", "Boiling"
     CLEAR_OVERRIDE = "clear_override", "Clear override"
+
+
+# The override's first token is the commanded hcmode; it maps 1:1 onto a display mode.
+OVERRIDE_MODES = {
+    "auto": BoilerMode.MIXED,
+    "heat": BoilerMode.HEATING,
+    "water": BoilerMode.BOILING,
+    "off": BoilerMode.OFF,
+}
 
 
 class BoilerModeService:
@@ -57,3 +67,13 @@ class BoilerModeService:
             return BoilerMode.HEATING
 
         return BoilerMode.MIXED
+
+    def get_current_mode(self) -> BoilerMode:
+        """Mode actually in effect for display: the active override wins, otherwise the target mode."""
+        boiler_override = BoilerStatusService().current_override()
+        if boiler_override:
+            hcmode = boiler_override.split(";", 1)[0]
+            if mode := OVERRIDE_MODES.get(hcmode):
+                return mode
+
+        return self.get_target_mode() or BoilerMode.MIXED
