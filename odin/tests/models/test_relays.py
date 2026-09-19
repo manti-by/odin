@@ -285,18 +285,18 @@ class TestRelaysWeatherModes:
         assert relay.target_state == RelayState.ON
         assert relay.mode == RelayMode.ANTIFREEZE
 
-    def test_relays__pump_runs_first_ten_minutes_in_midseason(self):
-        """Test that a PUMP runs for the first 10 minutes of every hour in midseason."""
+    def test_relays__pump_runs_every_third_hour_in_midseason(self):
+        """Test that a PUMP runs for the full first hour of every 3-hour window in midseason."""
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
 
-        local_time = datetime(2025, 1, 6, 10, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        local_time = datetime(2025, 1, 6, 9, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
             assert relay.target_state == RelayState.ON
             assert relay.mode == RelayMode.MIDSEASON
 
-    def test_relays__pump_is_off_outside_first_ten_minutes_in_midseason(self):
-        """Test that a PUMP is off for the rest of the hour in midseason."""
+    def test_relays__pump_is_off_outside_every_third_hour_in_midseason(self):
+        """Test that a PUMP is off during the two idle hours of every 3-hour window in midseason."""
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
 
@@ -329,8 +329,8 @@ class TestRelaysWeatherModes:
         assert relay.target_state == RelayState.OFF
         assert relay.mode == RelayMode.ANTIFREEZE
 
-    def test_relays__servo_stays_open_first_ten_minutes_in_midseason(self):
-        """Test that a SERVO stays open (OFF) for the first 10 minutes of every hour in midseason."""
+    def test_relays__servo_stays_open_every_third_hour_in_midseason(self):
+        """Test that a SERVO stays open (OFF) for the first hour of every 3-hour window in midseason."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
         sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
@@ -338,13 +338,13 @@ class TestRelaysWeatherModes:
         SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
 
-        local_time = datetime(2025, 1, 6, 10, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        local_time = datetime(2025, 1, 6, 9, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
             assert relay.target_state == RelayState.OFF
             assert relay.mode == RelayMode.MIDSEASON
 
-    def test_relays__servo_closes_outside_first_ten_minutes_in_midseason(self):
-        """Test that a SERVO closes (ON) for the rest of the hour in midseason."""
+    def test_relays__servo_closes_outside_every_third_hour_in_midseason(self):
+        """Test that a SERVO closes (ON) during the two idle hours of every 3-hour window in midseason."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
         sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
@@ -355,6 +355,80 @@ class TestRelaysWeatherModes:
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
             assert relay.target_state == RelayState.ON
+            assert relay.mode == RelayMode.MIDSEASON
+
+    @pytest.mark.parametrize(
+        ("hour", "expected_state"),
+        (
+            (0, RelayState.ON),
+            (1, RelayState.OFF),
+            (2, RelayState.OFF),
+            (3, RelayState.ON),
+            (21, RelayState.ON),
+            (22, RelayState.OFF),
+            (23, RelayState.OFF),
+        ),
+    )
+    def test_relays__pump_midseason_cadence_by_hour(self, hour, expected_state):
+        """Verify a PUMP runs only during the first hour of every 3-hour window in midseason."""
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+
+        local_time = datetime(2025, 1, 6, hour, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            assert relay.target_state == expected_state
+            assert relay.mode == RelayMode.MIDSEASON
+
+    @pytest.mark.parametrize(
+        ("hour", "expected_state"),
+        (
+            (0, RelayState.OFF),
+            (1, RelayState.ON),
+            (2, RelayState.ON),
+            (3, RelayState.OFF),
+            (21, RelayState.OFF),
+            (22, RelayState.ON),
+            (23, RelayState.ON),
+        ),
+    )
+    def test_relays__servo_midseason_cadence_by_hour(self, hour, expected_state):
+        """Verify a SERVO stays open only during the first hour of every 3-hour window in midseason."""
+        relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
+        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+
+        local_time = datetime(2025, 1, 6, hour, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            assert relay.target_state == expected_state
+            assert relay.mode == RelayMode.MIDSEASON
+
+    @pytest.mark.parametrize("minute", (0, 30, 59))
+    def test_relays__pump_midseason_active_window_spans_full_hour(self, minute):
+        """Verify the pump midseason window runs for the whole active hour, not only its first 10 minutes."""
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+
+        local_time = datetime(2025, 1, 6, 9, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            assert relay.target_state == RelayState.ON
+            assert relay.mode == RelayMode.MIDSEASON
+
+    @pytest.mark.parametrize("minute", (0, 30, 59))
+    def test_relays__servo_midseason_active_window_spans_full_hour(self, minute):
+        """Verify the servo stays open for the whole active hour, not only its first 10 minutes."""
+        relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
+        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+
+        local_time = datetime(2025, 1, 6, 9, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            assert relay.target_state == RelayState.OFF
             assert relay.mode == RelayMode.MIDSEASON
 
 

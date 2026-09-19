@@ -9,6 +9,7 @@ by the plugin.
 
 _Newest first._
 
+- [MNT-215: Midseason mode](pages/2026-09-19-mnt-215-midseason-mode.md) — Implementation of MNT-215: Midseason mode (2026-09-19)
 - [MNT-208: Boiler dashboard](pages/2026-09-18-mnt-208-boiler-dashboard.md) — Implementation of MNT-208: Boiler dashboard (2026-09-18)
 - [Relay state/mode refactor — review, test sync, and fixes](pages/2026-09-18-relay-state-mode-refactor.md) — Reviewed the relay `state`/`mode` column refactor (29 broken tests), synced the suite to the single-value `target_state`, fixed API update not populating the `state` column and API reads overwriting actual state with the computed target; 259 tests green (2026-09-18)
 - [ebusd lost its device config + refresh timer disabled](pages/2026-09-11-ebusd-config-load-boiler-refresh.md) — Boiler writes worked but reads all returned `element not found`: the long-running ebusd lost outbound HTTPS for a week+ (no Vaillant config loaded) and `boiler-refresh.timer` was disabled; fixed via restart, `--scanconfig=08`, and enabling the timer (2026-09-11)
@@ -38,6 +39,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [PR merge/rebase comment listener marks as read despite errors](pages/2026-07-16-merge-rebase-pr-comment-listener.md)
 - [MNT-206: Boiler mode controller](pages/2026-09-17-mnt-206-boiler-mode-controller.md) — 2026-09-17
 - [MNT-207: Wire boiler mode controller into scheduler tick / cron](pages/2026-09-18-mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron.md) — 2026-09-18
+- [MNT-215: Midseason mode](pages/2026-09-19-mnt-215-midseason-mode.md) — 2026-09-19
 
 ### Type checking & CI flow
 
