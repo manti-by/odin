@@ -9,6 +9,7 @@ interface Esp8266SensorsTileProps {
   sensors: DashboardSensor[];
   isAlive: boolean;
   onEditSensor: (sensor: DashboardSensor) => void;
+  onEditRelaySchedule: (relay: DashboardRelay) => void;
   loading: boolean;
 }
 
@@ -37,7 +38,17 @@ function relayIndicator(relay: DashboardRelay): ReactNode {
   }
 }
 
-export function Esp8266SensorsTile({ sensors, isAlive, onEditSensor, loading }: Esp8266SensorsTileProps) {
+function canManageSchedule(relay: DashboardRelay): boolean {
+  return relay.type === "PUMP" || relay.type === "SERVO";
+}
+
+export function Esp8266SensorsTile({
+  sensors,
+  isAlive,
+  onEditSensor,
+  onEditRelaySchedule,
+  loading,
+}: Esp8266SensorsTileProps) {
   const status = isAlive ? "alive" : "dead";
 
   const title: ReactNode = (
@@ -61,33 +72,48 @@ export function Esp8266SensorsTile({ sensors, isAlive, onEditSensor, loading }: 
         <p className="tile__empty">No Data</p>
       ) : (
         <ul className="sensor-list">
-          {sensors.map((sensor) => (
-            <li
-              key={sensor.sensor_id}
-              className="sensor-row"
-              data-sensor-id={sensor.sensor_id}
-              data-sensor-name={sensor.name}
-              data-target-temp={String(sensor.context?.target_temp ?? "")}
-            >
-              <span className="sensor-row__name">{sensor.name}</span>
-              <span className="sensor-row__relay">
-                {sensor.relay ? relayIndicator(sensor.relay) : <span className="info">nc</span>}
-              </span>
-              <span className="sensor-row__temp">
-                {formatValue(sensor.temp)}
-                <span>°C</span>
-              </span>
-              <span className="sensor-row__humidity">
-                {formatValue(sensor.humidity)}
-                <span>%</span>
-              </span>
-              <span className="sensor-row__edit">
-                <button type="button" className="edit-btn" onClick={() => onEditSensor(sensor)} aria-label="Edit">
-                  <Icon name="settings" alt="settings" width={20} />
-                </button>
-              </span>
-            </li>
-          ))}
+          {sensors.map((sensor) => {
+            const relay = sensor.relay;
+            return (
+              <li
+                key={sensor.sensor_id}
+                className="sensor-row"
+                data-sensor-id={sensor.sensor_id}
+                data-sensor-name={sensor.name}
+                data-target-temp={String(sensor.context?.target_temp ?? "")}
+              >
+                <span className="sensor-row__name">{sensor.name}</span>
+                <span className="sensor-row__relay">
+                  {relay ? relayIndicator(relay) : <span className="info">nc</span>}
+                </span>
+                <span className="sensor-row__temp">
+                  {formatValue(sensor.temp)}
+                  <span>°C</span>
+                </span>
+                <span className="sensor-row__humidity">
+                  {formatValue(sensor.humidity)}
+                  <span>%</span>
+                </span>
+                {relay && canManageSchedule(relay) && (
+                  <span className="sensor-row__edit">
+                    <button
+                      type="button"
+                      className="edit-btn"
+                      onClick={() => onEditRelaySchedule(relay)}
+                      aria-label="Relay schedule"
+                    >
+                      <Icon name="schedule" alt="schedule" width={20} />
+                    </button>
+                  </span>
+                )}
+                <span className="sensor-row__edit">
+                  <button type="button" className="edit-btn" onClick={() => onEditSensor(sensor)} aria-label="Edit">
+                    <Icon name="settings" alt="settings" width={20} />
+                  </button>
+                </span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Tile>

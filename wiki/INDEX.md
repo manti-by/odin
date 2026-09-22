@@ -9,6 +9,7 @@ by the plugin.
 
 _Newest first._
 
+- [MNT-217: Relay schedule component](pages/2026-09-22-mnt-217-relay-schedule-component.md) — Implementation of MNT-217: Relay schedule component (2026-09-22)
 - [ESP8266 relay indicators: SVG icons + mode tooltip](pages/2026-09-21-esp8266-indicator-icons.md) — Replaced blue/red dots with heating/cooling SVG icons for ON/OFF, red/grey dots for UNKNOWN/IGNORED, and moved relay mode into a title tooltip (2026-09-21)
 - [MNT-215: Midseason mode](pages/2026-09-19-mnt-215-midseason-mode.md) — Implementation of MNT-215: Midseason mode (2026-09-19)
 - [MNT-208: Boiler dashboard](pages/2026-09-18-mnt-208-boiler-dashboard.md) — Implementation of MNT-208: Boiler dashboard (2026-09-18)
@@ -41,6 +42,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [MNT-206: Boiler mode controller](pages/2026-09-17-mnt-206-boiler-mode-controller.md) — 2026-09-17
 - [MNT-207: Wire boiler mode controller into scheduler tick / cron](pages/2026-09-18-mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron.md) — 2026-09-18
 - [MNT-215: Midseason mode](pages/2026-09-19-mnt-215-midseason-mode.md) — 2026-09-19
+- [MNT-217: Relay schedule component](pages/2026-09-22-mnt-217-relay-schedule-component.md) — 2026-09-22
 
 ### Type checking & CI flow
 

@@ -8,7 +8,9 @@ import { Icon } from "@/components/icons/Icon";
 import { Modal } from "@/components/modal/Modal";
 import { AliveIndicator } from "@/components/tile/AliveIndicator";
 import type { AliveState } from "@/components/tile/AliveIndicator";
+import { RelayScheduleModal } from "@/components/tile/RelayScheduleModal";
 import { Tile } from "@/components/tile/Tile";
+import type { RelayPeriod } from "@/lib/api/relays";
 import { useState } from "react";
 
 const ALIVE_STATES: { state: AliveState; label: string }[] = [
@@ -16,6 +18,11 @@ const ALIVE_STATES: { state: AliveState; label: string }[] = [
   { state: "dead", label: "Dead (error)" },
   { state: "unknown", label: "Unknown (error)" },
   { state: "ignored", label: "Ignored (neutral)" },
+];
+
+const DEMO_PUMP_SCHEDULE: RelayPeriod[] = [
+  { start_time: "06:00", end_time: "09:00", target_state: "ON" },
+  { start_time: "17:00", end_time: "22:00", target_state: "ON" },
 ];
 
 const TOKENS = [
@@ -54,6 +61,7 @@ function Swatch({ color }: { color: string }) {
 
 export function StyleguidePage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [relayModalOpen, setRelayModalOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
   return (
@@ -218,6 +226,28 @@ export function StyleguidePage() {
             <SubmitButton label="Send" variant="primary" />
           </Form>
         </Modal>
+      </section>
+
+      <section>
+        <h3>RelayScheduleModal</h3>
+        <p>
+          Edits a relay&apos;s periodic schedule: up to 5 start/end periods with a target state (PUMP) or temperature
+          (SERVO), with overlap validation. In the dashboard it loads and saves through the relay API; this demo seeds
+          periods and stubs the submit so it works offline.
+        </p>
+        <SubmitButton label="Open relay schedule" variant="primary" onClick={() => setRelayModalOpen(true)} />
+        <RelayScheduleModal
+          open={relayModalOpen}
+          relayId="demo-relay"
+          relayName="Demo Pump"
+          relayType="PUMP"
+          initialPeriods={DEMO_PUMP_SCHEDULE}
+          onSubmit={async () => {
+            await new Promise((resolve) => setTimeout(resolve, 400));
+          }}
+          onClose={() => setRelayModalOpen(false)}
+          onSuccess={() => {}}
+        />
       </section>
 
       <section>

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from rest_framework import status
@@ -100,12 +102,27 @@ class TestRelaysRetrieveAPI:
 
     def test_relays__retrieve_includes_target_state(self):
         """Test that retrieve response includes target_state field."""
-        self.relay.context = {"schedule": {"0": {"10": True, "11": False}}}
+        self.relay.context = {
+            "schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}]}
+        }
         self.relay.save()
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert "target_state" in response.data
+
+    def test_relays__retrieve_includes_context(self):
+        """Test that retrieve response returns the relay context."""
+        self.relay.context = {
+            "schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}]}
+        }
+        self.relay.save()
+
+        response = self.client.get(self.url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["context"]["schedule"]["periods"] == [
+            {"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}
+        ]
 
     def test_relays__retrieve_non_existent(self):
         """Test that retrieve returns 404 for non-existent relay."""
@@ -118,57 +135,211 @@ class TestRelaysRetrieveAPI:
 class TestRelaysUpdateAPI:
     def setup_method(self):
         self.client = APIClient()
-        self.relay: Relay = RelayFactory()  # noqa
+        self.relay: Relay = RelayFactory(type=RelayType.PUMP, force_state=None)  # noqa
         self.url = reverse("api:v1:relays:retrieve_update", args=(self.relay.relay_id,))
 
-    def test_relays__update(self):
-        response = self.client.patch(self.url, data={"context": {"state": "ON"}}, format="json")
+    @staticmethod
+    def _schedule(*periods: dict) -> dict:
+        return {"context": {"schedule": {"periods": list(periods)}}}
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_schedule(self, mock_publish):
+        """Test that a schedule update persists periods into the relay context."""
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}),
+            format="json",
+        )
         assert response.status_code == status.HTTP_200_OK
 
         self.relay.refresh_from_db()
-        assert self.relay.context["state"] == "ON"
+        assert self.relay.context["schedule"]["periods"] == [
+            {"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}
+        ]
+        mock_publish.assert_called_once_with(relay_id=self.relay.relay_id, state=self.relay.state)
 
-    def test_relays__update_with_existing_context(self):
-        """Test that update merges with existing context."""
-        self.relay.context = {"existing_key": "existing_value", "state": "OFF"}
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_schedule_replaces_existing_schedule(self, mock_publish):
+        """Test that a new schedule replaces the previously stored periods."""
+        self.relay.context = {
+            "schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}]}
+        }
         self.relay.save()
 
-        response = self.client.patch(self.url, data={"context": {"state": "ON"}}, format="json")
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "20:00", "end_time": "22:00", "target_state": "OFF"}),
+            format="json",
+        )
         assert response.status_code == status.HTTP_200_OK
 
         self.relay.refresh_from_db()
-        assert self.relay.context["state"] == "ON"
+        assert self.relay.context["schedule"]["periods"] == [
+            {"start_time": "20:00", "end_time": "22:00", "target_state": "OFF"}
+        ]
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_schedule_preserves_unrelated_context(self, mock_publish):
+        """Test that updating a schedule keeps unrelated context keys."""
+        self.relay.context = {"existing_key": "existing_value"}
+        self.relay.save()
+
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
         assert self.relay.context["existing_key"] == "existing_value"
 
-    def test_relays__update_different_states(self):
-        """Test updating relay to different state values."""
-        response = self.client.patch(self.url, data={"context": {"state": "ON"}}, format="json")
-        assert response.status_code == status.HTTP_200_OK
-        self.relay.refresh_from_db()
-        assert self.relay.context["state"] == "ON"
-        assert self.relay.state == "ON"
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_schedule_recomputes_target_state(self, mock_publish):
+        """Test that a schedule update recomputes and persists state and mode."""
+        self.relay.context = {
+            "schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}]}
+        }
+        self.relay.save()
 
-        # Test OFF state
-        response = self.client.patch(self.url, data={"context": {"state": "OFF"}}, format="json")
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "00:00", "end_time": "00:01", "target_state": "OFF"}),
+            format="json",
+        )
         assert response.status_code == status.HTTP_200_OK
-        self.relay.refresh_from_db()
-        assert self.relay.context["state"] == "OFF"
-        assert self.relay.state == "OFF"
 
-        # Test custom state (not a valid RelayState, mapped to UNKNOWN)
-        response = self.client.patch(self.url, data={"context": {"state": "STANDBY"}}, format="json")
-        assert response.status_code == status.HTTP_200_OK
         self.relay.refresh_from_db()
-        assert self.relay.context["state"] == "STANDBY"
-        assert self.relay.state == RelayState.UNKNOWN
+        assert self.relay.state in (RelayState.ON, RelayState.OFF)
+        assert self.relay.mode is not None
+
+    def test_relays__update_schedule_rejects_invalid_time(self):
+        """Test that malformed times are rejected."""
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "8:00", "end_time": "18:00", "target_state": "ON"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_relays__update_schedule_rejects_more_than_5_periods(self):
+        """Test that more than five periods are rejected."""
+        periods = [
+            {"start_time": f"{hour:02d}:00", "end_time": f"{hour:02d}:30", "target_state": "ON"} for hour in range(6)
+        ]
+        response = self.client.patch(self.url, data=self._schedule(*periods), format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "periods",
+        (
+            (
+                {"start_time": "08:00", "end_time": "12:00", "target_state": "ON"},
+                {"start_time": "11:00", "end_time": "13:00", "target_state": "OFF"},
+            ),
+            (
+                {"start_time": "22:00", "end_time": "06:00", "target_state": "ON"},
+                {"start_time": "05:00", "end_time": "08:00", "target_state": "OFF"},
+            ),
+            (
+                {"start_time": "08:00", "end_time": "18:00", "target_state": "ON"},
+                {"start_time": "09:00", "end_time": "10:00", "target_state": "OFF"},
+            ),
+        ),
+    )
+    def test_relays__update_schedule_rejects_overlapping_periods(self, periods):
+        """Test that overlapping periods are rejected, including overnight spans."""
+        response = self.client.patch(self.url, data=self._schedule(*periods), format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_schedule_allows_adjacent_periods(self, mock_publish):
+        """Test that periods only touching at their boundaries are allowed."""
+        response = self.client.patch(
+            self.url,
+            data=self._schedule(
+                {"start_time": "08:00", "end_time": "12:00", "target_state": "ON"},
+                {"start_time": "12:00", "end_time": "18:00", "target_state": "OFF"},
+            ),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_relays__update_schedule_requires_target_state_for_pump(self):
+        """Test that PUMP periods without target_state are rejected."""
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "08:00", "end_time": "18:00"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_schedule_requires_target_temp_for_servo(self, mock_publish):
+        """Test that SERVO periods without target_temp are rejected."""
+        self.relay.type = RelayType.SERVO
+        self.relay.save()
+
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "08:00", "end_time": "18:00"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_schedule_accepts_target_temp_for_servo(self, mock_publish):
+        """Test that SERVO periods with target_temp are accepted."""
+        self.relay.type = RelayType.SERVO
+        self.relay.save()
+
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "08:00", "end_time": "18:00", "target_temp": 24.5}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.context["schedule"]["periods"][0]["target_temp"] == 24.5
+
+    def test_relays__update_schedule_rejects_valve_relay(self):
+        """Test that periods are rejected for VALVE relays (no actionable target)."""
+        self.relay.type = RelayType.VALVE
+        self.relay.save()
+
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "08:00", "end_time": "18:00"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_schedule_allows_clearing_for_valve(self, mock_publish):
+        """Test that clearing an existing schedule on a VALVE relay is still allowed."""
+        self.relay.type = RelayType.VALVE
+        self.relay.context = {"schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00"}]}}
+        self.relay.save()
+
+        response = self.client.patch(self.url, data=self._schedule(), format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.context["schedule"]["periods"] == []
 
     def test_relays__update_non_existent_relay(self):
         """Test that update returns 404 for non-existent relay."""
         url = reverse("api:v1:relays:retrieve_update", args=("non_existent_id",))
-        response = self.client.patch(url, data={"context": {"state": "ON"}}, format="json")
+        response = self.client.patch(
+            url,
+            data=self._schedule({"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}),
+            format="json",
+        )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_relays__update_with_empty_context(self):
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_with_empty_context(self, mock_publish):
         """Test that update with empty context dict works."""
         self.relay.context = {"existing_key": "existing_value"}
         self.relay.save()
@@ -179,3 +350,24 @@ class TestRelaysUpdateAPI:
         self.relay.refresh_from_db()
         # Empty context should preserve existing context (update, not replace)
         assert "existing_key" in self.relay.context
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=False)
+    def test_relays__update_schedule_logs_publish_failure(self, mock_publish):
+        """Test that a Redis publish failure does not fail the request."""
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        mock_publish.assert_called_once()
+
+    def test_relays__update_requires_authentication(self):
+        """Test that schedule updates require an authenticated session."""
+        client = APIClient()
+        response = client.patch(
+            self.url,
+            data=self._schedule({"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}),
+            format="json",
+        )
+        assert response.status_code in (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN)

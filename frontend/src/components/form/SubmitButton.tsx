@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes } from "react";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   label: string;
-  variant?: "primary" | "secondary" | "outline";
+  variant?: "primary" | "secondary" | "outline" | "danger";
 }
 
 export function SubmitButton({ label, variant = "primary", className, type = "submit", ...rest }: SubmitButtonProps) {
