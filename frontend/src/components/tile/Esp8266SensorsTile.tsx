@@ -42,13 +42,7 @@ function canManageSchedule(relay: DashboardRelay): boolean {
   return relay.type === "PUMP" || relay.type === "SERVO";
 }
 
-export function Esp8266SensorsTile({
-  sensors,
-  isAlive,
-  onEditSensor,
-  onEditRelaySchedule,
-  loading,
-}: Esp8266SensorsTileProps) {
+export function Esp8266SensorsTile({ sensors, isAlive, onEditRelaySchedule, loading }: Esp8266SensorsTileProps) {
   const status = isAlive ? "alive" : "dead";
 
   const title: ReactNode = (
@@ -102,15 +96,10 @@ export function Esp8266SensorsTile({
                       onClick={() => onEditRelaySchedule(relay)}
                       aria-label="Relay schedule"
                     >
-                      <Icon name="schedule" alt="schedule" width={20} />
+                      <Icon name="settings" alt="schedule" width={20} />
                     </button>
                   </span>
                 )}
-                <span className="sensor-row__edit">
-                  <button type="button" className="edit-btn" onClick={() => onEditSensor(sensor)} aria-label="Edit">
-                    <Icon name="settings" alt="settings" width={20} />
-                  </button>
-                </span>
               </li>
             );
           })}

@@ -384,15 +384,27 @@
 
 .period-item__action .form__button {
   min-width: 0;
+  padding: .25rem .75rem;
 }
 
 .relay-schedule__actions {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-flow: row;
+  justify-content: space-between;
+  align-items: end;
+  gap: 2.5rem;
+}
+
+.relay-schedule__actions .left-side {
+  text-align: left;
+}
+
+.relay-schedule__actions .right-side {
+  text-align: right;
 }
 
 .relay-schedule__count {
+  margin-left: 2rem;
   font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--color-text-tertiary);

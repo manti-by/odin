@@ -1,7 +1,6 @@
 const ICON_PATHS: Record<string, string> = {
   graph: "/static/img/graph.svg",
   settings: "/static/img/settings.svg",
-  schedule: "/static/img/schedule.svg",
   cooling: "/static/img/cooling.svg",
   heating: "/static/img/heating.svg",
 };

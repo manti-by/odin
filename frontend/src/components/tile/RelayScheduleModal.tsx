@@ -270,7 +270,7 @@ export function RelayScheduleModal({
     }
   };
 
-  const title = relayName ? `Schedule · ${relayName}` : "Relay schedule";
+  const title = relayName ? relayName : "Relay schedule";
 
   return (
     <Modal open={open} onClose={onClose} title={title}>
@@ -325,7 +325,7 @@ export function RelayScheduleModal({
                     <SubmitButton
                       type="button"
                       label="Remove"
-                      variant="danger"
+                      variant="secondary"
                       onClick={() => removePeriod(period.id)}
                     />
                   </div>
@@ -336,20 +336,23 @@ export function RelayScheduleModal({
         )}
 
         <div className="relay-schedule__actions">
-          <SubmitButton
-            type="button"
-            label="Add period"
-            variant="secondary"
-            onClick={addPeriod}
-            disabled={isLoading || periods.length >= MAX_SCHEDULE_PERIODS}
-          />
-          <span className="relay-schedule__count">
-            {periods.length}/{MAX_SCHEDULE_PERIODS}
-          </span>
+          <div className="left-side">
+            <SubmitButton
+              type="button"
+              label="Add period"
+              variant="secondary"
+              onClick={addPeriod}
+              disabled={isLoading || periods.length >= MAX_SCHEDULE_PERIODS}
+            />
+            <span className="relay-schedule__count">
+              {periods.length}/{MAX_SCHEDULE_PERIODS}
+            </span>
+          </div>
+          <div className="right-side">
+            <FieldStatus tone={isError ? "error" : "info"}>{message || "\u00A0"}</FieldStatus>
+            <SubmitButton label={isSubmitting ? "Saving..." : "Save"} disabled={isSubmitting || isLoading} />
+          </div>
         </div>
-
-        <FieldStatus tone={isError ? "error" : "info"}>{message || "\u00A0"}</FieldStatus>
-        <SubmitButton label={isSubmitting ? "Saving..." : "Save"} disabled={isSubmitting || isLoading} />
       </Form>
     </Modal>
   );
