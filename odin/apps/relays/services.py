@@ -50,8 +50,8 @@ class RelayTargetStateService:
                 # Anti freeze mode, always on
                 return RelayState.ON, RelayMode.ANTIFREEZE
             elif 8 < outside_temp < 15:
-                # Midseason mode, should work for 1 hour every 3rd hour
-                if self.now.hour % 3 == 0:
+                # Midseason mode, should work for 1 hour every 3rd hour, but not at night
+                if self.now.hour >= 6 and self.now.hour % 3 == 0:
                     return RelayState.ON, RelayMode.MIDSEASON
                 return RelayState.OFF, RelayMode.MIDSEASON
 
@@ -83,10 +83,8 @@ class RelayTargetStateService:
                 # Anti freeze mode, do not close
                 return RelayState.OFF, RelayMode.ANTIFREEZE
             elif 8 < outside_temp < 15:
-                # Midseason mode, must work for 1 hour every 3rd hour
-                if self.now.hour % 3 == 0:
-                    return RelayState.OFF, RelayMode.MIDSEASON
-                return RelayState.ON, RelayMode.MIDSEASON
+                # Midseason mode, servos are always open
+                return RelayState.OFF, RelayMode.MIDSEASON
 
         # Get target temp from schedule
         target_temp = sensor.target_temp

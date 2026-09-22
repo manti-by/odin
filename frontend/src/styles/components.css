@@ -82,13 +82,13 @@
   background-color: var(--color-success);
 }
 
-.alive-indicator--cooling {
-  background-color: var(--color-accent);
+.alive-indicator--dead,
+.alive-indicator--unknown {
+  background-color: var(--color-error);
 }
 
-.alive-indicator--dead,
-.alive-indicator--heating {
-  background-color: var(--color-error);
+.alive-indicator--ignored {
+  background-color: var(--color-text-tertiary);
 }
 
 /* ----- Modal (surface-3 rung) ----- */

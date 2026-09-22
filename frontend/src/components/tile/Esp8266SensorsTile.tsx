@@ -1,7 +1,8 @@
 import { Icon } from "@/components/icons/Icon";
+import { AliveIndicator } from "@/components/tile/AliveIndicator";
 import { HomeIndicatorLink } from "@/components/tile/HomeIndicatorLink";
 import { Tile } from "@/components/tile/Tile";
-import type { DashboardSensor } from "@/lib/api/dashboard";
+import type { DashboardRelay, DashboardSensor } from "@/lib/api/dashboard";
 import type { ReactNode } from "react";
 
 interface Esp8266SensorsTileProps {
@@ -16,6 +17,24 @@ function formatValue(value: string | null): string {
   const num = Number.parseFloat(value);
   if (Number.isNaN(num)) return "-";
   return num.toFixed(1);
+}
+
+function relayIndicator(relay: DashboardRelay): ReactNode {
+  const tooltip = relay.mode ?? relay.state ?? undefined;
+  switch (relay.mode) {
+    case "IGNORED":
+      return <AliveIndicator state="ignored" title={tooltip} />;
+    case "UNKNOWN":
+      return <AliveIndicator state="unknown" title={tooltip} />;
+  }
+  switch (relay.state) {
+    case "ON":
+      return <Icon name="heating" alt="heating" width={20} title={tooltip} />;
+    case "OFF":
+      return <Icon name="cooling" alt="cooling" width={20} title={tooltip} />;
+    default:
+      return <AliveIndicator state="unknown" title={tooltip} />;
+  }
 }
 
 export function Esp8266SensorsTile({ sensors, isAlive, onEditSensor, loading }: Esp8266SensorsTileProps) {
@@ -52,20 +71,8 @@ export function Esp8266SensorsTile({ sensors, isAlive, onEditSensor, loading }: 
             >
               <span className="sensor-row__name">{sensor.name}</span>
               <span className="sensor-row__relay">
-                {sensor.relay ? (
-                  <span
-                    className={`alive-indicator alive-indicator--${sensor.relay.is_on ? "cooling" : "heating"}`}
-                    aria-label={sensor.relay.is_on ? "cooling" : "heating"}
-                  />
-                ) : (
-                  <span className="info">nc</span>
-                )}
+                {sensor.relay ? relayIndicator(sensor.relay) : <span className="info">nc</span>}
               </span>
-              {sensor.relay ? (
-                <span className="sensor-row__mode">{sensor.relay.mode ? sensor.relay.mode[0] : "-"}</span>
-              ) : (
-                <span className="info">--</span>
-              )}
               <span className="sensor-row__temp">
                 {formatValue(sensor.temp)}
                 <span>°C</span>

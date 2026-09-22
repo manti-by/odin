@@ -8,6 +8,9 @@ SECRET_KEY = "test-secret-key-for-testing-only"
 
 MEDIA_ROOT = "/tmp/"
 
+# Fast password hashing to speed up test runs (user creation dominates setup time)
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
 # Keep base throttle rates (30/min) but start each throttle test with a fresh cache
 
 LOGGING = {

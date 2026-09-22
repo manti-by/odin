@@ -79,11 +79,6 @@
   background: var(--color-surface-1);
 }
 
-.sensor-row__mode {
-  font-family: var(--font-mono), monospace;
-  color: var(--color-text-tertiary);
-}
-
 /* ----- DS18B20 / Boiler Room tile ----- */
 .sensor-row-group {
   display: flex;

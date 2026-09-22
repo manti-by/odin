@@ -12,8 +12,9 @@ interface IconProps {
   alt: string;
   width?: number;
   className?: string;
+  title?: string;
 }
 
-export function Icon({ name, alt, width = 16, className }: IconProps) {
-  return <img src={ICON_PATHS[name]} alt={alt} width={width} className={className} />;
+export function Icon({ name, alt, width = 16, className, title }: IconProps) {
+  return <img src={ICON_PATHS[name]} alt={alt} width={width} className={className} title={title} />;
 }

@@ -330,7 +330,7 @@ class TestRelaysWeatherModes:
         assert relay.mode == RelayMode.ANTIFREEZE
 
     def test_relays__servo_stays_open_every_third_hour_in_midseason(self):
-        """Test that a SERVO stays open (OFF) for the first hour of every 3-hour window in midseason."""
+        """Test that a SERVO stays open (OFF) in midseason."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
         sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
@@ -343,8 +343,8 @@ class TestRelaysWeatherModes:
             assert relay.target_state == RelayState.OFF
             assert relay.mode == RelayMode.MIDSEASON
 
-    def test_relays__servo_closes_outside_every_third_hour_in_midseason(self):
-        """Test that a SERVO closes (ON) during the two idle hours of every 3-hour window in midseason."""
+    def test_relays__servo_stays_open_outside_every_third_hour_in_midseason(self):
+        """Test that a SERVO stays open (OFF) during the two idle hours of every 3-hour window in midseason."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
         sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
@@ -354,23 +354,24 @@ class TestRelaysWeatherModes:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert relay.target_state == RelayState.ON
+            assert relay.target_state == RelayState.OFF
             assert relay.mode == RelayMode.MIDSEASON
 
     @pytest.mark.parametrize(
         ("hour", "expected_state"),
         (
-            (0, RelayState.ON),
-            (1, RelayState.OFF),
-            (2, RelayState.OFF),
-            (3, RelayState.ON),
+            (0, RelayState.OFF),
+            (3, RelayState.OFF),
+            (5, RelayState.OFF),
+            (6, RelayState.ON),
+            (9, RelayState.ON),
             (21, RelayState.ON),
             (22, RelayState.OFF),
             (23, RelayState.OFF),
         ),
     )
     def test_relays__pump_midseason_cadence_by_hour(self, hour, expected_state):
-        """Verify a PUMP runs only during the first hour of every 3-hour window in midseason."""
+        """Verify a PUMP runs only during the first daytime hour (hour >= 6) of every 3-hour window in midseason."""
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
 
@@ -383,16 +384,18 @@ class TestRelaysWeatherModes:
         ("hour", "expected_state"),
         (
             (0, RelayState.OFF),
-            (1, RelayState.ON),
-            (2, RelayState.ON),
+            (1, RelayState.OFF),
+            (2, RelayState.OFF),
             (3, RelayState.OFF),
+            (6, RelayState.OFF),
+            (9, RelayState.OFF),
             (21, RelayState.OFF),
-            (22, RelayState.ON),
-            (23, RelayState.ON),
+            (22, RelayState.OFF),
+            (23, RelayState.OFF),
         ),
     )
     def test_relays__servo_midseason_cadence_by_hour(self, hour, expected_state):
-        """Verify a SERVO stays open only during the first hour of every 3-hour window in midseason."""
+        """Verify a SERVO stays open (OFF) at every hour in midseason."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
         sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}

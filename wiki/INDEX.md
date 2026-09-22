@@ -9,6 +9,7 @@ by the plugin.
 
 _Newest first._
 
+- [ESP8266 relay indicators: SVG icons + mode tooltip](pages/2026-09-21-esp8266-indicator-icons.md) — Replaced blue/red dots with heating/cooling SVG icons for ON/OFF, red/grey dots for UNKNOWN/IGNORED, and moved relay mode into a title tooltip (2026-09-21)
 - [MNT-215: Midseason mode](pages/2026-09-19-mnt-215-midseason-mode.md) — Implementation of MNT-215: Midseason mode (2026-09-19)
 - [MNT-208: Boiler dashboard](pages/2026-09-18-mnt-208-boiler-dashboard.md) — Implementation of MNT-208: Boiler dashboard (2026-09-18)
 - [Relay state/mode refactor — review, test sync, and fixes](pages/2026-09-18-relay-state-mode-refactor.md) — Reviewed the relay `state`/`mode` column refactor (29 broken tests), synced the suite to the single-value `target_state`, fixed API update not populating the `state` column and API reads overwriting actual state with the computed target; 259 tests green (2026-09-18)

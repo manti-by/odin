@@ -14,8 +14,8 @@ import { useState } from "react";
 const ALIVE_STATES: { state: AliveState; label: string }[] = [
   { state: "alive", label: "Alive (success)" },
   { state: "dead", label: "Dead (error)" },
-  { state: "heating", label: "Heating (error)" },
-  { state: "cooling", label: "Cooling (accent)" },
+  { state: "unknown", label: "Unknown (error)" },
+  { state: "ignored", label: "Ignored (neutral)" },
 ];
 
 const TOKENS = [

@@ -27,7 +27,6 @@ class RelayType(models.TextChoices):
 class RelayState(models.TextChoices):
     ON = "ON", _("ON")
     OFF = "OFF", _("OFF")
-    IGNORED = "IGNORED", _("Ignored")
     UNKNOWN = "UNKNOWN", _("Unknown")
 
     @classmethod

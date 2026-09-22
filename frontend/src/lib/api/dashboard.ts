@@ -4,8 +4,8 @@ export interface DashboardRelay {
   relay_id: string;
   name: string;
   type: string;
-  state: string;
-  mode: string;
+  state: string | null;
+  mode: string | null;
   is_on: boolean;
 }
 
