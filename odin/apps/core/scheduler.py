@@ -37,26 +37,26 @@ def schedule_fetch_traffic():
     call_command("fetch_traffic")
 
 
-@scheduler.scheduled_job("interval", minutes=5, id="update_boiler_mode", max_instances=1)
-def schedule_update_boiler_mode():
-    """React to pump/weather changes within minutes.
+# @scheduler.scheduled_job("interval", minutes=5, id="update_boiler_mode", max_instances=1)
+# def schedule_update_boiler_mode():
+#     """React to pump/weather changes within minutes.
 
-    Uses an interval trigger so the fire time is relative to the previous run:
-    DST transitions in ``settings.TIME_ZONE`` shift the wall-clock time but
-    never skip or duplicate a tick. ``max_instances=1`` prevents overlap, and
-    the ebusd write is additionally serialized by ``BOILER_LOCK_FILE``. While
-    the weekly boiling override (Sat 01:00-02:00) is active the controller
-    skips, so the scheduled hot-water cycle is never fought.
-    ``scheduled_job`` always registers with ``replace_existing=True``, so a
-    scheduler restart picks up the latest definition.
+#     Uses an interval trigger so the fire time is relative to the previous run:
+#     DST transitions in ``settings.TIME_ZONE`` shift the wall-clock time but
+#     never skip or duplicate a tick. ``max_instances=1`` prevents overlap, and
+#     the ebusd write is additionally serialized by ``BOILER_LOCK_FILE``. While
+#     the weekly boiling override (Sat 01:00-02:00) is active the controller
+#     skips, so the scheduled hot-water cycle is never fought.
+#     ``scheduled_job`` always registers with ``replace_existing=True``, so a
+#     scheduler restart picks up the latest definition.
 
-    The controller must never take down the blocking scheduler process, so any
-    error (ebusd unavailable, DB read failure, unexpected mode) is logged and
-    swallowed; the next tick retries.
-    """
-    from odin.apps.boiler.services.controller import run_boiler_mode_controller
+#     The controller must never take down the blocking scheduler process, so any
+#     error (ebusd unavailable, DB read failure, unexpected mode) is logged and
+#     swallowed; the next tick retries.
+#     """
+#     from odin.apps.boiler.services.controller import run_boiler_mode_controller
 
-    try:
-        run_boiler_mode_controller()
-    except Exception:
-        logger.exception("Boiler mode controller failed")
+#     try:
+#         run_boiler_mode_controller()
+#     except Exception:
+#         logger.exception("Boiler mode controller failed")
