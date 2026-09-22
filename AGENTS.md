@@ -3,19 +3,23 @@
 ## Project Overview
 
 Odin is a Django-based IoT dashboard for sensor management, weather monitoring, and home automation.
-It uses Django 5.2.7 with Django REST Framework, PostgreSQL, Redis, and modern Python tooling.
+It uses Django 6 with Django REST Framework, PostgreSQL, Redis, and modern Python tooling.
 
 ## Project Structure
 
 - All REST API related code placed in `./odin/api/`
 - Django apps with models, admin classes, migrations and management commands in `./odin/apps/`
-- eBus boiler control in `./odin/apps/boiler/` — `BoilerService` + `boiler_set` /
-  `boiler_status` management commands (no models/API; talks to the local `ebusd` daemon)
+- eBus boiler control in `./odin/apps/boiler/` — `BoilerStatusService` (+ `BoilerModeService` /
+  `BoilerModeController` decision logic) in the `services/` package (`ebusd.py`, `status.py`,
+  `mode.py`, `controller.py`, `schedule.py`), `boiler_set` / `boiler_status` management commands,
+  and a read API in `./odin/api/v1/boiler/` (`GET /api/v1/boiler/status/`); talks to the local
+  `ebusd` daemon
 - Tests in `./odin/tests/`
 - React + TypeScript SPA (Vite + Bun + Biome) in `./frontend/` — dashboard UI, built to `frontend/dist/`
-- Public-facing Django templates/static JS/CSS were retired; only the Django admin
-  assets remain under `./odin/templates/admin/`, `./odin/static/css/admin/`, and
-  `./odin/static/js/admin/`
+- Public-facing Django templates/static JS/CSS are no longer rendered (orphans still on disk
+  under `./odin/templates/` and `./odin/static/{css,js}/`, slated for deletion); only the Django
+  admin assets under `./odin/templates/admin/`, `./odin/static/css/admin/`, and
+  `./odin/static/js/admin/` are live
 - Shared static assets (favicons, images, fonts) live in `./odin/static/`
 - Nginx configuration in `./configs/`
 
@@ -143,6 +147,7 @@ uv run pre-commit run
 # Individual tools
 uv run ruff check .                 # Backend lint
 uv run ruff format .                # Backend format
+uv run ty check                     # Backend type checking (also runs via `make check`)
 uv run bandit -c pyproject.toml .   # Backend security analysis
 make frontend-check                 # Frontend lint (Biome) + typecheck (tsc)
 ```
@@ -439,14 +444,14 @@ Python-only pre-commit hooks are configured in `.pre-commit-config.yaml`:
 - Bandit (security analysis)
 - pyupgrade (Python 3.13+ syntax)
 - validate-pyproject (checks on pyproject.toml)
-- curlylint (HTML linting for the Django admin templates)
 
 Frontend checks are not part of pre-commit; they run via `make frontend-check`
 (`biome check` + `tsc -b --noEmit`) and the `frontend-checks` job in CI.
 
 ## Deployment
 
-- Services: gunicorn, worker, scheduler, sensor-consumer, nginx
+- Services: gunicorn, worker, scheduler, consumer (`manage.py consumer`, Redis pub/sub for
+  sensor + relay updates), nginx
 - Boiler/eBUS services: `ebusd` (must run with `--enabledefine --scanconfig=08`) and
   `boiler-refresh.timer` (must be **enabled**; re-sends the last boiler override every 60 s)
 - Use systemd for service management

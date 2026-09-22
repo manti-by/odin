@@ -16,7 +16,7 @@ Source link: [https://github.com/manti-by/odin/](https://github.com/manti-by/odi
 
 Requirements: Python 3.13, PostgreSQL 18, Redis 7, UV.
 
-Version: v1.6.0
+Version: v1.23.2
 
 
 ## Quick Start
@@ -30,7 +30,7 @@ Version: v1.6.0
 ```shell
 git clone https://github.com/manti-by/odin.git
 cd odin/
-uv sync --all-extras
+uv sync --all-extras --dev
 ```
 
 3. Install frontend dependencies and build the SPA:
@@ -44,8 +44,8 @@ make frontend
 
 ```shell
 uv run python manage.py collectstatic --no-input
-uv run python manage.py createsuperuser
 uv run python manage.py migrate
+uv run python manage.py createsuperuser
 ```
 
 5. Run development server:
@@ -61,6 +61,7 @@ uv run python manage.py runserver
 |---------------|--------------------------------------------|
 | `make run`    | Start development server                   |
 | `make migrate`| Run database migrations                    |
+| `make migrations`| Create new migrations                   |
 | `make messages`| Generate translation files (ru)           |
 | `make locale` | Compile translation files (ru)             |
 | `make static` | Collect static files (depends on `frontend`) |
@@ -69,12 +70,14 @@ uv run python manage.py runserver
 | `make frontend-lint` | Lint frontend (Biome)              |
 | `make frontend-typecheck` | Type-check frontend (tsc)       |
 | `make frontend-check` | Lint + type-check frontend (run by `make check`) |
-| `make test`   | Run test suite                             |
-| `make check`  | Run frontend checks + pre-commit hooks     |
+| `make test`   | Run test suite (excluding view tests)      |
+| `make full-test` | Run the full test suite                 |
+| `make verify` | Lint + format-check + full test suite      |
+| `make check`  | Frontend checks + `ty` + pre-commit hooks  |
 | `make django-checks` | Run Django checks                  |
-| `make pip`    | Install dev dependencies                   |
 | `make update` | Update dependencies and pre-commit hooks   |
-| `make ci`     | Run pip, checks, and tests                 |
+| `make ci`     | Run install, checks, and tests             |
+| `make deploy` | Pull, migrate, collect static, restart services |
 | `make dump`   | Backup database to odin.sql                |
 | `make restore`| Restore database from odin.sql             |
 
@@ -98,9 +101,10 @@ make test
 ## Code Quality
 
 ```shell
-make check      # Run all pre-commit hooks
+make check      # Frontend checks + ty + all pre-commit hooks
 uv run ruff check .       # Lint only
 uv run ruff format .      # Format only
+uv run ty check           # Type-check only
 uv run bandit -c pyproject.toml .  # Security analysis
 ```
 
@@ -136,25 +140,28 @@ Details: [`wiki/pages/2026-09-11-ebusd-config-load-boiler-refresh.md`](wiki/page
 ## Project Structure
 
 ```
-odin/
-├── api/              # REST API endpoints
-├── apps/             # Django apps (core, relays, sensors, weather)
-├── tests/            # Test suite
-├── static/           # Admin assets, favicons, images, fonts (no public CSS/JS)
-├── templates/admin/  # Django admin templates only
-├── locale/           # Translation files
-├── settings/         # Django settings (base, dev, prod, test, sqlite)
-├── configs/          # Nginx and other configs
-├── frontend/         # React + TypeScript SPA (Vite + Bun + Biome)
-├── opencode.json     # Opencode configuration
-└── manage.py         # Django management script
+odin/                    # Django project package
+├── api/                 # REST API endpoints (incl. v1/boiler/)
+├── apps/                # Django apps (boiler, core, currency, electricity,
+│                        #   music, provider, relays, sensors, weather)
+├── tests/               # Test suite
+├── static/              # Favicons, images, fonts + live admin assets
+│                        #   (orphaned public CSS/JS still on disk, unrendered)
+├── templates/admin/     # Live Django admin templates
+│                        #   (orphaned public templates still on disk, unrendered)
+├── locale/              # Translation files
+└── settings/            # Django settings (base, dev, prod, test, sqlite)
+configs/                 # Nginx, systemd units, ebusd config
+frontend/                # React + TypeScript SPA (Vite + Bun + Biome)
+opencode.json            # Opencode configuration
+manage.py                # Django management script
 ```
 
 
 ## Frontend (React SPA)
 
 The dashboard UI is a React + TypeScript SPA under `frontend/`, built with
-[Vite](https://vitejs.dev/), bundled by [Bun](https://bun.sh/), and
+[Vite](https://vitejs.dev/) and run via [Bun](https://bun.sh/), and
 linted/formatted with [Biome](https://biomejs.dev/). It replaces the previous
 Django-rendered dashboard (`index.html`, `chart.html`, `header.html`,
 `modal.html`).

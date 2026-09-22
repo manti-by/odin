@@ -1,53 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@langchain/langsmith-opencode", "@manti-by/openwiki@0.5.0-a"],
+  "plugin": [],
   "mcp": {
     "Playwright": {
       "type": "local",
       "command": ["npx", "-y", "@tontoko/fast-playwright-mcp@0.1.3"],
       "enabled": true
-    }
-  },
-  "command": {
-    "fix-review-findings": {
-      "template": "/skill:fix-review-findings",
-      "description": "Fix PR review findings",
-      "agent": "build"
-    },
-    "release-name": {
-      "template": "/skill:release-name",
-      "description": "Generate release name",
-      "agent": "plan"
-    },
-    "release-notes": {
-      "template": "/skill:release-notes",
-      "description": "Generate release notes",
-      "agent": "plan"
-    },
-    "wiki-agents-file": {
-      "template": "/skill:wiki-agents-file",
-      "description": "Update AGENTS.md file",
-      "agent": "build"
-    },
-    "wiki-archive": {
-      "template": "/skill:wiki-archive",
-      "description": "Archive old wiki pages",
-      "agent": "build"
-    },
-    "wiki-consistency": {
-      "template": "/skill:wiki-consistency",
-      "description": "Check wiki pages for consistency",
-      "agent": "build"
-    },
-    "wiki-dedup": {
-      "template": "/skill:wiki-dedup",
-      "description": "Check wiki pages for duplicates",
-      "agent": "build"
-    },
-    "wiki-update": {
-      "template": "/skill:wiki-sync",
-      "description": "Create or update wiki for the current session",
-      "agent": "build"
     }
   },
   "lsp": {
