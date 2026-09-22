@@ -12,6 +12,11 @@ from odin.apps.sensors.models import Sensor
 from odin.tests.factories import AuthFactory, RelayFactory, SensorFactory, UserFactory
 
 
+RELAY_SCHEDULE_PAYLOAD = {
+    "context": {"schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}]}}
+}
+
+
 @pytest.mark.django_db
 class TestApplicationServerKeyView:
     """VAPID public key endpoint is public (AllowAny) for PWA push registration."""
@@ -125,7 +130,7 @@ class TestCsrfEnforcement:
 
         response = self.client.patch(
             url,
-            data={"context": {"state": "ON"}},
+            data=RELAY_SCHEDULE_PAYLOAD,
             format="json",
             HTTP_X_CSRFTOKEN=csrf_token.value,
         )

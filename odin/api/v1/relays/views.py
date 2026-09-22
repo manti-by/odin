@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from rest_framework import mixins
@@ -8,8 +9,12 @@ from rest_framework.viewsets import GenericViewSet
 
 from odin.api.authentication import TokenAuthentication
 from odin.api.v1.relays.serializers import RelaySerializer, RelayUpdateSerializer
+from odin.apps.core.redis_bus import RedisBus
 from odin.apps.relays.models import Relay, RelayState
 from odin.apps.relays.services import RelayTargetStateService
+
+
+logger = logging.getLogger(__name__)
 
 
 class RelaysBaseView(GenericViewSet):
@@ -45,23 +50,25 @@ class RelayRetrieveUpdateView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin
 
     def perform_update(self, serializer: RelayUpdateSerializer) -> None:
         data: dict[str, Any] = serializer.validated_data
-        if not serializer.instance:
+        if not (item := serializer.instance):
             raise ValueError("Relay instance not found")
 
         update_fields = []
-        item: Relay = serializer.instance
         if "context" in data:
             item.context.update(**data["context"])
             update_fields.append("context")
 
-            if (state := data["context"].get("state")) is not None:
-                item.state = RelayState.__members__.get(state, RelayState.UNKNOWN)
-                update_fields.append("state")
-
         if "force_state" in data:
             item.force_state = data["force_state"]
+            update_fields.append("force_state")
+
+        if "context" in data or "force_state" in data:
             item.state, item.mode = RelayTargetStateService(item).get_target_state()
-            update_fields.extend(["force_state", "state", "mode"])
+            update_fields.extend(["state", "mode"])
 
         if update_fields:
             item.save(update_fields=update_fields)
+
+            if item.state in (RelayState.ON, RelayState.OFF):
+                if not RedisBus.publish_relay_control(relay_id=item.relay_id, state=item.state):
+                    logger.error(f"Failed to publish relay control message to Redis for relay {item.relay_id}")

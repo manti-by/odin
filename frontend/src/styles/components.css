@@ -297,6 +297,16 @@
   background-color: transparent;
 }
 
+.form__button--danger {
+  color: #fff;
+  background-color: var(--color-error);
+  border: 1px solid var(--color-error);
+}
+
+.form__button--danger:hover {
+  opacity: 0.9;
+}
+
 .form__button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -332,4 +342,63 @@
 /* Recharts tooltip override (referenced inline in TSX, but these catch fallbacks) */
 .recharts-default-tooltip {
   border-radius: var(--radius-sm) !important;
+}
+
+/* ----- Relay schedule modal ----- */
+.relay-schedule {
+  min-width: min(560px, 80vw);
+}
+
+.relay-schedule__periods {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.period-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  padding: 0.65rem;
+}
+
+.period-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem;
+}
+
+.period-fields .form__group {
+  flex: 1 1 7rem;
+  min-width: 6.5rem;
+  margin-bottom: 0;
+}
+
+.period-item__action {
+  display: flex;
+  align-items: flex-end;
+}
+
+.period-item__action .form__button {
+  min-width: 0;
+}
+
+.relay-schedule__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.relay-schedule__count {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+}
+
+.relay-schedule__loading {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
 }

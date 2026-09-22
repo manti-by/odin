@@ -32,9 +32,9 @@ class RelayTargetStateService:
             except (KeyError, ValueError):
                 continue
 
-            if start_time <= end_time and start_time <= current_time <= end_time:
+            if start_time <= end_time and start_time <= current_time < end_time:
                 return period
-            elif end_time <= start_time and (current_time >= start_time or current_time <= end_time):
+            elif end_time < start_time and (current_time >= start_time or current_time < end_time):
                 return period
 
         return None
@@ -89,7 +89,7 @@ class RelayTargetStateService:
         # Get target temp from schedule
         target_temp = sensor.target_temp
         if period := self.get_current_period_from_schedule():
-            if period.get("target_temp"):
+            if period.get("target_temp") is not None:
                 target_temp = Decimal(str(period["target_temp"]))
 
         # No target temperature configured, nothing to regulate against
