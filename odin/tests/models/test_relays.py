@@ -66,6 +66,23 @@ class TestRelaysPeriodicSchedule:
             assert self.relay.target_state == RelayState.ON
             assert self.relay.mode == RelayMode.FALLBACK
 
+    def test_relays__periodic_schedule_end_time_belongs_to_next_period(self):
+        """Test that a period's end time is exclusive, so adjacent periods do not overlap."""
+        self.relay.context = {
+            "schedule": {
+                "periods": [
+                    {"start_time": "08:00", "end_time": "12:00", "target_state": "ON"},
+                    {"start_time": "12:00", "end_time": "18:00", "target_state": "OFF"},
+                ]
+            }
+        }
+        self.relay.save()
+
+        local_time = datetime(2025, 1, 6, 12, 0, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            assert self.relay.target_state == RelayState.OFF
+            assert self.relay.mode == RelayMode.BASIC
+
     def test_relays__periodic_schedule_handles_overnight_periods(self):
         """Test that periodic schedule handles periods that span midnight."""
         self.relay.context = {
@@ -136,6 +153,21 @@ class TestServoPeriodOverride:
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
             # Should use period target_temp (25.0), temp 22.0 < 25.0 - 1.0 = 24.0, so ON
             assert self.relay.target_state == RelayState.ON
+            assert self.relay.mode == RelayMode.BASIC
+
+    def test_relays__servo_uses_zero_period_target_temp(self):
+        """Test that a period target_temp of 0 is honored instead of the sensor default."""
+        self.sensor.context = {"target_temp": "20.0", "hysteresis": "1.0"}
+        self.sensor.save()
+        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("10.0"), created_at=timezone.now())
+
+        self.relay.context = {"schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_temp": 0}]}}
+        self.relay.save()
+
+        local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            # 10.0 > 0 + 1.0, so the circuit closes instead of regulating against the sensor's 20.0
+            assert self.relay.target_state == RelayState.OFF
             assert self.relay.mode == RelayMode.BASIC
 
 

@@ -56,6 +56,10 @@ class RelayScheduleSerializer(BaseSerializer):
     periods = serializers.ListField(child=RelayPeriodSerializer(), max_length=MAX_SCHEDULE_PERIODS, required=False)
 
     def validate_periods(self, periods: list[dict]) -> list[dict]:
+        for period in periods:
+            if period["start_time"] == period["end_time"]:
+                raise serializers.ValidationError("Schedule period start and end times must differ")
+
         ranges = [range_ for period in periods for range_ in _time_ranges(period["start_time"], period["end_time"])]
         for index, (start_a, end_a) in enumerate(ranges):
             for start_b, end_b in ranges[index + 1 :]:

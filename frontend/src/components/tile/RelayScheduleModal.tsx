@@ -94,9 +94,6 @@ function splitRanges(start: number, end: number): [number, number][] {
 }
 
 function validatePeriods(periods: EditablePeriod[], relayType: RelayType): string | null {
-  if (periods.length === 0) {
-    return "Add at least one period.";
-  }
   if (periods.length > MAX_SCHEDULE_PERIODS) {
     return `At most ${MAX_SCHEDULE_PERIODS} periods are allowed.`;
   }
@@ -107,6 +104,9 @@ function validatePeriods(periods: EditablePeriod[], relayType: RelayType): strin
     const end = timeToMinutes(period.endTime);
     if (start === null || end === null) {
       return "Each period needs a valid start and end time.";
+    }
+    if (start === end) {
+      return "Each period needs different start and end times.";
     }
     if (relayType === "SERVO") {
       if (period.targetTemp.trim() === "") {
@@ -167,6 +167,7 @@ export function RelayScheduleModal({
 
     setMessage("");
     setIsError(false);
+    setIsSubmitting(false);
 
     const { relayId: currentRelayId, initialPeriods: seed } = loadRef.current;
 
@@ -225,7 +226,7 @@ export function RelayScheduleModal({
   };
 
   const removePeriod = (id: number) => {
-    setPeriods((current) => (current.length <= 1 ? current : current.filter((period) => period.id !== id)));
+    setPeriods((current) => current.filter((period) => period.id !== id));
   };
 
   const handleSubmit: FormEventHandler = async (event) => {
@@ -265,7 +266,6 @@ export function RelayScheduleModal({
     } catch {
       setIsError(true);
       setMessage("Could not save relay schedule.");
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -327,7 +327,6 @@ export function RelayScheduleModal({
                       label="Remove"
                       variant="danger"
                       onClick={() => removePeriod(period.id)}
-                      disabled={periods.length <= 1}
                     />
                   </div>
                 </div>

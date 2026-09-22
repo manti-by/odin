@@ -222,6 +222,15 @@ class TestRelaysUpdateAPI:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    def test_relays__update_schedule_rejects_zero_duration_period(self):
+        """Test that a period with equal start and end times is rejected."""
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"start_time": "08:00", "end_time": "08:00", "target_state": "ON"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     def test_relays__update_schedule_rejects_more_than_5_periods(self):
         """Test that more than five periods are rejected."""
         periods = [
@@ -324,6 +333,7 @@ class TestRelaysUpdateAPI:
 
         response = self.client.patch(self.url, data=self._schedule(), format="json")
         assert response.status_code == status.HTTP_200_OK
+        mock_publish.assert_not_called()
 
         self.relay.refresh_from_db()
         assert self.relay.context["schedule"]["periods"] == []

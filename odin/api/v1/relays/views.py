@@ -10,7 +10,7 @@ from rest_framework.viewsets import GenericViewSet
 from odin.api.authentication import TokenAuthentication
 from odin.api.v1.relays.serializers import RelaySerializer, RelayUpdateSerializer
 from odin.apps.core.redis_bus import RedisBus
-from odin.apps.relays.models import Relay
+from odin.apps.relays.models import Relay, RelayState
 from odin.apps.relays.services import RelayTargetStateService
 
 
@@ -69,5 +69,6 @@ class RelayRetrieveUpdateView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin
         if update_fields:
             item.save(update_fields=update_fields)
 
-            if not RedisBus.publish_relay_control(relay_id=item.relay_id, state=item.state):
-                logger.error(f"Failed to publish relay control message to Redis for relay {item.relay_id}")
+            if item.state in (RelayState.ON, RelayState.OFF):
+                if not RedisBus.publish_relay_control(relay_id=item.relay_id, state=item.state):
+                    logger.error(f"Failed to publish relay control message to Redis for relay {item.relay_id}")
