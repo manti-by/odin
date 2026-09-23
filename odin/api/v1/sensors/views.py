@@ -16,11 +16,12 @@ from odin.api.authentication import TokenAuthentication
 from odin.api.v1.sensors.serializers import (
     ChartOptionsQueryParamsSerializer,
     ChartQueryParamsSerializer,
+    DashboardSensorsSerializer,
     SensorLogSerializer,
     SensorSerializer,
     SensorUpdateSerializer,
 )
-from odin.apps.sensors.models import Sensor, SensorLog
+from odin.apps.sensors.models import Sensor, SensorLog, SensorType
 from odin.apps.sensors.services import get_chart_data
 
 
@@ -85,6 +86,35 @@ class DS18B20DataView(SensorDataView):
 
 class ESP8266DataView(SensorDataView):
     queryset = Sensor.objects.active().esp8266()
+
+
+class DashboardSensorsView(APIView):
+    authentication_classes = ()
+    permission_classes = (AllowAny,)
+    sensor_type: SensorType
+
+    def get_visible_sensors(self) -> query.QuerySet:
+        return Sensor.objects.active().visible().filter(type=self.sensor_type).order_by("order")
+
+    def get_is_alive(self) -> bool:
+        return all([sensor.is_alive for sensor in Sensor.objects.active().filter(type=self.sensor_type)])
+
+    def get(self, request: Request) -> Response:
+        sensors = list(self.get_visible_sensors())
+        for sensor in sensors:
+            if sensor.relay:
+                sensor.relay.refresh_state()
+
+        data = {"is_alive": self.get_is_alive(), "sensors": sensors}
+        return Response(DashboardSensorsSerializer(data).data)
+
+
+class ESP8266DashboardView(DashboardSensorsView):
+    sensor_type = SensorType.ESP8266
+
+
+class DS18B20DashboardView(DashboardSensorsView):
+    sensor_type = SensorType.DS18B20
 
 
 class ChartOptionsView(APIView):

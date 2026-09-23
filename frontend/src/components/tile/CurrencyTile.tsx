@@ -1,10 +1,11 @@
 import { Tile } from "@/components/tile/Tile";
-import type { ExchangeRate } from "@/lib/api/dashboard";
+import type { ExchangeRate } from "@/lib/api/currency";
 
 interface CurrencyTileProps {
   rates: ExchangeRate[];
   trends: Record<string, number>;
   loading: boolean;
+  error?: string | null;
 }
 
 function formatDate(dateStr: string): string {
@@ -18,15 +19,24 @@ function formatRate(value: string): string {
   return num.toFixed(4);
 }
 
-export function CurrencyTile({ rates, trends, loading }: CurrencyTileProps) {
+export function CurrencyTile({ rates, trends, loading, error }: CurrencyTileProps) {
   return (
     <Tile title="Exchange Rates">
-      {loading ? (
+      {loading && rates.length === 0 ? (
         <p className="tile__loading">Loading...</p>
+      ) : error && rates.length === 0 ? (
+        <p className="tile__empty" role="alert">
+          {error}
+        </p>
       ) : rates.length === 0 ? (
         <p className="tile__empty">No Data</p>
       ) : (
         <>
+          {error && (
+            <p className="tile__empty" role="alert">
+              {error}
+            </p>
+          )}
           <div className="currency-date info">{formatDate(rates[0].date)}</div>
           <div className="currency-rates">
             {rates.map((rate) => {

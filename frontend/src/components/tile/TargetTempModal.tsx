@@ -3,8 +3,8 @@ import { Form } from "@/components/form/Form";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { TextField } from "@/components/form/TextField";
 import { Modal } from "@/components/modal/Modal";
-import type { DashboardSensor } from "@/lib/api/dashboard";
 import { sensorsApi } from "@/lib/api/sensors";
+import type { DashboardSensor } from "@/lib/api/sensors-dashboard";
 import { type FormEventHandler, useEffect, useRef, useState } from "react";
 
 interface TargetTempModalProps {

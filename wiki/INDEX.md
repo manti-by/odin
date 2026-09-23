@@ -9,6 +9,7 @@ by the plugin.
 
 _Newest first._
 
+- [MNT-218: Split dashboard API](pages/2026-09-23-mnt-218-split-dashboard-api.md) — Implementation of MNT-218: Split dashboard API (2026-09-23)
 - [Relay mode computed on read](pages/2026-09-23-relay-mode-compute-on-read.md) — SERVO-BR and SERVO-HL showed different modes because `mode` is a persisted snapshot; compute `mode`/`target_state` on read in the CRUD and dashboard serializers (2026-09-23)
 - [MNT-217: Relay schedule component](pages/2026-09-22-mnt-217-relay-schedule-component.md) — Implementation of MNT-217: Relay schedule component (2026-09-22)
 - [ESP8266 relay indicators: SVG icons + mode tooltip](pages/2026-09-21-esp8266-indicator-icons.md) — Replaced blue/red dots with heating/cooling SVG icons for ON/OFF, red/grey dots for UNKNOWN/IGNORED, and moved relay mode into a title tooltip (2026-09-21)
@@ -54,6 +55,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 
 - [React frontend PR review — apply CodeRabbit + coding-guideline fixes](pages/2026-07-21-react-frontend-pr-review-fixes.md)
 - [Fix React SPA dev-mode issues: docs, proxy, base path, StrictMode Loading bug](pages/2026-08-24-react-spa-dev-mode-debug.md)
+- [MNT-218: Split dashboard API](pages/2026-09-23-mnt-218-split-dashboard-api.md)
 
 _Also belongs to "Type checking & CI flow" (wired frontend checks into Makefile/CI)._
 - [MNT-208: Boiler dashboard](pages/2026-09-18-mnt-208-boiler-dashboard.md) — 2026-09-18

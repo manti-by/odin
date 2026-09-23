@@ -1,5 +1,7 @@
 import { Tile } from "@/components/tile/Tile";
-import type { ErrorLogEntry, TrafficData, VoltageData } from "@/lib/api/dashboard";
+import type { VoltageData } from "@/lib/api/electricity";
+import type { ErrorLogEntry } from "@/lib/api/logs";
+import type { TrafficData } from "@/lib/api/provider";
 
 interface SystemErrorsTileProps {
   traffic: TrafficData | null;
@@ -7,6 +9,7 @@ interface SystemErrorsTileProps {
   systemdStatus: Record<string, { status?: string; error?: string }>;
   errorLogs: ErrorLogEntry[];
   loading: boolean;
+  error?: string | null;
 }
 
 function formatLogTime(asctime: string): string {
@@ -31,7 +34,7 @@ function formatVoltage(value: string): string {
   return Math.round(num).toString();
 }
 
-export function SystemErrorsTile({ voltage, systemdStatus, errorLogs, loading }: SystemErrorsTileProps) {
+export function SystemErrorsTile({ voltage, systemdStatus, errorLogs, loading, error }: SystemErrorsTileProps) {
   const systemdEntries = Object.entries(systemdStatus);
 
   return (
@@ -40,6 +43,11 @@ export function SystemErrorsTile({ voltage, systemdStatus, errorLogs, loading }:
         <p className="tile__loading">Loading...</p>
       ) : (
         <>
+          {error && (
+            <p className="tile__empty" role="alert">
+              {error}
+            </p>
+          )}
           {voltage && (
             <div className="system-voltage">
               <span className="label">Voltage</span>
