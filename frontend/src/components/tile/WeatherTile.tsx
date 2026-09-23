@@ -1,9 +1,10 @@
 import { Tile } from "@/components/tile/Tile";
-import type { WeatherData } from "@/lib/api/dashboard";
+import type { WeatherData } from "@/lib/api/weather";
 
 interface WeatherTileProps {
   weather: WeatherData | null;
   loading: boolean;
+  error?: string | null;
 }
 
 const DIRECTIONS = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
@@ -14,15 +15,24 @@ function windDirectionAbbr(degrees: number | null): string {
   return DIRECTIONS[index];
 }
 
-export function WeatherTile({ weather, loading }: WeatherTileProps) {
+export function WeatherTile({ weather, loading, error }: WeatherTileProps) {
   return (
     <Tile title="Weather" className="weather">
-      {loading ? (
+      {loading && !weather ? (
         <p className="tile__loading">Loading...</p>
+      ) : error && !weather ? (
+        <p className="tile__empty" role="alert">
+          {error}
+        </p>
       ) : !weather ? (
         <p className="tile__empty">No Data</p>
       ) : (
         <>
+          {error && (
+            <p className="tile__empty" role="alert">
+              {error}
+            </p>
+          )}
           <div className="weather-temp attr">
             <span>{weather.temp_display}°C</span>
             <span className="meta info">

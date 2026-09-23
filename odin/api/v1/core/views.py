@@ -11,13 +11,11 @@ from rest_framework.views import APIView
 
 from odin.api.v1.core.serializers import (
     ChartTypeSerializer,
-    DashboardSerializer,
     DeviceSubscriptionSerializer,
-    LogSerializer,
     WeatherChartQueryParamsSerializer,
 )
-from odin.apps.core.models import Device, Log
-from odin.apps.core.services import build_index_context
+from odin.apps.core.models import Device
+from odin.apps.core.services import systemd_status
 from odin.apps.core.utils import create_metric_gauge_chart
 from odin.apps.weather.services import get_weather_chart_data
 
@@ -58,14 +56,6 @@ class DeviceView(CreateAPIView, ListAPIView):
         Device.objects.create(subscription=subscription, browser=browser, is_active=True)
 
 
-class LogsView(CreateAPIView):
-    permission_classes = (AllowAny,)
-    serializer_class = LogSerializer
-
-    def perform_create(self, serializer: LogSerializer):
-        Log.objects.create(**serializer.validated_data)
-
-
 class HealthCheckView(RetrieveAPIView):
     authentication_classes = ()
     permission_classes = (AllowAny,)
@@ -87,16 +77,6 @@ class ChartView(RetrieveAPIView):
         return HttpResponse(contents, content_type="image/svg+xml")
 
 
-class DashboardView(APIView):
-    authentication_classes = ()
-    permission_classes = (AllowAny,)
-
-    def get(self, request: Request, *args: list, **kwargs: dict) -> Response:
-        context = build_index_context()
-        serializer = DashboardSerializer(context)
-        return Response(serializer.data)
-
-
 class WeatherChartView(APIView):
     authentication_classes = ()
     permission_classes = (AllowAny,)
@@ -106,6 +86,14 @@ class WeatherChartView(APIView):
         serializer.is_valid(raise_exception=True)
         data = get_weather_chart_data(**serializer.validated_data)
         return Response(data)
+
+
+class SystemdStatusView(APIView):
+    authentication_classes = ()
+    permission_classes = (AllowAny,)
+
+    def get(self, request: Request, *args: list, **kwargs: dict) -> Response:
+        return Response(systemd_status())
 
 
 class CsrfTokenView(APIView):

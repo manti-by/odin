@@ -8,9 +8,15 @@ import { SystemErrorsTile } from "@/components/tile/SystemErrorsTile";
 import { TargetTempModal } from "@/components/tile/TargetTempModal";
 import { WeatherTile } from "@/components/tile/WeatherTile";
 import { useBoilerStatus } from "@/hooks/useBoilerStatus";
-import { useDashboardData } from "@/hooks/useDashboardData";
-import type { DashboardRelay, DashboardSensor } from "@/lib/api/dashboard";
+import { useErrorLogs } from "@/hooks/useErrorLogs";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { useDs18B20Dashboard, useEsp8266Dashboard } from "@/hooks/useSensorsDashboard";
+import { useSystemdStatus } from "@/hooks/useSystemdStatus";
+import { useTraffic } from "@/hooks/useTraffic";
+import { useVoltage } from "@/hooks/useVoltage";
+import { useWeather } from "@/hooks/useWeather";
 import type { RelayType } from "@/lib/api/relays";
+import type { DashboardRelay, DashboardSensor } from "@/lib/api/sensors-dashboard";
 import { useState } from "react";
 
 function toRelayType(value: string | undefined): RelayType {
@@ -18,8 +24,15 @@ function toRelayType(value: string | undefined): RelayType {
 }
 
 export function DashboardPage() {
-  const { data, loading, error, reload } = useDashboardData();
-  const { data: boiler, loading: boilerLoading, error: boilerError } = useBoilerStatus();
+  const esp8266 = useEsp8266Dashboard();
+  const ds18b20 = useDs18B20Dashboard();
+  const weather = useWeather();
+  const boiler = useBoilerStatus();
+  const exchangeRates = useExchangeRates();
+  const voltage = useVoltage();
+  const traffic = useTraffic();
+  const errorLogs = useErrorLogs();
+  const systemd = useSystemdStatus();
   const [selectedSensor, setSelectedSensor] = useState<DashboardSensor | null>(null);
   const [selectedRelay, setSelectedRelay] = useState<DashboardRelay | null>(null);
 
@@ -32,7 +45,11 @@ export function DashboardPage() {
   };
 
   const handleModalSuccess = () => {
-    void reload();
+    if (selectedSensor?.type === "ESP8266") {
+      esp8266.reload();
+    } else {
+      ds18b20.reload();
+    }
   };
 
   const handleEditRelaySchedule = (relay: DashboardRelay) => {
@@ -44,51 +61,41 @@ export function DashboardPage() {
   };
 
   const handleRelayModalSuccess = () => {
-    void reload();
+    esp8266.reload();
   };
-
-  if (error && !data) {
-    return (
-      <section>
-        <p className="error" role="alert">
-          {error}
-        </p>
-        <button type="button" onClick={() => void reload()} disabled={loading}>
-          {loading ? "Loading..." : "Retry"}
-        </button>
-      </section>
-    );
-  }
 
   return (
     <section>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
       <ResponsiveGrid>
         <Esp8266SensorsTile
-          sensors={data?.sensors.esp8266 ?? []}
-          isAlive={data?.home_sensors_is_alive ?? true}
+          sensors={esp8266.data?.sensors ?? []}
+          isAlive={esp8266.data?.is_alive ?? true}
           onEditSensor={handleEditSensor}
           onEditRelaySchedule={handleEditRelaySchedule}
-          loading={loading}
+          loading={esp8266.loading}
+          error={esp8266.error}
         />
         <Ds18b20SensorsTile
-          sensors={data?.sensors.ds18b20 ?? []}
-          isAlive={data?.boiler_sensors_is_alive ?? true}
-          loading={loading}
+          sensors={ds18b20.data?.sensors ?? []}
+          isAlive={ds18b20.data?.is_alive ?? true}
+          loading={ds18b20.loading}
+          error={ds18b20.error}
         />
-        <WeatherTile weather={data?.weather ?? null} loading={loading} />
-        <BoilerTile status={boiler} loading={boilerLoading} error={boilerError} />
-        <CurrencyTile rates={data?.exchange_rates ?? []} trends={data?.exchange_rates_trends ?? {}} loading={loading} />
+        <WeatherTile weather={weather.data} loading={weather.loading} error={weather.error} />
+        <BoilerTile status={boiler.data} loading={boiler.loading} error={boiler.error} />
+        <CurrencyTile
+          rates={exchangeRates.data?.rates ?? []}
+          trends={exchangeRates.data?.trends ?? {}}
+          loading={exchangeRates.loading}
+          error={exchangeRates.error}
+        />
         <SystemErrorsTile
-          traffic={data?.traffic ?? null}
-          voltage={data?.voltage ?? null}
-          systemdStatus={data?.systemd_status ?? {}}
-          errorLogs={data?.error_logs ?? []}
-          loading={loading}
+          traffic={traffic.data}
+          voltage={voltage.data}
+          systemdStatus={systemd.data ?? {}}
+          errorLogs={errorLogs.data ?? []}
+          loading={voltage.loading || traffic.loading || errorLogs.loading || systemd.loading}
+          error={voltage.error ?? traffic.error ?? errorLogs.error ?? systemd.error}
         />
       </ResponsiveGrid>
       <TargetTempModal
