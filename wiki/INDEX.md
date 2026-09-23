@@ -9,6 +9,7 @@ by the plugin.
 
 _Newest first._
 
+- [Relay mode computed on read](pages/2026-09-23-relay-mode-compute-on-read.md) — SERVO-BR and SERVO-HL showed different modes because `mode` is a persisted snapshot; compute `mode`/`target_state` on read in the CRUD and dashboard serializers (2026-09-23)
 - [MNT-217: Relay schedule component](pages/2026-09-22-mnt-217-relay-schedule-component.md) — Implementation of MNT-217: Relay schedule component (2026-09-22)
 - [ESP8266 relay indicators: SVG icons + mode tooltip](pages/2026-09-21-esp8266-indicator-icons.md) — Replaced blue/red dots with heating/cooling SVG icons for ON/OFF, red/grey dots for UNKNOWN/IGNORED, and moved relay mode into a title tooltip (2026-09-21)
 - [MNT-215: Midseason mode](pages/2026-09-19-mnt-215-midseason-mode.md) — Implementation of MNT-215: Midseason mode (2026-09-19)
