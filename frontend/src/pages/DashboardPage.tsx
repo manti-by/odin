@@ -69,7 +69,7 @@ export function DashboardPage() {
       <ResponsiveGrid>
         <Esp8266SensorsTile
           sensors={esp8266.data?.sensors ?? []}
-          isAlive={esp8266.data?.is_alive ?? true}
+          isAlive={esp8266.data?.is_alive}
           onEditSensor={handleEditSensor}
           onEditRelaySchedule={handleEditRelaySchedule}
           loading={esp8266.loading}
@@ -77,7 +77,7 @@ export function DashboardPage() {
         />
         <Ds18b20SensorsTile
           sensors={ds18b20.data?.sensors ?? []}
-          isAlive={ds18b20.data?.is_alive ?? true}
+          isAlive={ds18b20.data?.is_alive}
           loading={ds18b20.loading}
           error={ds18b20.error}
         />

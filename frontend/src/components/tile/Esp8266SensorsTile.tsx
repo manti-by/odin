@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 
 interface Esp8266SensorsTileProps {
   sensors: DashboardSensor[];
-  isAlive: boolean;
+  isAlive?: boolean | null;
   onEditSensor: (sensor: DashboardSensor) => void;
   onEditRelaySchedule: (relay: DashboardRelay) => void;
   loading: boolean;
@@ -44,7 +44,7 @@ function canManageSchedule(relay: DashboardRelay): boolean {
 }
 
 export function Esp8266SensorsTile({ sensors, isAlive, onEditRelaySchedule, loading, error }: Esp8266SensorsTileProps) {
-  const status = isAlive ? "alive" : "dead";
+  const status = isAlive == null ? "unknown" : isAlive ? "alive" : "dead";
 
   const title: ReactNode = (
     <>

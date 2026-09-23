@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 
 interface Ds18b20SensorsTileProps {
   sensors: DashboardSensor[];
-  isAlive: boolean;
+  isAlive?: boolean | null;
   loading: boolean;
   error?: string | null;
 }
@@ -18,7 +18,7 @@ function formatLinkedTemp(value: string | null): string {
 }
 
 export function Ds18b20SensorsTile({ sensors, isAlive, loading, error }: Ds18b20SensorsTileProps) {
-  const status = isAlive ? "alive" : "dead";
+  const status = isAlive == null ? "unknown" : isAlive ? "alive" : "dead";
 
   const title: ReactNode = (
     <>
