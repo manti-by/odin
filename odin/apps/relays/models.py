@@ -117,12 +117,15 @@ class Relay(models.Model):
 
     @property
     def target_state(self) -> RelayState:
+        self.state, self.mode = self.get_target_state()
+        self.save()
+        return self.state
+
+    def get_target_state(self) -> tuple[RelayState, RelayMode]:
+        """Compute the target state and mode without persisting them."""
         from odin.apps.relays.services import RelayTargetStateService
 
-        self.state, self.mode = RelayTargetStateService(self).get_target_state()
-        self.save()
-
-        return self.state
+        return RelayTargetStateService(self).get_target_state()
 
     def refresh_state(self) -> str | None:
         """Refresh relay state from Redis and persist it.

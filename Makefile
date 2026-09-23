@@ -4,6 +4,9 @@ frontend-install:
 frontend: frontend-install
 	bun run --cwd frontend build
 
+frontend-dev: frontend-install
+	bun run --cwd frontend dev
+
 frontend-lint: frontend-install
 	bun run --cwd frontend lint
 
@@ -12,7 +15,7 @@ frontend-typecheck: frontend-install
 
 frontend-check: frontend-lint frontend-typecheck
 
-.PHONY: run shell migrate migrations messages locale static deploy test full-test verify check django-checks install update ci dump restore agent-instance wiki-dedup wiki-consistency frontend frontend-install frontend-lint frontend-typecheck frontend-check
+.PHONY: run shell migrate migrations messages locale static deploy test full-test verify check django-checks install update ci dump restore agent-instance wiki-dedup wiki-consistency frontend frontend-install frontend-dev frontend-lint frontend-typecheck frontend-check
 
 run:
 	uv run manage.py runserver

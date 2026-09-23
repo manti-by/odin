@@ -49,8 +49,12 @@ class DashboardRelaySerializer(serializers.Serializer):
     name = serializers.CharField(max_length=32)
     type = serializers.CharField(max_length=32)
     state = serializers.CharField(max_length=32)
-    mode = serializers.CharField(max_length=32)
+    mode = serializers.SerializerMethodField()
     is_on = serializers.BooleanField()
+
+    def get_mode(self, obj: Any) -> str:
+        _, mode = obj.get_target_state()
+        return str(mode)
 
 
 class LinkedSensorSerializer(serializers.Serializer):

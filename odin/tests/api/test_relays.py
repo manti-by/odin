@@ -1,13 +1,16 @@
+from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
 
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
-from odin.apps.relays.models import Relay, RelayState, RelayType
-from odin.tests.factories import RelayFactory
+from odin.apps.relays.models import Relay, RelayMode, RelayState, RelayType
+from odin.apps.sensors.models import Sensor
+from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory
 
 
 @pytest.mark.django_db
@@ -123,6 +126,21 @@ class TestRelaysRetrieveAPI:
         assert response.data["context"]["schedule"]["periods"] == [
             {"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}
         ]
+
+    def test_relays__retrieve_computes_mode_on_read(self):
+        """Mode is recomputed on read so a stale stored mode is never returned."""
+        pump: Relay = RelayFactory(type=RelayType.PUMP, state=RelayState.OFF)
+        relay: Relay = RelayFactory(type=RelayType.SERVO, related_relay=pump, mode=RelayMode.MIDSEASON)
+        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+
+        url = reverse("api:v1:relays:retrieve_update", args=(relay.relay_id,))
+        response = self.client.get(url, format="json")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["mode"] == RelayMode.IGNORED
 
     def test_relays__retrieve_non_existent(self):
         """Test that retrieve returns 404 for non-existent relay."""

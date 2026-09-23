@@ -4,7 +4,6 @@ from rest_framework import serializers
 
 from odin.api.utils.serializers import BaseSerializer
 from odin.apps.relays.models import Relay, RelayType
-from odin.apps.relays.services import RelayTargetStateService
 
 
 MAX_SCHEDULE_PERIODS = 5
@@ -35,14 +34,15 @@ class RelaySerializer(BaseSerializer):
     name = serializers.CharField()
     type = serializers.CharField()
     state = serializers.CharField()
-    mode = serializers.CharField()
     context = serializers.JSONField()
-    target_state = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(read_only=True)
 
-    def get_target_state(self, obj: Relay) -> str:
-        state, _ = RelayTargetStateService(obj).get_target_state()
-        return str(state)
+    def to_representation(self, instance: Relay) -> dict:
+        data = super().to_representation(instance)
+        state, mode = instance.get_target_state()
+        data["mode"] = str(mode)
+        data["target_state"] = str(state)
+        return data
 
 
 class RelayPeriodSerializer(BaseSerializer):

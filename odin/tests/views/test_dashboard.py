@@ -17,6 +17,7 @@ from odin.apps.core.models import Log
 from odin.apps.core.redis_bus import RedisBus
 from odin.apps.currency.models import Currency
 from odin.apps.provider.models import Traffic
+from odin.apps.relays.models import RelayMode, RelayState, RelayType
 from odin.apps.sensors.models import SensorType
 from odin.tests.factories import (
     ExchangeRateFactory,
@@ -144,6 +145,22 @@ class TestDashboardAPI:
         assert ds["relay"]["is_on"] is True
         assert ds["linked_sensor"]["sensor_id"] == "linked1"
         assert ds["linked_sensor"]["temp"] == "25.00"
+
+    def test_dashboard__relay_mode_computed_on_read(self):
+        """Relay mode is recomputed on read so the tile never shows a stale mode."""
+        pump = RelayFactory(relay_id="pump1", type=RelayType.PUMP, state=RelayState.OFF)
+        RelayFactory(relay_id="servo1", type=RelayType.SERVO, related_relay=pump, mode=RelayMode.MIDSEASON)
+        sensor = SensorFactory(type=SensorType.ESP8266, sensor_id="esp1", relay_id="servo1", is_visible=True)
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor_id="esp1", temp=Decimal("23.0"), created_at=timezone.now())
+
+        with patch.object(RedisBus, "get_relay_latest_message", return_value={"data": {"state": "OFF"}}):
+            response = self.client.get(self.url, format="json")
+
+        assert response.status_code == status.HTTP_200_OK
+        relay = response.data["sensors"]["esp8266"][0]["relay"]
+        assert relay["mode"] == RelayMode.IGNORED
 
     def test_dashboard__exchange_rates_and_trends(self):
         today = date.today()
