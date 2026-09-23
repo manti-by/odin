@@ -30,9 +30,9 @@ function relayIndicator(relay: DashboardRelay): ReactNode {
   }
   switch (relay.state) {
     case "ON":
-      return <Icon name="heating" alt="cooling" width={20} title={tooltip} />;
+      return <Icon name="cooling" alt="cooling" width={20} title={tooltip} />;
     case "OFF":
-      return <Icon name="cooling" alt="heating" width={20} title={tooltip} />;
+      return <Icon name="heating" alt="heating" width={20} title={tooltip} />;
     default:
       return <AliveIndicator state="unknown" title={tooltip} />;
   }
