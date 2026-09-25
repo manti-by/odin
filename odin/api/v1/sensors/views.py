@@ -58,10 +58,10 @@ class SensorsLogView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericView
     serializer_class = SensorLogSerializer
 
     def get_queryset(self) -> query.QuerySet:
-        return SensorLog.objects.current()
+        return SensorLog.objects.current().select_related("sensor")
 
     def perform_create(self, serializer: SensorLogSerializer) -> SensorLog:
-        return SensorLog.objects.create(**serializer.validated_data)
+        return serializer.save()
 
 
 class SensorDataView(APIView):
@@ -93,19 +93,15 @@ class DashboardSensorsView(APIView):
     permission_classes = (AllowAny,)
     sensor_type: SensorType
 
-    def get_visible_sensors(self) -> query.QuerySet:
-        return Sensor.objects.active().visible().filter(type=self.sensor_type).order_by("order")
-
-    def get_is_alive(self) -> bool:
-        return all([sensor.is_alive for sensor in Sensor.objects.active().filter(type=self.sensor_type)])
-
     def get(self, request: Request) -> Response:
-        sensors = list(self.get_visible_sensors())
+        sensors = (
+            Sensor.objects.active().visible().filter(type=self.sensor_type).select_related("relay").order_by("order")
+        )
         for sensor in sensors:
             if sensor.relay:
                 sensor.relay.refresh_state()
 
-        data = {"is_alive": self.get_is_alive(), "sensors": sensors}
+        data = {"is_alive": all(sensor.is_alive for sensor in sensors), "sensors": sensors}
         return Response(DashboardSensorsSerializer(data).data)
 
 

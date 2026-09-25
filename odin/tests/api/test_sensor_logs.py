@@ -51,18 +51,18 @@ class TestSensorsLogsAPI:
     def test_sensors__list(self):
         sensor_01 = SensorFactory()
 
-        SensorLogFactory(sensor_id=sensor_01.sensor_id)
+        SensorLogFactory(sensor=sensor_01)
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 1
 
-        SensorLogFactory(sensor_id=sensor_01.sensor_id)
+        SensorLogFactory(sensor=sensor_01)
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 1
 
         sensor_02 = SensorFactory()
-        SensorLogFactory(sensor_id=sensor_02.sensor_id)
+        SensorLogFactory(sensor=sensor_02)
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 2
@@ -131,15 +131,15 @@ class TestSensorsLogsAPI:
         inactive_sensor = SensorFactory(is_active=False, sensor_id="inactive")
 
         # Create multiple logs for sensor1 - only latest should appear
-        SensorLogFactory(sensor_id=sensor1.sensor_id, created_at=timezone.now() - timedelta(hours=2))
-        SensorLogFactory(sensor_id=sensor1.sensor_id, created_at=timezone.now() - timedelta(hours=1))
-        latest_log = SensorLogFactory(sensor_id=sensor1.sensor_id, created_at=timezone.now())
+        SensorLogFactory(sensor=sensor1, created_at=timezone.now() - timedelta(hours=2))
+        SensorLogFactory(sensor=sensor1, created_at=timezone.now() - timedelta(hours=1))
+        latest_log = SensorLogFactory(sensor=sensor1, created_at=timezone.now())
 
         # Create log for sensor2
-        SensorLogFactory(sensor_id=sensor2.sensor_id, created_at=timezone.now())
+        SensorLogFactory(sensor=sensor2, created_at=timezone.now())
 
         # Create log for inactive sensor - should not appear
-        SensorLogFactory(sensor_id=inactive_sensor.sensor_id, created_at=timezone.now())
+        SensorLogFactory(sensor=inactive_sensor, created_at=timezone.now())
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -152,15 +152,15 @@ class TestSensorsLogsAPI:
 
         # Verify latest log for sensor1 is returned
         sensor1_log = next(log for log in response.data["results"] if log["sensor_id"] == sensor1.sensor_id)
-        assert sensor1_log["sensor_id"] == latest_log.sensor_id
+        assert sensor1_log["sensor_id"] == latest_log.sensor.sensor_id
 
     def test_sensors__list_different_sensor_types(self):
         """Test that list works with different sensor types."""
         ds18b20_sensor = SensorFactory(type=SensorType.DS18B20, is_active=True)
         esp8266_sensor = SensorFactory(type=SensorType.ESP8266, is_active=True)
 
-        SensorLogFactory(sensor_id=ds18b20_sensor.sensor_id)
-        SensorLogFactory(sensor_id=esp8266_sensor.sensor_id)
+        SensorLogFactory(sensor=ds18b20_sensor)
+        SensorLogFactory(sensor=esp8266_sensor)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -174,7 +174,7 @@ class TestSensorsLogsAPI:
         """Test that list returns empty when no active sensors with logs exist."""
         # Create inactive sensor with log
         inactive_sensor = SensorFactory(is_active=False)
-        SensorLogFactory(sensor_id=inactive_sensor.sensor_id)
+        SensorLogFactory(sensor=inactive_sensor)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -183,19 +183,19 @@ class TestSensorsLogsAPI:
     def test_sensors__response_fields(self):
         """Test that response includes all expected fields."""
         sensor = SensorFactory(is_active=True)
-        log = SensorLogFactory(sensor_id=sensor.sensor_id, temp=22.5, humidity=65.0)
+        log = SensorLogFactory(sensor=sensor, temp=22.5, humidity=65.0)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
 
         log_data = response.data["results"][0]
-        assert log_data["sensor_id"] == log.sensor_id
+        assert log_data["sensor_id"] == log.sensor.sensor_id
         assert float(log_data["temp"]) == float(log.temp)
 
     def test_sensors__create_updates_existing_context(self):
         """Test that creating a log for a sensor that already has a log updates the current log."""
         sensor = SensorFactory(is_active=True)
-        SensorLogFactory(sensor_id=sensor.sensor_id, temp=20.0, created_at=timezone.now() - timedelta(hours=1))
+        SensorLogFactory(sensor=sensor, temp=20.0, created_at=timezone.now() - timedelta(hours=1))
 
         # Create new log for same sensor
         data = SensorLogDataFactory(sensor_id=sensor.sensor_id, temp=22.5)

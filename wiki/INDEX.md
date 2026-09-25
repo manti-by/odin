@@ -9,6 +9,14 @@ by the plugin.
 
 _Newest first._
 
+- [Silk profiler unreachable — SPA catch-all shadows /silk/](pages/2026-09-24-silk-route-spa-catchall-shadow.md) —
+  Local dev server was down (both pages refused), and `/silk/` also served the SPA `index.html` because the
+  catch-all `re_path` didn't exclude `silk`; added `silk(?:$|/)` to the lookahead (2026-09-24)
+
+- [SensorLog and Sensor Relay FK Migrations](pages/2026-09-24-sensorlog-sensor-fk-migration.md) — Replaced
+  SensorLog.sensor_id and Sensor.relay_id CharFields with nullable FKs and batch data migrations; API contracts
+  unchanged (2026-09-24)
+
 - [MNT-218: Split dashboard API](pages/2026-09-23-mnt-218-split-dashboard-api.md) — Implementation of MNT-218: Split dashboard API (2026-09-23)
 - [Relay mode computed on read](pages/2026-09-23-relay-mode-compute-on-read.md) — SERVO-BR and SERVO-HL showed different modes because `mode` is a persisted snapshot; compute `mode`/`target_state` on read in the CRUD and dashboard serializers (2026-09-23)
 - [MNT-217: Relay schedule component](pages/2026-09-22-mnt-217-relay-schedule-component.md) — Implementation of MNT-217: Relay schedule component (2026-09-22)

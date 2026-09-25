@@ -178,8 +178,8 @@ class TestSensorsModelProperties:
     def test_sensors__temp_returns_latest_log_temp(self):
         """Test that temp returns temperature from the latest log."""
         sensor: Sensor = SensorFactory()  # noqa
-        older_log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("22.5"))  # noqa
-        newer_log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.5"))  # noqa
+        older_log: SensorLog = SensorLogFactory(sensor=sensor, temp=Decimal("22.5"))  # noqa
+        newer_log: SensorLog = SensorLogFactory(sensor=sensor, temp=Decimal("23.5"))  # noqa
         newer_log.created_at = older_log.created_at + timedelta(hours=1)
         newer_log.save()
         assert sensor.temp == Decimal("23.5")
@@ -197,14 +197,14 @@ class TestSensorsModelProperties:
         offset to `None` (regression: MNT-185).
         """
         sensor: Sensor = SensorFactory(humidity_offset=Decimal("5.0"))  # noqa
-        SensorLogFactory(sensor_id=sensor.sensor_id, humidity=None)  # noqa
+        SensorLogFactory(sensor=sensor, humidity=None)  # noqa
         assert sensor.humidity is None
 
     def test_sensors__humidity_returns_latest_log_humidity(self):
         """Test that humidity returns humidity from latest log."""
         sensor: Sensor = SensorFactory()  # noqa
-        older_log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, humidity=Decimal("65.0"))  # noqa
-        newer_log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, humidity=Decimal("70.0"))  # noqa
+        older_log: SensorLog = SensorLogFactory(sensor=sensor, humidity=Decimal("65.0"))  # noqa
+        newer_log: SensorLog = SensorLogFactory(sensor=sensor, humidity=Decimal("70.0"))  # noqa
         newer_log.created_at = older_log.created_at + timedelta(hours=1)
         newer_log.save()
         assert sensor.humidity == Decimal("70.0")
@@ -212,30 +212,41 @@ class TestSensorsModelProperties:
     def test_sensors__temp_includes_temp_offset(self):
         """Test that temp property includes temp_offset in calculation."""
         sensor: Sensor = SensorFactory(temp_offset=Decimal("2.5"))  # noqa
-        log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("20.0"))  # noqa
+        log: SensorLog = SensorLogFactory(sensor=sensor, temp=Decimal("20.0"))  # noqa
         assert sensor.temp == Decimal("22.5")
 
     def test_sensors__temp_with_negative_offset(self):
         """Test that temp property handles negative offset correctly."""
         sensor: Sensor = SensorFactory(temp_offset=Decimal("-1.5"))  # noqa
-        log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("25.0"))  # noqa
+        log: SensorLog = SensorLogFactory(sensor=sensor, temp=Decimal("25.0"))  # noqa
         assert sensor.temp == Decimal("23.5")
 
     def test_sensors__humidity_includes_humidity_offset(self):
         """Test that humidity property includes humidity_offset in calculation."""
         sensor: Sensor = SensorFactory(humidity_offset=Decimal("5.0"))  # noqa
-        log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, humidity=Decimal("60.0"))  # noqa
+        log: SensorLog = SensorLogFactory(sensor=sensor, humidity=Decimal("60.0"))  # noqa
         assert sensor.humidity == Decimal("65.0")
 
     def test_sensors__humidity_with_negative_offset(self):
         """Test that humidity property handles negative offset correctly."""
         sensor: Sensor = SensorFactory(humidity_offset=Decimal("-10.0"))  # noqa
-        log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, humidity=Decimal("80.0"))  # noqa
+        log: SensorLog = SensorLogFactory(sensor=sensor, humidity=Decimal("80.0"))  # noqa
         assert sensor.humidity == Decimal("70.0")
 
     def test_sensors__zero_offset_does_not_change_value(self):
         """Test that zero offset returns an original value."""
         sensor: Sensor = SensorFactory(temp_offset=Decimal("0.0"), humidity_offset=Decimal("0.0"))  # noqa
-        log: SensorLog = SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("22.5"), humidity=Decimal("55.0"))  # noqa
+        log: SensorLog = SensorLogFactory(sensor=sensor, temp=Decimal("22.5"), humidity=Decimal("55.0"))  # noqa
         assert sensor.temp == Decimal("22.5")
         assert sensor.humidity == Decimal("55.0")
+
+    def test_sensors__linked_sensor_resolves_via_fk(self):
+        """Test that linked_sensor points at the related sensor row."""
+        linked: Sensor = SensorFactory()  # noqa
+        sensor: Sensor = SensorFactory(linked_sensor=linked)  # noqa
+        assert sensor.linked_sensor == linked
+
+    def test_sensors__linked_sensor_none_when_unset(self):
+        """Test that linked_sensor is None when no relation is set."""
+        sensor: Sensor = SensorFactory()  # noqa
+        assert sensor.linked_sensor is None

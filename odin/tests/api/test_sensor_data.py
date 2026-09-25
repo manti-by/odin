@@ -44,11 +44,11 @@ class TestDS18B20DataAPI:
         # Create DS18B20 sensor with logs
         ds18b20_sensor = SensorFactory(type=SensorType.DS18B20, is_active=True, sensor_id="ds18b20_1")
         now = timezone.now()
-        SensorLogFactory(sensor_id=ds18b20_sensor.sensor_id, created_at=now)
+        SensorLogFactory(sensor=ds18b20_sensor, created_at=now)
 
         # Create ESP8266 sensor with logs - should not be included
         esp8266_sensor = SensorFactory(type=SensorType.ESP8266, is_active=True, sensor_id="esp8266_1")
-        SensorLogFactory(sensor_id=esp8266_sensor.sensor_id, created_at=now)
+        SensorLogFactory(sensor=esp8266_sensor, created_at=now)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -60,8 +60,8 @@ class TestDS18B20DataAPI:
         active_sensor = SensorFactory(type=SensorType.DS18B20, is_active=True, sensor_id="active_1")
         inactive_sensor = SensorFactory(type=SensorType.DS18B20, is_active=False, sensor_id="inactive_1")
         now = timezone.now()
-        SensorLogFactory(sensor_id=active_sensor.sensor_id, created_at=now)
-        SensorLogFactory(sensor_id=inactive_sensor.sensor_id, created_at=now)
+        SensorLogFactory(sensor=active_sensor, created_at=now)
+        SensorLogFactory(sensor=inactive_sensor, created_at=now)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -75,11 +75,11 @@ class TestDS18B20DataAPI:
 
         # Create log within last 12 hours
         recent_log_time = now - timedelta(hours=6)
-        SensorLogFactory(sensor_id=sensor.sensor_id, created_at=recent_log_time, temp=22.5)
+        SensorLogFactory(sensor=sensor, created_at=recent_log_time, temp=22.5)
 
         # Create log older than 12 hours - should not be included
         old_log_time = now - timedelta(hours=13)
-        SensorLogFactory(sensor_id=sensor.sensor_id, created_at=old_log_time, temp=21.0)
+        SensorLogFactory(sensor=sensor, created_at=old_log_time, temp=21.0)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -93,7 +93,7 @@ class TestDS18B20DataAPI:
         """Test that the response has the correct data structure."""
         sensor = SensorFactory(type=SensorType.DS18B20, is_active=True, sensor_id="sensor_1", name="Test Sensor")
         now = timezone.now()
-        SensorLogFactory(sensor_id=sensor.sensor_id, created_at=now, temp=22.5)
+        SensorLogFactory(sensor=sensor, created_at=now, temp=22.5)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -123,11 +123,11 @@ class TestDS18B20DataAPI:
 
         now = timezone.now()
         # Create multiple logs for sensor1
-        SensorLogFactory(sensor_id=sensor1.sensor_id, created_at=now - timedelta(hours=2), temp=22.0)
-        SensorLogFactory(sensor_id=sensor1.sensor_id, created_at=now - timedelta(hours=1), temp=22.5)
+        SensorLogFactory(sensor=sensor1, created_at=now - timedelta(hours=2), temp=22.0)
+        SensorLogFactory(sensor=sensor1, created_at=now - timedelta(hours=1), temp=22.5)
 
         # Create log for sensor2
-        SensorLogFactory(sensor_id=sensor2.sensor_id, created_at=now - timedelta(hours=1), temp=23.0)
+        SensorLogFactory(sensor=sensor2, created_at=now - timedelta(hours=1), temp=23.0)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -171,10 +171,10 @@ class TestESP8266DataAPI:
         """Test that only ESP8266 sensors are included, not DS18B20."""
         esp8266_sensor = SensorFactory(type=SensorType.ESP8266, is_active=True, sensor_id="esp8266_1")
         now = timezone.now()
-        SensorLogFactory(sensor_id=esp8266_sensor.sensor_id, created_at=now)
+        SensorLogFactory(sensor=esp8266_sensor, created_at=now)
 
         ds18b20_sensor = SensorFactory(type=SensorType.DS18B20, is_active=True, sensor_id="ds18b20_1")
-        SensorLogFactory(sensor_id=ds18b20_sensor.sensor_id, created_at=now)
+        SensorLogFactory(sensor=ds18b20_sensor, created_at=now)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -186,8 +186,8 @@ class TestESP8266DataAPI:
         active_sensor = SensorFactory(type=SensorType.ESP8266, is_active=True, sensor_id="active_1")
         inactive_sensor = SensorFactory(type=SensorType.ESP8266, is_active=False, sensor_id="inactive_1")
         now = timezone.now()
-        SensorLogFactory(sensor_id=active_sensor.sensor_id, created_at=now)
-        SensorLogFactory(sensor_id=inactive_sensor.sensor_id, created_at=now)
+        SensorLogFactory(sensor=active_sensor, created_at=now)
+        SensorLogFactory(sensor=inactive_sensor, created_at=now)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -200,10 +200,10 @@ class TestESP8266DataAPI:
         now = timezone.now()
 
         recent_log_time = now - timedelta(hours=6)
-        SensorLogFactory(sensor_id=sensor.sensor_id, created_at=recent_log_time, temp=22.5)
+        SensorLogFactory(sensor=sensor, created_at=recent_log_time, temp=22.5)
 
         old_log_time = now - timedelta(hours=13)
-        SensorLogFactory(sensor_id=sensor.sensor_id, created_at=old_log_time, temp=21.0)
+        SensorLogFactory(sensor=sensor, created_at=old_log_time, temp=21.0)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -216,7 +216,7 @@ class TestESP8266DataAPI:
         """Test that the response has the correct data structure."""
         sensor = SensorFactory(type=SensorType.ESP8266, is_active=True, sensor_id="sensor_1", name="Test ESP8266")
         now = timezone.now()
-        SensorLogFactory(sensor_id=sensor.sensor_id, created_at=now, temp=22.5)
+        SensorLogFactory(sensor=sensor, created_at=now, temp=22.5)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -242,10 +242,10 @@ class TestESP8266DataAPI:
         sensor2 = SensorFactory(type=SensorType.ESP8266, is_active=True, sensor_id="esp8266_2", name="ESP8266 2")
 
         now = timezone.now()
-        SensorLogFactory(sensor_id=sensor1.sensor_id, created_at=now - timedelta(hours=2), temp=22.0)
-        SensorLogFactory(sensor_id=sensor1.sensor_id, created_at=now - timedelta(hours=1), temp=22.5)
+        SensorLogFactory(sensor=sensor1, created_at=now - timedelta(hours=2), temp=22.0)
+        SensorLogFactory(sensor=sensor1, created_at=now - timedelta(hours=1), temp=22.5)
 
-        SensorLogFactory(sensor_id=sensor2.sensor_id, created_at=now - timedelta(hours=1), temp=23.0)
+        SensorLogFactory(sensor=sensor2, created_at=now - timedelta(hours=1), temp=23.0)
 
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK

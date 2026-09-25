@@ -31,7 +31,7 @@ urlpatterns = [
     path("sw.js", service_worker_view, name="sw"),
     path("manifest.webmanifest", manifest_view, name="manifest"),
     re_path(
-        r"^(?!api(?:$|/)|admin(?:$|/)|static(?:$|/)|media(?:$|/)|sw\.js$|manifest\.webmanifest$).*$",
+        r"^(?!api(?:$|/)|admin(?:$|/)|silk(?:$|/)|static(?:$|/)|media(?:$|/)|sw\.js$|manifest\.webmanifest$).*$",
         index_view,
         name="index",
     ),
@@ -40,6 +40,9 @@ urlpatterns = [
 if settings.DEBUG:
     from django.conf.urls.static import static
     from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+
+    # Silk profiler
+    urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
 
     # Serve static and media files from development server
     urlpatterns += staticfiles_urlpatterns()

@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13.6, <3.14.0"
 
 [[package]]
@@ -360,6 +360,20 @@ wheels = [
 ]
 
 [[package]]
+name = "django-silk"
+version = "5.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "gprof2dot" },
+    { name = "sqlparse" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d5/36/49ce4c5244dc3716b2c70919fb510eb4edc3fc0b36d2f4c096ca6f539949/django_silk-5.6.0.tar.gz", hash = "sha256:bb741fb8af45eba663e8ed832207d16ecd731496313311f6dfae5fe776bed38e", size = 4501978, upload-time = "2026-09-12T05:36:59.31Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2f/c4/3593fe23bad8bdaef7ad6360fa88cfa70618fd40b0b0935db9130b438429/django_silk-5.6.0-py3-none-any.whl", hash = "sha256:761300bde25b8ce3c381dc0710e82c792c099c0ee6558fad3165dc560a06dd48", size = 1946405, upload-time = "2026-09-12T05:37:10.558Z" },
+]
+
+[[package]]
 name = "djangorestframework"
 version = "3.18.1"
 source = { registry = "https://pypi.org/simple" }
@@ -452,6 +466,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/59/5e/c69f733a86a94ab10f68e496dc6b7e8bc078ebb415281d5698313e3af3a1/frozenlist-1.8.0-cp313-cp313t-win_amd64.whl", hash = "sha256:5d63a068f978fc69421fb0e6eb91a9603187527c86b7cd3f534a5b77a592b888", size = 48034, upload-time = "2025-10-06T05:37:06.343Z" },
     { url = "https://files.pythonhosted.org/packages/16/6c/be9d79775d8abe79b05fa6d23da99ad6e7763a1d080fbae7290b286093fd/frozenlist-1.8.0-cp313-cp313t-win_arm64.whl", hash = "sha256:bf0a7e10b077bf5fb9380ad3ae8ce20ef919a6ad93b4552896419ac7e1d8e042", size = 41749, upload-time = "2025-10-06T05:37:07.431Z" },
     { url = "https://files.pythonhosted.org/packages/9a/9a/e35b4a917281c0b8419d4207f4334c8e8c5dbf4f3f5f9ada73958d937dcc/frozenlist-1.8.0-py3-none-any.whl", hash = "sha256:0c18a16eab41e82c295618a77502e17b195883241c563b00f0aa5106fc4eaa0d", size = 13409, upload-time = "2025-10-06T05:38:16.721Z" },
+]
+
+[[package]]
+name = "gprof2dot"
+version = "2025.4.14"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bb/fd/cad13fa1f7a463a607176432c4affa33ea162f02f58cc36de1d40d3e6b48/gprof2dot-2025.4.14.tar.gz", hash = "sha256:35743e2d2ca027bf48fa7cba37021aaf4a27beeae1ae8e05a50b55f1f921a6ce", size = 39536, upload-time = "2025-04-14T07:21:45.76Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/ed/89d760cb25279109b89eb52975a7b5479700d3114a2421ce735bfb2e7513/gprof2dot-2025.4.14-py3-none-any.whl", hash = "sha256:0742e4c0b4409a5e8777e739388a11e1ed3750be86895655312ea7c20bd0090e", size = 37555, upload-time = "2025-04-14T07:21:43.319Z" },
 ]
 
 [[package]]
@@ -635,7 +658,7 @@ wheels = [
 
 [[package]]
 name = "odin"
-version = "1.23.4"
+version = "1.24.0"
 source = { virtual = "." }
 dependencies = [
     { name = "django" },
@@ -664,6 +687,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "debugpy" },
+    { name = "django-silk" },
     { name = "pytest" },
     { name = "pytest-django" },
     { name = "pytest-factoryboy" },
@@ -698,6 +722,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "debugpy", specifier = ">=1.8.22" },
+    { name = "django-silk", specifier = ">=5.6.0" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-django", specifier = ">=4.14.0" },
     { name = "pytest-factoryboy", specifier = ">=2.8.1" },

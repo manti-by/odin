@@ -69,13 +69,21 @@ class SensorFactory(DjangoModelFactory):
 
 
 class SensorLogFactory(DjangoModelFactory):
-    sensor_id = factory.Sequence(lambda n: f"sensor_{n}")
+    sensor = factory.SubFactory(SensorFactory)
     temp = FuzzyDecimal(low=-10, high=40, precision=2)
     humidity = FuzzyDecimal(low=0, high=100, precision=2)
     created_at = factory.Faker("date_time")
 
     class Meta:
         model = SensorLog
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        """Persist the log and mirror the ingest pipeline onto its sensor."""
+        log = super()._create(model_class, *args, **kwargs)
+        if log.sensor:
+            log.sensor.update(temp=log.temp, humidity=log.humidity)
+        return log
 
 
 class SensorLogDataFactory(DictFactory):

@@ -7,8 +7,8 @@ from .models import Sensor, SensorLog
 class SensorAdmin(admin.ModelAdmin):
     list_display = (
         "sensor_id",
-        "linked_sensor_id",
-        "relay_id",
+        "linked_sensor",
+        "relay",
         "name",
         "type",
         "is_active",
@@ -18,10 +18,11 @@ class SensorAdmin(admin.ModelAdmin):
         "created_at",
     )
     list_filter = ("type",)
+    readonly_fields = ("temp", "humidity", "updated_at", "created_at")
 
 
 @admin.register(SensorLog)
 class SensorLogAdmin(admin.ModelAdmin):
     list_display = ("sensor_id", "temp", "humidity", "synced_at", "created_at")
     search_fields = ("sensor_id",)
-    list_filter = ("sensor_id", "synced_at")
+    list_filter = ("sensor", "synced_at")

@@ -17,7 +17,7 @@ from django.utils.translation import gettext_lazy as _
 
 from odin.apps.core.redis_bus import MessageType, RedisBus
 from odin.apps.relays.models import Relay
-from odin.apps.sensors.models import SensorLog
+from odin.apps.sensors.models import Sensor, SensorLog
 
 
 logger = logging.getLogger(__name__)
@@ -99,6 +99,7 @@ class Command(LoggedCommand):
         if not isinstance(data, dict) or not data.get("sensor_id") or not isinstance(timestamp, str):
             logger.warning("Skipping sensor message with missing required fields")
             return
+
         try:
             self.process_envelope(message=message)
         except (ValueError, TypeError, AttributeError, DatabaseError) as e:
@@ -130,6 +131,7 @@ class Command(LoggedCommand):
         if not isinstance(data, dict):
             logger.warning("Received sensor update message without a dict data payload")
             return
+
         sensor_id = data.get("sensor_id")
         timestamp = message.get("timestamp")
         if not any((sensor_id, data, timestamp)):
@@ -139,7 +141,10 @@ class Command(LoggedCommand):
         temp = data.get("temp")
         humidity = data.get("humidity")
         created_at = datetime.fromisoformat(timestamp) if timestamp else timezone.now()
-        SensorLog.objects.create(sensor_id=sensor_id, temp=temp, humidity=humidity, created_at=created_at)
+
+        if sensor := Sensor.objects.filter(sensor_id=sensor_id).order_by("created_at").last():
+            sensor.update(temp=temp, humidity=humidity)
+        SensorLog.objects.create(sensor=sensor, temp=temp, humidity=humidity, created_at=created_at)
 
         logger.info(
             f"Created SensorLog for sensor {sensor_id}: temp={temp}, humidity={humidity}, created_at={created_at}"
@@ -156,6 +161,7 @@ class Command(LoggedCommand):
                 self.pubsub.close()
             except RedisError as e:
                 logger.error(f"Error closing pubsub: {e}")
+
         self.pubsub = None
         self.client = None
         logger.info("Consumer closed.")

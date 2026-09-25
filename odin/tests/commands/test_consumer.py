@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -7,7 +8,7 @@ from django.conf import settings
 
 from odin.apps.relays.models import RelayState
 from odin.apps.sensors.models import SensorLog
-from odin.tests.factories import RelayFactory
+from odin.tests.factories import RelayFactory, SensorFactory
 
 
 @pytest.mark.django_db
@@ -18,6 +19,7 @@ class TestConsumeSensorsCommand:
         self.command = Command()
 
     def test_process_message__creates_sensor_log(self):
+        sensor = SensorFactory(sensor_id="sensor_1")
         message = {
             "type": "SENSOR_DATA_UPDATE",
             "data": {"sensor_id": "sensor_1", "temp": 21.5, "humidity": 40},
@@ -26,9 +28,14 @@ class TestConsumeSensorsCommand:
 
         self.command.process_message(json.dumps(message).encode())
 
-        log = SensorLog.objects.get(sensor_id="sensor_1")
+        log = SensorLog.objects.get()
+        assert log.sensor == sensor
         assert log.temp == 21.5
         assert log.humidity == 40
+
+        sensor.refresh_from_db()
+        assert sensor.temp == Decimal("21.5")
+        assert sensor.humidity == Decimal("40")
 
     @patch(
         "odin.apps.core.redis_bus.RedisBus.get_relay_latest_message",

@@ -11,7 +11,7 @@ from rest_framework.test import APIClient
 
 from odin.apps.core.redis_bus import RedisBus
 from odin.apps.relays.models import RelayMode, RelayState, RelayType
-from odin.apps.sensors.models import SensorType
+from odin.apps.sensors.models import Sensor, SensorType
 from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory
 
 
@@ -44,9 +44,9 @@ class TestEsp8266DashboardAPI:
         assert sensor_ids == ["esp1"]
 
     def test_esp8266_dashboard__relay_and_alive_flag(self):
-        RelayFactory(relay_id="rel1", context={"state": "ON"})
-        SensorFactory(type=SensorType.ESP8266, sensor_id="esp1", relay_id="rel1", is_visible=True)
-        SensorLogFactory(sensor_id="esp1", temp=Decimal("23.0"), created_at=timezone.now())
+        relay = RelayFactory(relay_id="rel1", context={"state": "ON"})
+        sensor = SensorFactory(type=SensorType.ESP8266, sensor_id="esp1", relay=relay, is_visible=True)
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
 
         with patch.object(RedisBus, "get_relay_latest_message", return_value={"data": {"state": "ON"}}):
             response = self.client.get(self.url, format="json")
@@ -59,9 +59,10 @@ class TestEsp8266DashboardAPI:
         assert sensor["relay"]["state"] == "ON"
         assert sensor["relay"]["is_on"] is True
 
-    def test_esp8266_dashboard__not_alive_when_log_is_stale(self):
+    def test_esp8266_dashboard__not_alive_when_sensor_is_stale(self):
         sensor = SensorFactory(type=SensorType.ESP8266, sensor_id="esp1", is_visible=True)
-        SensorLogFactory(sensor_id="esp1", created_at=timezone.now() - timedelta(hours=1))
+        Sensor.objects.filter(pk=sensor.pk).update(updated_at=timezone.now() - timedelta(hours=1))
+        sensor.refresh_from_db()
         assert sensor.is_alive is False
 
         response = self.client.get(self.url, format="json")
@@ -96,12 +97,12 @@ class TestDs18B20DashboardAPI:
         assert sensor_ids == ["ds1"]
 
     def test_ds18b20_dashboard__linked_sensor(self):
-        SensorFactory(sensor_id="linked1", type=SensorType.DS18B20, is_visible=True)
-        SensorLogFactory(sensor_id="linked1", temp=Decimal("25.0"), created_at=timezone.now())
+        linked = SensorFactory(sensor_id="linked1", type=SensorType.DS18B20, is_visible=True)
+        SensorLogFactory(sensor=linked, temp=Decimal("25.0"), created_at=timezone.now())
         SensorFactory(
             type=SensorType.DS18B20,
             sensor_id="ds1",
-            linked_sensor_id="linked1",
+            linked_sensor=linked,
             is_visible=True,
         )
 
@@ -115,11 +116,11 @@ class TestDs18B20DashboardAPI:
     def test_ds18b20_dashboard__relay_mode_computed_on_read(self):
         """Relay mode is recomputed on read so the tile never shows a stale mode."""
         pump = RelayFactory(relay_id="pump1", type=RelayType.PUMP, state=RelayState.OFF)
-        RelayFactory(relay_id="servo1", type=RelayType.SERVO, related_relay=pump, mode=RelayMode.MIDSEASON)
-        sensor = SensorFactory(type=SensorType.DS18B20, sensor_id="ds1", relay_id="servo1", is_visible=True)
+        servo = RelayFactory(relay_id="servo1", type=RelayType.SERVO, related_relay=pump, mode=RelayMode.MIDSEASON)
+        sensor = SensorFactory(type=SensorType.DS18B20, sensor_id="ds1", relay=servo, is_visible=True)
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
-        SensorLogFactory(sensor_id="ds1", temp=Decimal("23.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
 
         with patch.object(RedisBus, "get_relay_latest_message", return_value={"data": {"state": "OFF"}}):
             response = self.client.get(self.url, format="json")

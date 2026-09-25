@@ -21,13 +21,11 @@ def parse_timestamp_data(sensors: QuerySet, sensor_logs: QuerySet) -> dict[str, 
         log_time = sensor_log.created_at if sensor_log.created_at else sensor_log.synced_at
         rounded_minutes = (log_time.minute // 5) * 5
         timestamp_key = log_time.replace(minute=rounded_minutes, second=0, microsecond=0).isoformat()
+        sensor_id = sensor_log.sensor.sensor_id
 
-        if (
-            sensor_log.sensor_id not in timestamp_data[timestamp_key]
-            or log_time > timestamp_data[timestamp_key][sensor_log.sensor_id][0]
-        ):
-            temp_offset = sensor_offset_map.get(sensor_log.sensor_id, 0)
-            timestamp_data[timestamp_key][sensor_log.sensor_id] = (log_time, float(sensor_log.temp + temp_offset))
+        if sensor_id not in timestamp_data[timestamp_key] or log_time > timestamp_data[timestamp_key][sensor_id][0]:
+            temp_offset = sensor_offset_map.get(sensor_id, 0)
+            timestamp_data[timestamp_key][sensor_id] = (log_time, float(sensor_log.temp + temp_offset))
 
     return timestamp_data
 
@@ -40,10 +38,14 @@ def get_chart_data(sensors: QuerySet, start: datetime | None = None, end: dateti
     if not sensor_ids:
         return {"timestamps": [], "sensors": []}
 
-    sensor_logs = SensorLog.objects.filter(
-        sensor_id__in=sensor_ids,
-        created_at__range=(start_dt, end_dt),
-    ).order_by("created_at")
+    sensor_logs = (
+        SensorLog.objects.filter(
+            sensor__sensor_id__in=sensor_ids,
+            created_at__range=(start_dt, end_dt),
+        )
+        .select_related("sensor")
+        .order_by("created_at")
+    )
 
     timestamp_data = parse_timestamp_data(sensors=sensors, sensor_logs=sensor_logs)
     sorted_timestamps = sorted(timestamp_data.keys())

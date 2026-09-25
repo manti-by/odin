@@ -13,8 +13,8 @@ class SensorSerializer(BaseSerializer):
     type = serializers.CharField()
     context = serializers.JSONField()
 
-    temp = serializers.DecimalField(max_digits=7, decimal_places=2)
-    humidity = serializers.DecimalField(max_digits=7, decimal_places=2)
+    temp = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
+    humidity = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
     temp_offset = serializers.DecimalField(max_digits=7, decimal_places=2)
     humidity_offset = serializers.DecimalField(max_digits=7, decimal_places=2)
 
@@ -44,6 +44,23 @@ class SensorLogSerializer(BaseSerializer):
         if not attrs.get("created_at"):
             attrs["created_at"] = timezone.now()
         return attrs
+
+    def create(self, validated_data: dict) -> Any:
+        from odin.apps.sensors.models import Sensor, SensorLog
+
+        sensor = None
+        if sensor_id := validated_data.pop("sensor_id", None):
+            if sensor := Sensor.objects.filter(sensor_id=sensor_id).order_by("created_at").last():
+                sensor.update(temp=validated_data.get("temp"), humidity=validated_data.get("humidity"))
+        return SensorLog.objects.create(sensor=sensor, **validated_data)
+
+    def to_representation(self, instance: Any) -> dict:
+        return {
+            "sensor_id": instance.sensor.sensor_id if instance.sensor else None,
+            "temp": f"{instance.temp:.2f}",
+            "humidity": f"{instance.humidity:.2f}" if instance.humidity is not None else None,
+            "created_at": instance.created_at.isoformat() if instance.created_at else None,
+        }
 
 
 class ChartQueryParamsSerializer(BaseSerializer):
@@ -79,14 +96,16 @@ class DashboardSensorSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=32)
     type = serializers.ChoiceField(choices=SensorType.choices)
     context = serializers.JSONField()
+
+    is_alive = serializers.BooleanField()
     temp = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
-    humidity = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
     temp_offset = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
+    humidity = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
     humidity_offset = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
+
     created_at = serializers.DateTimeField()
     relay = serializers.SerializerMethodField()
     linked_sensor = serializers.SerializerMethodField()
-    is_alive = serializers.BooleanField()
 
     def get_relay(self, obj: Any) -> dict | None:
         if obj.relay:

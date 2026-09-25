@@ -111,9 +111,7 @@ class Relay(models.Model):
 
     @property
     def sensor(self) -> Sensor | None:
-        from odin.apps.sensors.models import Sensor
-
-        return Sensor.objects.filter(relay_id=self.relay_id).order_by("created_at").last()
+        return self.sensors.order_by("-created_at").first()  # ty: ignore
 
     @property
     def target_state(self) -> RelayState:

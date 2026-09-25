@@ -16,7 +16,7 @@ from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory, 
 class TestRelaysPeriodicSchedule:
     def setup_method(self):
         self.relay: Relay = RelayFactory(type=RelayType.PUMP)
-        self.sensor: Sensor = SensorFactory(relay_id=self.relay.relay_id)
+        self.sensor: Sensor = SensorFactory(relay=self.relay)
 
     def test_relays__periodic_schedule_returns_on_when_target_state_is_on(self):
         """Test that periodic schedule returns ON when target_state is ON."""
@@ -58,7 +58,7 @@ class TestRelaysPeriodicSchedule:
             "schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_temp": 25.0}]}
         }
         self.relay.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("25.0"))
+        SensorLogFactory(sensor=self.sensor, temp=Decimal("25.0"))
 
         # Outside the period (after 18:00)
         local_time = datetime(2025, 1, 6, 20, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
@@ -134,14 +134,14 @@ class TestRelaysPeriodicSchedule:
 class TestServoPeriodOverride:
     def setup_method(self):
         self.relay: Relay = RelayFactory(type=RelayType.SERVO)
-        self.sensor: Sensor = SensorFactory(relay_id=self.relay.relay_id)
+        self.sensor: Sensor = SensorFactory(relay=self.relay)
 
     def test_relays__servo_uses_period_target_temp_when_available(self):
         """Test that SERVO relay uses period target_temp when available."""
         # Set sensor target_temp to 20.0
         self.sensor.context = {"target_temp": "20.0", "hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("22.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=self.sensor, temp=Decimal("22.0"), created_at=timezone.now())
 
         # Set period with different target_temp
         self.relay.context = {
@@ -159,7 +159,7 @@ class TestServoPeriodOverride:
         """Test that a period target_temp of 0 is honored instead of the sensor default."""
         self.sensor.context = {"target_temp": "20.0", "hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("10.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=self.sensor, temp=Decimal("10.0"), created_at=timezone.now())
 
         self.relay.context = {"schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_temp": 0}]}}
         self.relay.save()
@@ -177,20 +177,18 @@ class TestRelaysSensorProperty:
         self.relay: Relay = RelayFactory()  # noqa
 
     def test_relays__sensor_returns_none_when_no_linked_sensor(self):
-        """Test that sensor property returns None when relay_id doesn't match any sensor."""
-        self.relay.relay_id = "nonexistent"
-        self.relay.save()
+        """Test that sensor property returns None when no sensor is linked."""
         assert self.relay.sensor is None
 
     def test_relays__sensor_returns_linked_sensor(self):
         """Test that sensor property returns the linked sensor."""
-        sensor = SensorFactory(relay_id=self.relay.relay_id)
+        sensor = SensorFactory(relay=self.relay)
         assert self.relay.sensor == sensor
 
     def test_relays__sensor_returns_most_recent_when_multiple(self):
         """Test that sensor property returns the most recent sensor."""
-        SensorFactory(relay_id=self.relay.relay_id)
-        new_sensor = SensorFactory(relay_id=self.relay.relay_id)
+        SensorFactory(relay=self.relay)
+        new_sensor = SensorFactory(relay=self.relay)
         assert self.relay.sensor == new_sensor
 
 
@@ -198,24 +196,21 @@ class TestRelaysSensorProperty:
 class TestRelaysServoTargetState:
     def setup_method(self):
         self.relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
-        self.sensor: Sensor = SensorFactory(relay_id=self.relay.relay_id)  # noqa
+        self.sensor: Sensor = SensorFactory(relay=self.relay)  # noqa
 
     def test_relays__servo_target_state_returns_off_when_no_sensor(self):
         """Test that target_state opens the circuit when there is no linked sensor."""
-        self.relay.relay_id = "nonexistent"
-        self.relay.save()
+        self.sensor.relay = None
+        self.sensor.save(update_fields=["relay"])
         assert self.relay.target_state == RelayState.OFF
         assert self.relay.mode == RelayMode.UNKNOWN
 
     def test_relays__servo_target_state_returns_off_when_sensor_is_stale(self):
-        """Test that target_state opens the circuit when the latest log is stale."""
+        """Test that target_state opens the circuit when the sensor stopped reporting."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(
-            sensor_id=self.sensor.sensor_id,
-            temp=Decimal("23.0"),
-            created_at=timezone.now() - timedelta(minutes=30),
-        )
+        Sensor.objects.filter(pk=self.sensor.pk).update(updated_at=timezone.now() - timedelta(minutes=30))
+        self.sensor.refresh_from_db()
 
         assert self.relay.target_state == RelayState.OFF
         assert self.relay.mode == RelayMode.UNKNOWN
@@ -224,7 +219,7 @@ class TestRelaysServoTargetState:
         """Test that servo turns ON when temp is below target - hysteresis."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=self.sensor, temp=Decimal("23.0"), created_at=timezone.now())
 
         assert self.relay.target_state == RelayState.ON
         assert self.relay.mode == RelayMode.BASIC
@@ -233,7 +228,7 @@ class TestRelaysServoTargetState:
         """Test that servo turns OFF when temp is above target plus hysteresis."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("27.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=self.sensor, temp=Decimal("27.0"), created_at=timezone.now())
 
         assert self.relay.target_state == RelayState.OFF
         assert self.relay.mode == RelayMode.BASIC
@@ -242,7 +237,7 @@ class TestRelaysServoTargetState:
         """Test that servo turns OFF when temp is within hysteresis range."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("25.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=self.sensor, temp=Decimal("25.0"), created_at=timezone.now())
 
         assert self.relay.target_state == RelayState.OFF
         assert self.relay.mode == RelayMode.FALLBACK
@@ -259,7 +254,7 @@ class TestRelaysServoTargetState:
         """Test that target_state opens the circuit when no target_temp is configured (no crash)."""
         self.sensor.context = {"hysteresis": "1.0"}
         self.sensor.save()
-        SensorLogFactory(sensor_id=self.sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=self.sensor, temp=Decimal("23.0"), created_at=timezone.now())
 
         assert self.relay.target_state == RelayState.OFF
         assert self.relay.mode == RelayMode.UNKNOWN
@@ -284,10 +279,10 @@ class TestRelaysTargetStateDispatch:
     def test_relays__target_state_returns_servo_state_for_servo_type(self):
         """Test that target_state uses target_state for SERVO type."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
-        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
-        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
 
         assert relay.target_state == RelayState.ON
         assert relay.mode == RelayMode.BASIC
@@ -340,10 +335,10 @@ class TestRelaysWeatherModes:
     def test_relays__servo_stays_open_in_summer(self):
         """Test that a SERVO stays open (OFF) when outside temperature is 15°C or higher."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
-        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
-        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "20.0"}})
 
         assert relay.target_state == RelayState.OFF
@@ -352,10 +347,10 @@ class TestRelaysWeatherModes:
     def test_relays__servo_stays_open_in_antifreeze(self):
         """Test that a SERVO stays open (OFF) below -8°C."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
-        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
-        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "-10.0"}})
 
         assert relay.target_state == RelayState.OFF
@@ -364,10 +359,10 @@ class TestRelaysWeatherModes:
     def test_relays__servo_stays_open_every_third_hour_in_midseason(self):
         """Test that a SERVO stays open (OFF) in midseason."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
-        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
-        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
 
         local_time = datetime(2025, 1, 6, 9, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
@@ -378,10 +373,10 @@ class TestRelaysWeatherModes:
     def test_relays__servo_stays_open_outside_every_third_hour_in_midseason(self):
         """Test that a SERVO stays open (OFF) during the two idle hours of every 3-hour window in midseason."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
-        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
-        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
@@ -429,10 +424,10 @@ class TestRelaysWeatherModes:
     def test_relays__servo_midseason_cadence_by_hour(self, hour, expected_state):
         """Verify a SERVO stays open (OFF) at every hour in midseason."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
-        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
-        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
 
         local_time = datetime(2025, 1, 6, hour, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
@@ -455,10 +450,10 @@ class TestRelaysWeatherModes:
     def test_relays__servo_midseason_active_window_spans_full_hour(self, minute):
         """Verify the servo stays open for the whole active hour, not only its first 10 minutes."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
-        sensor: Sensor = SensorFactory(relay_id=relay.relay_id)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
-        SensorLogFactory(sensor_id=sensor.sensor_id, temp=Decimal("23.0"), created_at=timezone.now())
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
 
         local_time = datetime(2025, 1, 6, 9, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
