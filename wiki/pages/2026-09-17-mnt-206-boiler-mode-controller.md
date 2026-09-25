@@ -8,7 +8,7 @@ services: [services, test_boiler_mode_controller, pyproject, uv]
 branch: mnt-206-boiler-mode-controller
 tickets: [MNT-206]
 tags: [wiki, backend, feature]
-related: []
+related: [2026-09-18-mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron]
 ---
 # MNT-206: Boiler mode controller
 
@@ -100,6 +100,12 @@ The implementation plan for the BoilerModeService is as follows:
   `DEFAULT_*` constants), so it fails at collection; it needs rewriting against `BoilerModeService.get_target_mode()`.
 - Decide whether the currently unreturned `BoilerMode.OFF` / `BoilerMode.CLEAR_OVERRIDE` members stay for future use or
   should be removed.
+
+> **Note 2026-09-25 (Consistency Agent):** both follow-ups are resolved in the current tree. The test
+> imports `BoilerModeService`/`BoilerMode` from `odin/apps/boiler/services/mode.py` and exercises
+> `get_target_mode()`. The apply half was added later as `odin/apps/boiler/services/controller.py`
+> (see [[2026-09-18-mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron]]), which consumes
+> `BoilerMode.OFF`/`CLEAR_OVERRIDE`.
 
 ## References
 

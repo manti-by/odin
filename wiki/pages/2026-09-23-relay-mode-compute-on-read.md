@@ -8,7 +8,11 @@ services: [api, relays]
 branch: -
 tickets: []
 tags: [relays, mode, api, dashboard, serializers]
-related: [2026-09-19-mnt-215-midseason-mode, 2026-09-18-relay-state-mode-refactor, 2026-09-21-esp8266-indicator-icons]
+related:
+  - 2026-09-19-mnt-215-midseason-mode
+  - 2026-09-18-relay-state-mode-refactor
+  - 2026-09-21-esp8266-indicator-icons
+  - 2026-09-23-mnt-218-split-dashboard-api
 ---
 
 # Relay mode computed on read
@@ -108,6 +112,11 @@ class RelaySerializer(BaseSerializer):
 ## Step 3 — Compute mode on read in the dashboard
 
 **File:** `odin/api/v1/core/serializers.py:47`
+
+> **Note 2026-09-25 (Consistency Agent):** `DashboardRelaySerializer` now lives in
+> `odin/api/v1/sensors/serializers.py`. It moved when MNT-218 split the dashboard API and removed
+> the aggregate `core/dashboard/` endpoint (see [[2026-09-23-mnt-218-split-dashboard-api]]); the
+> serializer shape described below is unchanged.
 
 This is the path the SPA tile actually reads (`DashboardSensorSerializer.get_relay`). Its
 `mode` field became a `SerializerMethodField` backed by the same helper.

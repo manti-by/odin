@@ -125,4 +125,7 @@ The implementation plan for the Relay Schedule Component (MNT-217) involves both
 
 ## References
 
+- Related: [[2026-09-18-relay-state-mode-refactor]]
+- Related: [[2026-09-19-mnt-215-midseason-mode]]
+- Related: [[2026-09-21-esp8266-indicator-icons]]
 - External: https://linear.app/mnt/issue/MNT-217/relay-schedule-component

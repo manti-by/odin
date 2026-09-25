@@ -8,7 +8,11 @@ services: [relays, core, dashboard, frontend]
 branch: -
 tickets: []
 tags: [relays, state, mode, review, tests, redis]
-related: [2026-09-11-relay-state-redis-consumer, 2026-09-11-add-related-relay-field]
+related:
+  - 2026-09-11-relay-state-redis-consumer
+  - 2026-09-11-add-related-relay-field
+  - 2026-09-19-mnt-215-midseason-mode
+  - 2026-09-23-relay-mode-compute-on-read
 ---
 
 # Relay state/mode refactor — review, test sync, and fixes
@@ -37,6 +41,14 @@ Author-confirmed behavior change: in midseason (`8 < outside < 15`) a servo now 
 returns `(ON, MIDSEASON)` outside the first 10 minutes of the hour (previously it fell through to
 temperature regulation). This mirrors the pump, which runs `(ON, MIDSEASON)` only in the first 10
 minutes — pump and servo are exactly opposite in midseason.
+
+> **Note 2026-09-25 (Consistency Agent):** the midseason servo rule above was superseded by
+> [[2026-09-19-mnt-215-midseason-mode]]: the inversion was removed and
+> `RelayTargetStateService.get_servo_target_state()` now returns `(OFF, MIDSEASON)` unconditionally,
+> while the pump runs only during the active daytime hour — the "exactly opposite" statement no
+> longer holds. Separately, the Step 3 `SerializerMethodField` fix was itself superseded by
+> [[2026-09-23-relay-mode-compute-on-read]], which computes `mode`/`target_state` once in a
+> `to_representation` override.
 
 ## Step 1 — Sync model tests to the single-value `target_state`
 

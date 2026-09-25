@@ -10,6 +10,7 @@ tickets: []
 tags: [react, vite, strictmode, dev-server, dashboard, typescript]
 related:
   - 2026-07-21-react-frontend-pr-review-fixes.md
+  - 2026-09-23-mnt-218-split-dashboard-api.md
 ---
 
 # Fix React SPA dev-mode issues: docs, proxy, base path, StrictMode Loading bug
@@ -24,6 +25,12 @@ redirected `/` → `/static/` → 404, so `base` is now scoped to production onl
 breaks in dev by leaving the ref at `false` after the simulated unmount — the
 `fetchIdRef` staleness check alone is enough. Prod was never affected because
 the bug only fires under StrictMode's double-invocation, which is dev-only.
+
+> **Note 2026-09-25 (Consistency Agent):** the hook was renamed `useDashboardData.ts` →
+> `usePollingData.ts` and the aggregate `/api/v1/core/dashboard/` endpoint was removed by
+> [[2026-09-23-mnt-218-split-dashboard-api]]; each tile now polls its own endpoint. The
+> `formatTrafficValue` TS6133 follow-up is also resolved (the symbol no longer exists). The
+> StrictMode and Vite `base` fixes remain in effect.
 
 ---
 

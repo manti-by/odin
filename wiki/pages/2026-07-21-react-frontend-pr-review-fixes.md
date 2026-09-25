@@ -8,7 +8,7 @@ services: [core, sensors, weather, frontend]
 branch: epic/react_frontend
 tickets: [MNT-125]
 tags: [code-review, coderabbit, react, frontend, ci, testing, refactor]
-related: [2026-07-17-mock-kafka-systemctl-in-tests.md]
+related: [2026-07-17-mock-kafka-systemctl-in-tests.md, 2026-09-23-mnt-218-split-dashboard-api.md]
 ---
 
 # React frontend PR review — apply CodeRabbit + coding-guideline fixes
@@ -22,6 +22,12 @@ Reviewed `epic/react_frontend` against `master` (93 files, the full React/Vite S
 ## Overview
 
 The diff scope was the full React frontend migration: a new `frontend/` Vite+React+TS+Bun SPA replacing the server-rendered `odin/templates/index.html`, plus backend support (dashboard aggregate API, weather-chart API, CSRF endpoint, session/token auth, write throttling, SPA-serving views). CodeRabbit had left 10 unresolved inline comments plus several nitpicks across 5 review passes on PR #14 (`epic/react_frontend` → `master`); none had been addressed by later commits. The user confirmed the dashboard is an internal-only app (`odin.manti.by` → `192.168.1.100`, no auth needed), so the two security-flavored findings (unauthenticated `DashboardView`/`LogsView` exposing `error_logs`/`systemd_status`) were explicitly left alone — everything else was fixed.
+
+> **Note 2026-09-25 (Consistency Agent):** the aggregate `DashboardSerializer` in
+> `odin/api/v1/core/serializers.py` was removed by [[2026-09-23-mnt-218-split-dashboard-api]], and
+> `useDashboardData` was renamed `usePollingData`. Steps 1–2, the `useDashboardData` bullet in
+> Step 5, and the `core/dashboard/` references below are therefore historical; the CI/`Makefile`
+> wiring and the other frontend fixes remain in effect.
 
 ## Step 1 — DashboardSerializer explicit fields + missing type hints
 

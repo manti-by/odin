@@ -8,7 +8,7 @@ services: [frontend]
 branch: -
 tickets: []
 tags: [frontend, esp8266, relay, indicators, svg]
-related: [2026-09-18-relay-state-mode-refactor]
+related: [2026-09-18-relay-state-mode-refactor, 2026-09-19-mnt-215-midseason-mode]
 ---
 # ESP8266 relay indicators: SVG icons + mode tooltip
 
@@ -25,10 +25,17 @@ All frontend checks (typecheck, Biome lint, production build) and dashboard test
 
 The ESP8266 dashboard tile rendered each relay as a colored dot derived from
 `relay.is_on` (`cooling`/`heating`) plus a separate one-letter mode block
-(`sensor.relay.mode[0]`). The relay model now has four `state` values — ON, OFF,
-IGNORED, UNKNOWN — so the indicator needed to distinguish them, and `mode` (a
-multi-letter enum like `SUMMER`, `MIDSEASON`, `BASIC`) is too long for a one-letter
-block.
+(`sensor.relay.mode[0]`). At the time the relay model had four `state` values —
+ON, OFF, IGNORED, UNKNOWN — so the indicator had to distinguish them, and `mode`
+(a multi-letter enum like `SUMMER`, `MIDSEASON`, `BASIC`) is too long for a
+one-letter block.
+
+> **Note 2026-09-25 (Consistency Agent):** `RelayState.IGNORED` was removed in
+> [[2026-09-19-mnt-215-midseason-mode]]; `RelayState` now has **three** values
+> (ON/OFF/UNKNOWN) and `IGNORED` survives only as a `RelayMode`. The current
+> `relayIndicator()` (`frontend/src/components/tile/Esp8266SensorsTile.tsx:22`)
+> has no `state="IGNORED"` branch and maps `ON → cooling`, `OFF → heating`, the
+> inverse of the snippet below.
 
 ## Step 1 — Indicator mapping in `Esp8266SensorsTile.tsx`
 

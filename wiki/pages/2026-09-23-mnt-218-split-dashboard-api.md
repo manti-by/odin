@@ -263,4 +263,5 @@ The plan involves splitting the existing dashboard API into smaller APIs for eac
 
 ## References
 
+- Related: [[2026-09-18-mnt-208-boiler-dashboard]]
 - External: https://linear.app/mnt/issue/MNT-218/split-dashboard-api

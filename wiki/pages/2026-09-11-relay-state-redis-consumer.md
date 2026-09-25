@@ -8,7 +8,7 @@ services: [relays, sensors, core]
 branch: -
 tickets: []
 tags: [redis, pubsub, relays, django-admin, consumer, systemd]
-related: [2026-09-11-add-related-relay-field.md]
+related: [2026-09-11-add-related-relay-field.md, 2026-09-18-relay-state-mode-refactor.md]
 ---
 
 # Relay state sync — admin refresh and Redis consumer
@@ -39,6 +39,12 @@ Scope of this session:
 The first change was a small admin hook. The second was investigated against both submodules
 (see Step 2) and resolved by extending the existing `consume_sensors` command rather than
 adding a fifth service.
+
+> **Note 2026-09-25 (Consistency Agent):** the consumer command has since moved to
+> `odin/apps/core/management/commands/consumer.py` (tests in `odin/tests/commands/test_consumer.py`),
+> and `Relay.refresh_state()` now writes the dedicated `state` column instead of
+> `Relay.context["state"]` (see [[2026-09-18-relay-state-mode-refactor]]). The `consume_sensors`
+> path and context-write references below are otherwise historical.
 
 ## Step 1 — refresh relay state in the admin
 
@@ -158,4 +164,4 @@ def process_relay_message(self, message: dict[str, Any]) -> None:
 
 ## References
 
-- Related: [[2026-09-11-add-related-relay-field.md]]
+- Related: [[2026-09-11-add-related-relay-field]]

@@ -8,7 +8,7 @@ services: [main]
 branch: -
 tickets: []
 tags: [relays, django-admin, migrations]
-related: []
+related: [2026-09-18-relay-state-mode-refactor, 2026-09-23-relay-mode-compute-on-read]
 ---
 
 # Add self-referential related_relay field to Relay
@@ -85,6 +85,12 @@ or `autocomplete_fields` needed for the current relay count.
 - Optionally expose `related_relay` through the relays API serializer
   (`odin/api/v1/relays/serializers.py`).
 - Fix or land the uncommitted `services.py` WIP that currently reddens the relay tests.
+
+> **Note 2026-09-25 (Consistency Agent):** the pump TODO and the WIP are resolved —
+> `RelayTargetStateService.get_servo_target_state()` now returns `RelayMode.IGNORED` when the
+> related pump is off (see [[2026-09-18-relay-state-mode-refactor]]), and target state is computed
+> on read (see [[2026-09-23-relay-mode-compute-on-read]]). The optional `related_relay` API
+> exposure is still absent from `odin/api/v1/relays/serializers.py`.
 
 ## References
 

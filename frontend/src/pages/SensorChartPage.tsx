@@ -103,7 +103,7 @@ export function SensorChartPage() {
       <h2>{title}</h2>
 
       <Form onSubmit={handleSubmit}>
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "flex-end" }}>
+        <div className="chart-filter">
           <TextField
             id="dateFrom"
             label="From"
@@ -120,7 +120,9 @@ export function SensorChartPage() {
             onChange={(e) => setEnd(e.target.value)}
             required
           />
-          <SubmitButton label="Apply" />
+          <div className="chart-filter__action">
+            <SubmitButton label="Apply" />
+          </div>
         </div>
       </Form>
 

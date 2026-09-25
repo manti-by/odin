@@ -8,7 +8,7 @@ services: [sensors]
 branch: -
 tickets: []
 tags: [models, queryset, manager]
-related: []
+related: [2026-09-24-sensor-fks-and-denormalized-readings]
 ---
 
 # Sensor Model QuerySet and Manager Investigation
@@ -16,6 +16,13 @@ related: []
 ## TL;DR
 
 Investigated `Sensor` model, `SensorQuerySet`, and `SensorManager` in `odin/apps/sensors/models.py`. Found four QuerySet filter methods (`active`, `visible`, `ds18b20`, `esp8266`), a custom `SensorManager` proxying `active()` and `visible()` at the manager level, and a `SensorLogManager` with a `current()` method for latest-log-per-sensor queries.
+
+> **Note 2026-09-25 (Consistency Agent):** the model shape described below has since changed. The
+> `linked_sensor_id`/`relay_id` string columns are now FKs (`Sensor.linked_sensor`, `Sensor.relay`),
+> the `latest_log`/`temp`/`humidity` properties were replaced by denormalized `temp`/`humidity`
+> fields plus an `is_alive` derived from `updated_at`, and `SensorLog.sensor_id` is now an FK to
+> `Sensor`. See [[2026-09-24-sensor-fks-and-denormalized-readings]]. `SensorQuerySet`,
+> `SensorManager`, and `SensorLogManager` are otherwise unchanged.
 
 ---
 

@@ -106,4 +106,5 @@ Follow-up changes in the working tree after the initial merge adjust the midseas
 
 ## References
 
+- Related: [[2026-09-18-relay-state-mode-refactor]]
 - External: https://linear.app/mnt/issue/MNT-215/midseason-mode

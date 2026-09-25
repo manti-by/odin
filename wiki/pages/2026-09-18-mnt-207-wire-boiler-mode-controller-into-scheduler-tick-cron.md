@@ -9,7 +9,7 @@ services: [__init__, controller, mode, scheduler, test_boiler_mode_controller, p
 branch: mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron
 tickets: [MNT-207]
 tags: [wiki, backend, feature]
-related: []
+related: [2026-09-17-mnt-206-boiler-mode-controller]
 ---
 # MNT-207: Wire boiler mode controller into scheduler tick / cron
 
@@ -22,6 +22,13 @@ The boiler mode controller is now invoked periodically via a scheduler, ensuring
 ## Overview
 
 The implementation involved creating a new `BoilerModeController` class in `odin/apps/boiler/services/controller.py` and registering a scheduled job in `odin/apps/core/scheduler.py`. The `BoilerModeController` is invoked every 5 minutes, and the implementation includes a thin wrapper function `run_boiler_mode_controller` for testability. Key files modified include `odin/apps/boiler/services/__init__.py`, `odin/apps/core/scheduler.py`, and `odin/tests/services/test_boiler_mode_controller.py`.
+
+> **Note 2026-09-25 (Consistency Agent):** the `update_boiler_mode` scheduled job was commented out
+> in commit `0a11c2e` ("Disable boiler observer", 2026-09-22), so the controller is **not** currently
+> invoked periodically — see the commented block at `odin/apps/core/scheduler.py:40`. Re-enabling is
+> tracked by MNT-216 ("Fix boiler blocking state", in progress). The controller code itself is
+> unchanged in `odin/apps/boiler/services/controller.py`; the decision half remains
+> [[2026-09-17-mnt-206-boiler-mode-controller]].
 
 ## Changed files
 
