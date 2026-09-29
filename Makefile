@@ -1,3 +1,5 @@
+.PHONY: run shell migrate migrations messages locale static deploy test full-test verify check django-checks install update ci dump restore agent-instance wiki-dedup wiki-consistency frontend frontend-install frontend-dev frontend-lint frontend-typecheck frontend-check
+
 frontend-install:
 	bun install --cwd frontend
 
@@ -15,9 +17,8 @@ frontend-typecheck: frontend-install
 
 frontend-check: frontend-lint frontend-typecheck
 
-.PHONY: run shell migrate migrations messages locale static deploy test full-test verify check django-checks install update ci dump restore agent-instance wiki-dedup wiki-consistency frontend frontend-install frontend-dev frontend-lint frontend-typecheck frontend-check
 
-run:
+django:
 	uv run manage.py runserver
 
 shell:
@@ -38,18 +39,20 @@ locale:
 static: frontend
 	uv run manage.py collectstatic --no-input
 
-deploy: frontend
-	git pull
-	uv sync
-	make frontend
-	uv run manage.py migrate
-	uv run manage.py collectstatic --no-input
+restart:
 	sudo systemctl daemon-reload
 	sudo systemctl restart worker.service
 	sudo systemctl restart gunicorn.service
 	sudo systemctl restart scheduler.service
 	sudo systemctl restart consumer.service
 	sudo service nginx reload
+
+deploy:
+	git pull
+	uv sync
+	make frontend
+	make migrate
+	make restart
 
 test:
 	uv run pytest -m "not views" --disable-warnings --ds=odin.settings.test odin/
@@ -88,13 +91,3 @@ restore:
 	psql -h localhost -U odin -d postgres -c "DROP DATABASE odin;"
 	psql -h localhost -U odin -d postgres -c "CREATE DATABASE odin;"
 	psql -h localhost -U odin -d odin < odin.sql
-
-agent-instance:
-	git worktree add $(CURDIR)-$(NAME)
-	cp .env $(CURDIR)-$(NAME)/.env
-
-wiki-dedup:
-	opencode run /wiki-dedup
-
-wiki-consistency:
-	opencode run /wiki-consistency
