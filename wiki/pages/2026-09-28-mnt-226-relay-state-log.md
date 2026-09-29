@@ -22,7 +22,13 @@ The relay state log feature has been implemented, allowing for the tracking of c
 
 ## Overview
 
-A new RelayLog model has been added to odin/apps/relays/models.py to store changes to relay state, mode, and force state. The RelayLogService class in odin/apps/relays/services.py creates a new RelayLog entry when any tracked field changes. Explicit calls to the RelayLogService have been added in various locations, including odin/api/v1/relays/views.py and odin/apps/relays/admin.py. Tests have been added to odin/tests/services/test_relay_log.py to cover the new functionality.
+A new RelayLog model has been added to odin/apps/relays/models.py to store changes to relay state, mode, and force state. The RelayLogService class in odin/apps/relays/services.py creates a new RelayLog entry when any tracked field changes. Explicit calls to the RelayLogService have been added in various locations, including odin/api/v1/relays/views.py and odin/apps/relays/admin.py. Tests have been added to odin/tests/services/test_relay_log.py to cover the new functionality. This builds on the relay state/mode column refactor ([[2026-09-18-relay-state-mode-refactor]]), the compute-on-read change ([[2026-09-23-relay-mode-compute-on-read]]), and the Redis consumer ([[2026-09-11-relay-state-redis-consumer]]).
+
+> **Note 2026-09-29 (Consistency Agent):** `RelayLogService.snapshot()` logs the **stored** `mode`
+> column (`getattr(relay, "mode")` in `odin/apps/relays/services.py:28`), recomputed on write via
+> `RelayTargetStateService` in `odin/api/v1/relays/views.py:68` — not the live-computed read value
+> from `Relay.get_target_state()`. The logged mode and the API-served mode can therefore differ
+> between writes; see the cosmetic-drift follow-up in [[2026-09-23-relay-mode-compute-on-read]].
 
 ## Changed files
 
@@ -104,4 +110,7 @@ Call `R…
 
 ## References
 
+- Related: [[2026-09-18-relay-state-mode-refactor]]
+- Related: [[2026-09-23-relay-mode-compute-on-read]]
+- Related: [[2026-09-11-relay-state-redis-consumer]]
 - External: https://linear.app/mnt/issue/MNT-226/relay-state-log

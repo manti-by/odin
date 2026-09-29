@@ -11,7 +11,7 @@ branch: mnt-217-relay-schedule-component
 tickets: [MNT-217]
 tags: [wiki, feature, frontend, backend]
 related: [2026-09-18-relay-state-mode-refactor, 2026-09-19-mnt-215-midseason-mode,
-  2026-09-21-esp8266-indicator-icons]
+  2026-09-21-esp8266-indicator-icons, 2026-09-28-mnt-226-relay-state-log]
 ---
 # MNT-217: Relay schedule component
 
@@ -106,7 +106,7 @@ The implementation plan for the Relay Schedule Component (MNT-217) involves both
    - Override `validate_periods` in `RelayScheduleSerializer` to reject overlaps.
 
 2. **Update `odin/api/v1/relays/views.py`**:
-   - Remove the `state` column write in `perform_update`.
+   - Remove the `state` column write in `perform_update`. (> **Note 2026-09-29 (Consistency Agent):** superseded — `perform_update` in `odin/api/v1/relays/views.py:67-69` currently recomputes **and persists** `state` + `mode` on every context/`force_state` write, which is also what `RelayLogService` snapshots in [[2026-09-28-mnt-226-relay-state-log]].)
    - After context update, recompute target via `RelayTargetStateService` and publish via `RedisBus`.
    - Add type-specific validation for `target_temp` and `target_state`.
 
@@ -128,4 +128,5 @@ The implementation plan for the Relay Schedule Component (MNT-217) involves both
 - Related: [[2026-09-18-relay-state-mode-refactor]]
 - Related: [[2026-09-19-mnt-215-midseason-mode]]
 - Related: [[2026-09-21-esp8266-indicator-icons]]
+- Related: [[2026-09-28-mnt-226-relay-state-log]]
 - External: https://linear.app/mnt/issue/MNT-217/relay-schedule-component

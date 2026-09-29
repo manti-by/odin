@@ -13,7 +13,7 @@ services: [CurrencyTile, Ds18b20SensorsTile, Esp8266SensorsTile, SystemErrorsTil
   test_index, pyproject, uv, .sessions, INDEX, 2026-09-23-mnt-218-split-dashboard-api]
 branch: mnt-218-split-dashboard-api
 tickets: [MNT-218]
-tags: [wiki, feature, incomplete, backend]
+tags: [wiki, feature, backend]
 related: [2026-09-18-mnt-208-boiler-dashboard]
 ---
 # MNT-218: Split dashboard API
@@ -260,6 +260,7 @@ The plan involves splitting the existing dashboard API into smaller APIs for eac
 ## Follow-ups
 
 - None
+- **Note 2026-09-29 (Consistency Agent):** removed the stale `incomplete` tag from frontmatter; the session status is `resolved` with no follow-ups.
 
 ## References
 

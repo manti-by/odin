@@ -107,6 +107,10 @@ make frontend-check          # lint + typecheck (run by `make check` / `make ci`
 latest build. See [`frontend/README.md`](frontend/README.md) for the
 component layout, API client, PWA configuration, and session/CSRF details.
 
+Dev-only gotchas: Silk profiler is wired only under `DEBUG` (`odin/urls.py:40-45`), and the SPA
+catch-all explicitly excludes `silk` (`odin/urls.py:34`) — keep any new non-SPA route out of that
+lookahead or it will serve `index.html`.
+
 ### Database Operations
 
 ```bash
@@ -144,6 +148,8 @@ uv run pytest --cov=odin --cov-report=term-missing odin/
 # Run all pre-commit hooks
 uv run pre-commit run
 
+# Note: `make check` also runs `git add .` before `ty check` + pre-commit (Makefile:65-68)
+
 # Individual tools
 uv run ruff check .                 # Backend lint
 uv run ruff format .                # Backend format
@@ -175,7 +181,7 @@ make frontend-check                 # Frontend lint (Biome) + typecheck (tsc)
 
 ### Background Tasks
 
-- Use RQ for long-running or resource-intensive operations
+- RQ (`django-rq`) is configured but has no live jobs; when adding one:
 - Define jobs as additional functions with prefix `queue_`
 - Configure queue names for different priority levels
 
@@ -195,9 +201,12 @@ def queue_sync_sensor_data(sensor_id: str):
 
 ### Periodic Jobs
 
-- Use APScheduler for scheduled tasks
+- Use APScheduler (via `django-apscheduler`) for scheduled tasks
 - Define jobs in `odin/apps/core/scheduler.py` within the app
 - Use `scheduler.scheduled_job` for scheduling
+- Live jobs: `update_weather` (30 min), `update_voltage` (5 min), `update_exchange_rates` (4 h),
+  `fetch_traffic` (15 min). `update_boiler_mode` is commented out (disabled 2026-09-22, MNT-216
+  pending) — the boiler controller does not run periodically.
 
 ```python
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -212,11 +221,31 @@ def schedule_update_weather():
     call_command("update_weather")
 ```
 
+### Relay control
+
+- `Relay.state`/`Relay.mode` are persisted columns, but the API computes `mode`/`target_state` on
+  read via `Relay.get_target_state()` — never trust the stored `mode` in responses
+  (`odin/api/v1/relays/serializers.py:40`).
+- `RelayState` is `ON`/`OFF`/`UNKNOWN` only (`IGNORED` was removed); `RelayMode.IGNORED` still
+  exists (servo whose related pump is off).
+- `perform_update` recomputes and persists `state`+`mode`, publishes via `RedisBus`, and records a
+  `RelayLog` row (`odin/apps/relays/services.py:19`); servos link to their pump via the nullable
+  `related_relay` self-FK.
+- Midseason: pump runs only in the active daytime hour (`hour >= 6 and hour % 3 == 0`); servos
+  stay open (`OFF, MIDSEASON`).
+
+### Sensor data
+
+- Ingest contract: `POST /api/v1/sensors/logs/` takes a string `sensor_id` (unknown IDs stored
+  with `sensor=None`); producers omit fields they cannot provide.
+- `Sensor.temp`/`humidity` are denormalized calibrated caches; `is_alive` derives from
+  `updated_at` (10 min threshold). `SensorLogManager.current()` uses `DISTINCT ON (sensor)`.
+
 ## Code Style Guidelines
 
 ### Python Standards
 
-- Python version 3.13+ with type hints encouraged
+- Python 3.13.x (`requires-python = ">=3.13.6,<3.14.0"`) with type hints encouraged
 - Ensure code style consistency using Ruff
 - Line length 120 characters
 - Indentation 4 spaces
@@ -229,8 +258,9 @@ Use Ruff isort with this order:
 2. Standard library imports
 3. Third-party imports
 4. First-party imports
-5. Django imports
+5. Django imports (also `rest_framework`, `django_rq`, `django_apscheduler`, `apscheduler`)
 6. Odin imports
+7. Local folder imports
 
 ```python
 from __future__ import annotations
@@ -310,6 +340,9 @@ class Sensor(models.Model):
 - URL-based versioning: `/api/v1/...`
 - Include version in DRF router namespace: `api:v1:sensors:list`
 - Increment version for breaking changes only
+- The aggregate `core/dashboard/` endpoint was removed (MNT-218); per-model packages live directly
+  under `odin/api/v1/` (`core`, `currency`, `electricity`, `logs`, `provider`, `sensors`, `relays`,
+  `boiler`, `weather`)
 
 ## Dependency Management
 
@@ -324,6 +357,7 @@ class Sensor(models.Model):
 - Use mocks for external services and slow dependencies
 - Test error handling and validation logic
 - Use meaningful test names that describe the scenario
+- Test settings (`odin/settings/test.py:12`) use an MD5 password hasher for speed
 
 ### Testing Patterns
 
@@ -331,7 +365,7 @@ class Sensor(models.Model):
 
 - Use pytest with pytest-django
 - Create descriptive test method names with double underscores
-- Use Factory Boy for test data
+- Use Factory Boy (via `pytest-factoryboy`) for test data
 - Test both success and error cases
 - Use parametrized tests for similar scenarios
 
@@ -361,7 +395,7 @@ class TestSensorsAPI:
 
 #### Test Data
 
-- Use Factory Boy for creating test instances
+- Use Factory Boy (via `pytest-factoryboy`) for creating test instances
 - Use meaningful default values in factories
 - Test with different data variations
 
@@ -416,18 +450,18 @@ class SensorConnectionError(SensorError):
 
 ## Environment Configuration
 
-### Settings Files
+### Settings Files (`odin/settings/`)
 
 - `base.py`: Common settings
 - `dev.py`: Development (DEBUG=True, ALLOWED_HOSTS="*")
-- `test.py`: Testing (DEBUG=False, minimal logging)
+- `test.py`: Testing (DEBUG=True, ERROR-level logging, MD5 password hasher for speed)
 - `prod.py`: Production settings
-- `sqlite.py`: SQLite settings for Django checks
+- `sqlite.py`: In-memory SQLite settings for Django checks only
 
 ### Database
 
-- **Development/Production**: PostgreSQL
-- **Testing**: SQLite (configured in test settings)
+- **Development/Production/Testing**: PostgreSQL (`odin/settings/base.py:98`, inherited by `test.py`)
+- **SQLite** only in `odin/settings/sqlite.py` (`:memory:`) for `make django-checks`, never pytest
 
 ## Security Guidelines
 
@@ -452,6 +486,11 @@ Frontend checks are not part of pre-commit; they run via `make frontend-check`
 
 - Services: gunicorn, worker, scheduler, consumer (`manage.py consumer`, Redis pub/sub for
   sensor + relay updates), nginx
+- Redis contract (`odin/apps/core/redis_bus.py`): control channel `relays:control`
+  (`REDIS_RELAYS_CHANNEL`), telemetry channel `sensors:telemetry` (`REDIS_SENSORS_CHANNEL`), last
+  known state under `relays:state:<relay_id>`; envelope
+  `{type: RELAY_STATE_UPDATE | SENSOR_DATA_UPDATE, data, timestamp}`. Kafka was removed entirely —
+  do not add Kafka code back.
 - Boiler/eBUS services: `ebusd` (must run with `--enabledefine --scanconfig=08`) and
   `boiler-refresh.timer` (must be **enabled**; re-sends the last boiler override every 60 s)
 - Use systemd for service management

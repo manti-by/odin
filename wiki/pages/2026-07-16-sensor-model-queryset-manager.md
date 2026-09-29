@@ -22,7 +22,10 @@ Investigated `Sensor` model, `SensorQuerySet`, and `SensorManager` in `odin/apps
 > the `latest_log`/`temp`/`humidity` properties were replaced by denormalized `temp`/`humidity`
 > fields plus an `is_alive` derived from `updated_at`, and `SensorLog.sensor_id` is now an FK to
 > `Sensor`. See [[2026-09-24-sensor-fks-and-denormalized-readings]]. `SensorQuerySet`,
-> `SensorManager`, and `SensorLogManager` are otherwise unchanged.
+> `SensorManager`, and `SensorLogManager` are otherwise unchanged, except that
+> `SensorLogManager.current()` now uses `.distinct("sensor")` (PostgreSQL `DISTINCT ON`) at
+> `odin/apps/sensors/models.py:130-131` rather than the subquery described under `SensorLogManager`
+> below (verified 2026-09-29).
 
 ---
 

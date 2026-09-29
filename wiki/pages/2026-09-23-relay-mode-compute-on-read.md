@@ -140,7 +140,10 @@ class DashboardRelaySerializer(serializers.Serializer):
 - `odin/tests/api/test_relays.py::test_relays__retrieve_computes_mode_on_read` — servo with
   stored `MIDSEASON` and an OFF related pump returns `IGNORED`.
 - `odin/tests/views/test_dashboard.py::test_dashboard__relay_mode_computed_on_read` — same
-  scenario through `DashboardRelaySerializer`.
+  scenario through `DashboardRelaySerializer`. (> **Note 2026-09-29 (Consistency Agent):** this file
+  was deleted later the same day by [[2026-09-23-mnt-218-split-dashboard-api]]; the equivalent
+  coverage now lives in
+  `odin/tests/api/test_sensors_dashboard.py::test_ds18b20_dashboard__relay_mode_computed_on_read`.)
 - `ruff check`, `ruff format --check`, `ty check`, `pre-commit`, and the full suite are green:
   `327 passed`.
 - Post-fix, both serializers agree for both servos (live DB, read-only):
@@ -149,6 +152,12 @@ class DashboardRelaySerializer(serializers.Serializer):
 SERVO-BR  stored mode=MIDSEASON | RelaySerializer=MIDSEASON | Dashboard=MIDSEASON
 SERVO-HL  stored mode=IGNORED   | RelaySerializer=MIDSEASON | Dashboard=MIDSEASON
 ```
+
+> **Note 2026-09-29 (Consistency Agent):** the `(OFF, IGNORED)` computation above vs `MIDSEASON` here
+> is not a contradiction — the related pump's stored state flipped between the two reads (noted at
+> 10 ms apart above). Pump OFF yields `(OFF, IGNORED)` (`odin/apps/relays/services.py:119-121`);
+> pump ON in midseason yields `(OFF, MIDSEASON)` (`:132-134`). Both serializers agree in each read
+> because both call `get_target_state()` on the same pump state.
 
 ---
 
@@ -167,3 +176,4 @@ SERVO-HL  stored mode=IGNORED   | RelaySerializer=MIDSEASON | Dashboard=MIDSEASO
 - Related: [[2026-09-19-mnt-215-midseason-mode]]
 - Related: [[2026-09-18-relay-state-mode-refactor]]
 - Related: [[2026-09-21-esp8266-indicator-icons]]
+- Related: [[2026-09-23-mnt-218-split-dashboard-api]]

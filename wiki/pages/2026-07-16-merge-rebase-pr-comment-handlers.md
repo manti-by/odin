@@ -21,7 +21,10 @@ Exhaustive search for GitHub PR merge/rebase comment handlers, notification mark
 
 ## Net effect
 
-Any GitHub PR/webhook integration would need to be built from scratch. The existing notification system is Firebase Cloud Messaging push only, with no read-status tracking.
+Any GitHub PR/webhook integration would need to be built from scratch. The existing notification system is WebPush push only, with no read-status tracking.
+
+> **Note 2026-09-29 (Consistency Agent):** corrected "Firebase Cloud Messaging" → WebPush here and
+> below — `odin/apps/core/webpush.py` uses `pywebpush` (standard WebPush), not FCM.
 
 ## Areas explored
 
@@ -35,8 +38,8 @@ Searched for `mark_read`, `mark_as_read`, notification read-state models, and vi
 
 ### Notification system (existing)
 
-- **`odin/apps/core/webpush.py`** — Sends Firebase Cloud Messaging push notifications. No read tracking.
-- **`odin/apps/core/models.py`** — `Device` model for FCM subscriptions. No notification read-status field.
+- **`odin/apps/core/webpush.py`** — Sends WebPush push notifications. No read tracking.
+- **`odin/apps/core/models.py`** — `Device` model for WebPush subscriptions. No notification read-status field.
 
 ### Tangential matches (false positives)
 

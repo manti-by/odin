@@ -221,6 +221,11 @@ If `messages` is back down to ~12–13, the daemon lost its config again → `su
 
 - Related: [[2026-08-11-proterm-lynx-25-ebus-protocol]]
 - Code: `odin/apps/boiler/services.py` (`SETMODE_DEF` line 29, `refresh()` line 132, `_write()` line 186),
-  `odin/apps/boiler/management/commands/boiler_set.py`
+  `odin/apps/boiler/management/commands/boiler_set.py` (> **Note 2026-09-29 (Consistency Agent):**
+  paths are historical — MNT-206 split the monolith into the `odin/apps/boiler/services/` package
+  and renamed `BoilerService` → `BoilerStatusService`; see
+  [[2026-09-17-mnt-206-boiler-mode-controller]]. The `6364` vs `~230` message counts above are also
+  consistent, not conflicting: 6364 is the `--checkconfig` full-library scan, ~230 is what the
+  running daemon loads for device 08.)
 - System: `/etc/default/ebusd`, `/var/log/ebusd.log`, `boiler-refresh.timer` / `boiler-refresh.service`
 - ebusd TCP commands: https://github.com/john30/ebusd/wiki/3.1.-TCP-client-commands

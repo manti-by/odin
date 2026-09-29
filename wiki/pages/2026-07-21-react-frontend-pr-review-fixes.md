@@ -8,7 +8,7 @@ services: [core, sensors, weather, frontend]
 branch: epic/react_frontend
 tickets: [MNT-125]
 tags: [code-review, coderabbit, react, frontend, ci, testing, refactor]
-related: [2026-07-17-mock-kafka-systemctl-in-tests.md, 2026-09-23-mnt-218-split-dashboard-api.md]
+related: [2026-07-17-mock-kafka-systemctl-in-tests.md, 2026-09-23-mnt-218-split-dashboard-api.md, 2026-08-24-react-spa-dev-mode-debug.md]
 ---
 
 # React frontend PR review — apply CodeRabbit + coding-guideline fixes
@@ -66,7 +66,7 @@ The diff scope was the full React frontend migration: a new `frontend/` Vite+Rea
 - **TargetTempModal:** PATCH body changed from `{ context: { ...sensor.context, target_temp: temp } }` to `{ context: { target_temp: temp } }` — the backend (`SensorsUpdateView.perform_update`) already merges context server-side, so spreading the client's cached copy only risked clobbering fields changed elsewhere since the last dashboard poll (up to 5 min via `POLL_INTERVAL`).
 - **MiniSparkline:** tooltip data remapped from `{ v: value }` to `{ name: timestamp, value }` so Recharts' default tooltip shows a real timestamp/label instead of an array index.
 - **client.ts:** `readCookie` no longer builds a `RegExp` dynamically from the cookie name; parses `document.cookie` by manual split instead (defense-in-depth, not an active vuln today since the name is a hardcoded constant).
-- **useDashboardData:** added `isMountedRef` guard so `setData`/`setError`/`setLoading` don't fire after the component unmounts mid-request.
+- **useDashboardData:** added `isMountedRef` guard so `setData`/`setError`/`setLoading` don't fire after the component unmounts mid-request. (> **Note 2026-09-29 (Consistency Agent):** this guard was removed in [[2026-08-24-react-spa-dev-mode-debug]] — React 18 `<StrictMode>` breaks it in dev; the `fetchIdRef` staleness check alone is enough.)
 
 ## Step 6 — CSS, docs, CI/Makefile
 
@@ -99,4 +99,5 @@ bun run build (tsc -b && vite build)                      → succeeds, dist/ ge
 ## References
 
 - Related: [[2026-07-17-mock-kafka-systemctl-in-tests]]
+- Related: [[2026-08-24-react-spa-dev-mode-debug]]
 - External: https://github.com/manti-by/odin/pull/14

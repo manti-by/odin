@@ -62,6 +62,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [React frontend PR review — apply CodeRabbit + coding-guideline fixes](pages/2026-07-21-react-frontend-pr-review-fixes.md)
 - [Fix React SPA dev-mode issues: docs, proxy, base path, StrictMode Loading bug](pages/2026-08-24-react-spa-dev-mode-debug.md)
 - [MNT-218: Split dashboard API](pages/2026-09-23-mnt-218-split-dashboard-api.md)
+- [Silk profiler unreachable — SPA catch-all shadows /silk/](pages/2026-09-24-silk-route-spa-catchall-shadow.md)
 
 ### GitHub integration & notifications
 
@@ -78,7 +79,3 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 
 - [Fix type errors and verify CI flow](pages/2026-07-16-fix-type-errors-ci-flow.md)
 - [Mock Kafka and systemctl in dashboard tests for CI](pages/2026-07-17-mock-kafka-systemctl-in-tests.md)
-
-### Django admin & dev tooling
-
-- [Silk profiler unreachable — SPA catch-all shadows /silk/](pages/2026-09-24-silk-route-spa-catchall-shadow.md)
