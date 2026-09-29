@@ -21,6 +21,12 @@ function formatTemp(value: number | null): string {
   return value === null ? "—" : `${value}°C`;
 }
 
+function parseTemp(value: string | undefined): number | null {
+  if (value === undefined) return null;
+  const n = Number(value);
+  return Number.isNaN(n) ? null : n;
+}
+
 function formatUpdated(value: string | null): string {
   if (!value) return "—";
   const d = new Date(value);
@@ -70,11 +76,11 @@ export function BoilerTile({ status, loading, error }: BoilerTileProps) {
           <div className="boiler-temps">
             <div className="boiler-temps__item">
               <span className="boiler-temps__label">Flow</span>
-              <span className="boiler-temps__value">{formatTemp(status.target_temp)}</span>
+              <span className="boiler-temps__value">{formatTemp(parseTemp(status.status.FlowTempDesired))}</span>
             </div>
             <div className="boiler-temps__item">
-              <span className="boiler-temps__label">Hot water</span>
-              <span className="boiler-temps__value">{formatTemp(status.hwc_temp)}</span>
+              <span className="boiler-temps__label">Tank</span>
+              <span className="boiler-temps__value">{formatTemp(parseTemp(status.status.StorageTempDesired))}</span>
             </div>
           </div>
           <div className="boiler-rows">

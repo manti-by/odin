@@ -11,6 +11,7 @@ from rest_framework.test import APIClient
 from odin.apps.boiler.services.ebusd import EbusdError
 from odin.apps.boiler.services.mode import BoilerMode
 from odin.apps.boiler.services.schedule import BOIL_HOUR, CLEAR_HOUR, get_next_boil_schedule
+from odin.apps.boiler.services.status import BoilerStatusService
 
 
 MINSK = ZoneInfo("Europe/Minsk")
@@ -43,6 +44,11 @@ class TestBoilerStatusAPI:
         assert response.data["hwc_temp"] is None
         assert response.data["override_updated_at"] is None
         assert response.data["ebusd_alive"] is True
+
+    def test_status__live_fields(self, boiler_state):
+        response = self.client.get(self.url, format="json")
+
+        assert set(response.data["status"]) == {name for name, _ in BoilerStatusService.STATUS_FIELDS}
 
     def test_status__boiling_override(self, boiler_state):
         boiler_state.write_text("water;0;55;-;0;0;0;0;0;0\n")

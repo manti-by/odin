@@ -28,5 +28,6 @@ class BoilerStatusView(APIView):
             "ebusd_alive": service.is_alive(),
             "next_boil_at": boil_at,
             "next_clear_at": clear_at,
+            "status": service.status(),
         }
         return Response(BoilerStatusSerializer(data).data)

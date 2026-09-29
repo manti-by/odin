@@ -12,3 +12,4 @@ class BoilerStatusSerializer(serializers.Serializer):
     ebusd_alive = serializers.BooleanField()
     next_boil_at = serializers.DateTimeField()
     next_clear_at = serializers.DateTimeField()
+    status = serializers.DictField(child=serializers.CharField())

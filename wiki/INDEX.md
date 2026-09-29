@@ -9,7 +9,12 @@ by the plugin.
 
 _Newest first._
 
+<<<<<<< Updated upstream
 - [MNT-226: Relay state log](pages/2026-09-28-mnt-226-relay-state-log.md) — Implementation of MNT-226: Relay state log (2026-09-28)
+=======
+- [Boiler tile shows no temperatures — API returns override, not live status](pages/2026-09-27-boiler-live-status-api.md) — `GET /api/v1/boiler/status/` returned only override-derived setpoints, so the tile showed `—` in panel mode; the API now also returns the same live ebusd fields as `boiler_status` and the tile renders Flow/Return/Tank temps (2026-09-27)
+
+>>>>>>> Stashed changes
 - [Silk profiler unreachable — SPA catch-all shadows /silk/](pages/2026-09-24-silk-route-spa-catchall-shadow.md) — Local dev server was down, and `/silk/` also served the SPA `index.html` because the catch-all `re_path` didn't exclude `silk`; added `silk(?:$|/)` to the lookahead (2026-09-24)
 - [Sensor relation FKs and denormalized readings](pages/2026-09-24-sensor-fks-and-denormalized-readings.md) — Migrated `SensorLog.sensor`, `Sensor.relay`, and `Sensor.linked_sensor` from char columns to nullable FKs, dropped the legacy `*_old` columns, and cached `temp`/`humidity` on `Sensor`; `is_alive` now reads `updated_at` (2026-09-24/25)
 - [MNT-218: Split dashboard API](pages/2026-09-23-mnt-218-split-dashboard-api.md) — Split the aggregate dashboard API into per-model endpoints under `odin/api/v1/` and moved the SPA to per-tile hooks/APIs; removed the old `core/dashboard/` view, serializer, and services (2026-09-23)

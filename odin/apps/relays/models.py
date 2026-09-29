@@ -222,8 +222,8 @@ class RelayLog(models.Model):
         verbose_name=_("Updated by"),
     )
 
-    created_at: models.DateTimeField[datetime] = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
     updated_at: models.DateTimeField[datetime] = models.DateTimeField(auto_now=True, verbose_name=_("Updated at"))
+    created_at: models.DateTimeField[datetime] = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
 
     objects = models.Manager()
 

@@ -15,7 +15,7 @@ from django.utils.translation import gettext_lazy as _
 
 from odin.apps.core.redis_bus import RedisBus
 
-from .models import Relay, RelayState, RelayType
+from .models import Relay, RelayLog, RelayState, RelayType
 from .services import RelayLogService
 
 
@@ -147,3 +147,25 @@ class RelayAdmin(admin.ModelAdmin):
             )
             if not published:
                 logger.error(f"Failed to publish relay control message to Redis for relay {obj.relay_id}")
+
+
+@admin.register(RelayLog)
+class RelayLogAdmin(admin.ModelAdmin):
+    fieldsets = [
+        ("", {"fields": ("relay",)}),
+        ("State", {"fields": ("old_state", "new_state")}),
+        ("Mode", {"fields": ("old_mode", "new_mode")}),
+        ("Force state", {"fields": ("old_force_state", "new_force_state")}),
+        ("Context", {"fields": ("old_context", "new_context")}),
+        ("Changed", {"fields": ("updated_by", "updated_at", "created_at")}),
+    ]
+    list_display = (
+        "relay",
+        "old_state",
+        "new_state",
+        "updated_by",
+        "updated_at",
+        "created_at",
+    )
+    list_filter = ("relay",)
+    readonly_fields = ("updated_by", "updated_at", "created_at")
