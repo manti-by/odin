@@ -69,6 +69,19 @@ class TestEsp8266DashboardAPI:
         assert response.status_code == status.HTTP_200_OK
         assert response.data["is_alive"] is False
 
+    def test_esp8266_dashboard__refresh_does_not_audit(self):
+        """SPA polling refreshes relay state from Redis without writing audit rows."""
+        relay = RelayFactory(relay_id="rel1", state=RelayState.OFF)
+        SensorFactory(type=SensorType.ESP8266, sensor_id="esp1", relay=relay, is_visible=True)
+
+        with patch.object(RedisBus, "get_relay_latest_message", return_value={"data": {"state": "ON"}}):
+            response = self.client.get(self.url, format="json")
+
+        assert response.status_code == status.HTTP_200_OK
+        relay.refresh_from_db()
+        assert relay.state == RelayState.ON
+        assert relay.logs.count() == 0
+
 
 @pytest.mark.django_db
 class TestDs18B20DashboardAPI:

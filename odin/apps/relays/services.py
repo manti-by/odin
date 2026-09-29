@@ -1,16 +1,63 @@
 from __future__ import annotations
 
+import copy
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.utils import timezone
 
-from odin.apps.relays.models import RelayMode, RelayState, RelayType
+from odin.apps.relays.models import RelayLog, RelayMode, RelayState, RelayType
 from odin.apps.weather.models import Weather
 
 
 if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+
     from odin.apps.relays.models import Relay
+
+
+class RelayLogService:
+    """Audit trail for relay state, mode, force_state and context changes."""
+
+    TRACKED_FIELDS = ("state", "mode", "force_state", "context")
+
+    def __init__(self, relay: Relay, user: User | None = None):
+        self.relay = relay
+        self.user = user
+
+    @classmethod
+    def snapshot(cls, relay: Relay) -> dict[str, Any]:
+        """Capture the tracked fields before a mutation."""
+        return {
+            field: copy.deepcopy(getattr(relay, field)) if field == "context" else getattr(relay, field)
+            for field in cls.TRACKED_FIELDS
+        }
+
+    def log_change(self, before: dict[str, Any]) -> RelayLog | None:
+        """Create a RelayLog row when any tracked field differs from the snapshot.
+
+        Args:
+            before: snapshot of the relay taken before the change.
+
+        Returns:
+            The created RelayLog, or None when nothing changed.
+        """
+        after = self.snapshot(self.relay)
+        if all(before.get(field) == after[field] for field in self.TRACKED_FIELDS):
+            return None
+
+        return RelayLog.objects.create(
+            relay=self.relay,
+            old_state=before.get("state"),
+            new_state=after["state"],
+            old_mode=before.get("mode"),
+            new_mode=after["mode"],
+            old_force_state=before.get("force_state"),
+            new_force_state=after["force_state"],
+            old_context=before.get("context") or {},
+            new_context=after["context"] or {},
+            updated_by=self.user,
+        )
 
 
 class RelayTargetStateService:

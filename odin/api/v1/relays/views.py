@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+from django.db import transaction
 from rest_framework import mixins
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -11,7 +12,7 @@ from odin.api.authentication import TokenAuthentication
 from odin.api.v1.relays.serializers import RelaySerializer, RelayUpdateSerializer
 from odin.apps.core.redis_bus import RedisBus
 from odin.apps.relays.models import Relay, RelayState
-from odin.apps.relays.services import RelayTargetStateService
+from odin.apps.relays.services import RelayLogService, RelayTargetStateService
 
 
 logger = logging.getLogger(__name__)
@@ -53,6 +54,7 @@ class RelayRetrieveUpdateView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin
         if not (item := serializer.instance):
             raise ValueError("Relay instance not found")
 
+        before = RelayLogService.snapshot(item)
         update_fields = []
         if "context" in data:
             item.context.update(**data["context"])
@@ -67,7 +69,10 @@ class RelayRetrieveUpdateView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin
             update_fields.extend(["state", "mode"])
 
         if update_fields:
-            item.save(update_fields=update_fields)
+            user = self.request.user if self.request.user.is_authenticated else None
+            with transaction.atomic():
+                item.save(update_fields=update_fields)
+                RelayLogService(item, user=user).log_change(before)
 
             if item.state in (RelayState.ON, RelayState.OFF):
                 if not RedisBus.publish_relay_control(relay_id=item.relay_id, state=item.state):

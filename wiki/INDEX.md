@@ -9,6 +9,7 @@ by the plugin.
 
 _Newest first._
 
+- [MNT-226: Relay state log](pages/2026-09-28-mnt-226-relay-state-log.md) — Implementation of MNT-226: Relay state log (2026-09-28)
 - [Silk profiler unreachable — SPA catch-all shadows /silk/](pages/2026-09-24-silk-route-spa-catchall-shadow.md) — Local dev server was down, and `/silk/` also served the SPA `index.html` because the catch-all `re_path` didn't exclude `silk`; added `silk(?:$|/)` to the lookahead (2026-09-24)
 - [Sensor relation FKs and denormalized readings](pages/2026-09-24-sensor-fks-and-denormalized-readings.md) — Migrated `SensorLog.sensor`, `Sensor.relay`, and `Sensor.linked_sensor` from char columns to nullable FKs, dropped the legacy `*_old` columns, and cached `temp`/`humidity` on `Sensor`; `is_alive` now reads `updated_at` (2026-09-24/25)
 - [MNT-218: Split dashboard API](pages/2026-09-23-mnt-218-split-dashboard-api.md) — Split the aggregate dashboard API into per-model endpoints under `odin/api/v1/` and moved the SPA to per-tile hooks/APIs; removed the old `core/dashboard/` view, serializer, and services (2026-09-23)
@@ -46,6 +47,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [ESP8266 relay indicators: SVG icons + mode tooltip](pages/2026-09-21-esp8266-indicator-icons.md)
 - [MNT-217: Relay schedule component](pages/2026-09-22-mnt-217-relay-schedule-component.md)
 - [Relay mode computed on read](pages/2026-09-23-relay-mode-compute-on-read.md)
+- [MNT-226: Relay state log](pages/2026-09-28-mnt-226-relay-state-log.md)
 
 ### Boiler / eBus control
 

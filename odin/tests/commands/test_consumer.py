@@ -53,6 +53,25 @@ class TestConsumeSensorsCommand:
 
         mock_get_relay_latest_message.assert_called_once_with("PUMP-1")
 
+    @patch(
+        "odin.apps.core.redis_bus.RedisBus.get_relay_latest_message",
+        return_value={"data": {"state": RelayState.ON.value}},
+    )
+    def test_process_message__relay_refresh_writes_no_audit_row(self, mock_get_relay_latest_message: MagicMock):
+        """ODIN's own control echo (and Coruscant acks) must not create audit rows."""
+        relay = RelayFactory(relay_id="PUMP-1", state=RelayState.OFF)
+        message = {
+            "type": "RELAY_STATE_UPDATE",
+            "data": {"relay_id": "PUMP-1", "state": RelayState.ON.value},
+            "timestamp": "2026-01-01T00:00:00+00:00",
+        }
+
+        self.command.process_message(json.dumps(message).encode())
+
+        relay.refresh_from_db()
+        assert relay.state == RelayState.ON
+        assert relay.logs.count() == 0
+
     @patch("odin.apps.core.redis_bus.RedisBus.get_relay_latest_message")
     def test_process_message__ignores_unknown_relay(self, mock_get_relay_latest_message: MagicMock):
         message = {
