@@ -11,6 +11,7 @@ import redis
 from redis.exceptions import RedisError
 
 from django.conf import settings
+from django.contrib.auth.models import User
 
 from odin.apps.core.exceptions import RedisReadError
 
@@ -93,23 +94,25 @@ class RedisBus:
         return False
 
     @classmethod
-    def publish_relay_control(cls, relay_id: str, state: str) -> bool:
+    def publish_relay_control(cls, relay_id: str, state: str, user: User | None = None) -> bool:
         """Publish a relay control command to the relays channel.
 
         Publishes the canonical envelope
-        {type, data: {relay_id, state}, timestamp} where state is "ON" or
-        "OFF".
+        {type, data: {relay_id, state, user_id}, timestamp} where state is
+        "ON" or "OFF" and user_id is the acting user's pk (or null for
+        system-driven updates).
 
         Args:
             relay_id: Identifier of the relay to control.
             state: Desired relay state value ("ON" or "OFF").
+            user: Acting user, or None for a system-driven update.
 
         Returns:
             True if the control message was published, False otherwise.
         """
         message = {
             "type": MessageType.RELAY_STATE_UPDATE.value,
-            "data": {"relay_id": relay_id, "state": state},
+            "data": {"relay_id": relay_id, "state": state, "user_id": user.pk if user else None},
             "timestamp": datetime.now().isoformat(),
         }
         return cls.publish_message(settings.REDIS_RELAYS_CHANNEL, payload=message)

@@ -27,8 +27,9 @@ class TestRelaysPeriodicSchedule:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.ON
-            assert self.relay.mode == RelayMode.BASIC
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
 
     def test_relays__periodic_schedule_returns_off_when_target_state_is_off(self):
         """Test that periodic schedule returns OFF when target_state is OFF."""
@@ -39,8 +40,9 @@ class TestRelaysPeriodicSchedule:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.OFF
-            assert self.relay.mode == RelayMode.BASIC
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.BASIC
 
     def test_relays__periodic_schedule_returns_on_when_no_periods(self):
         """Test that periodic schedule defaults to ON when no periods are defined."""
@@ -49,8 +51,9 @@ class TestRelaysPeriodicSchedule:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.ON
-            assert self.relay.mode == RelayMode.FALLBACK
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.FALLBACK
 
     def test_relays__periodic_schedule_returns_on_when_no_matching_period(self):
         """Test that periodic schedule defaults to ON when current time doesn't match any period."""
@@ -63,8 +66,9 @@ class TestRelaysPeriodicSchedule:
         # Outside the period (after 18:00)
         local_time = datetime(2025, 1, 6, 20, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.ON
-            assert self.relay.mode == RelayMode.FALLBACK
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.FALLBACK
 
     def test_relays__periodic_schedule_end_time_belongs_to_next_period(self):
         """Test that a period's end time is exclusive, so adjacent periods do not overlap."""
@@ -80,8 +84,9 @@ class TestRelaysPeriodicSchedule:
 
         local_time = datetime(2025, 1, 6, 12, 0, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.OFF
-            assert self.relay.mode == RelayMode.BASIC
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.BASIC
 
     def test_relays__periodic_schedule_handles_overnight_periods(self):
         """Test that periodic schedule handles periods that span midnight."""
@@ -93,14 +98,16 @@ class TestRelaysPeriodicSchedule:
         # During overnight period (23:00)
         local_time = datetime(2025, 1, 6, 23, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.ON
-            assert self.relay.mode == RelayMode.BASIC
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
 
         # During overnight period (02:00)
         local_time = datetime(2025, 1, 7, 2, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.ON
-            assert self.relay.mode == RelayMode.BASIC
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
 
     def test_relays__periodic_schedule_applies_to_all_days(self):
         """Test that periodic schedule applies to all days of the week."""
@@ -120,14 +127,16 @@ class TestRelaysPeriodicSchedule:
         # Monday (day 1) - should work
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))  # Monday
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.ON
-            assert self.relay.mode == RelayMode.BASIC
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
 
         # Sunday (day 0) - should also work since periods apply to all days
         local_time = datetime(2025, 1, 5, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))  # Sunday
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.ON
-            assert self.relay.mode == RelayMode.BASIC
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
 
 
 @pytest.mark.django_db
@@ -152,8 +161,9 @@ class TestServoPeriodOverride:
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
             # Should use period target_temp (25.0), temp 22.0 < 25.0 - 1.0 = 24.0, so ON
-            assert self.relay.apply_target_state() == RelayState.ON
-            assert self.relay.mode == RelayMode.BASIC
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
 
     def test_relays__servo_uses_zero_period_target_temp(self):
         """Test that a period target_temp of 0 is honored instead of the sensor default."""
@@ -167,8 +177,9 @@ class TestServoPeriodOverride:
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
             # 10.0 > 0 + 1.0, so the circuit closes instead of regulating against the sensor's 20.0
-            assert self.relay.apply_target_state() == RelayState.OFF
-            assert self.relay.mode == RelayMode.BASIC
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.BASIC
 
 
 @pytest.mark.django_db
@@ -202,8 +213,9 @@ class TestRelaysServoTargetState:
         """Test that target_state opens the circuit when there is no linked sensor."""
         self.sensor.relay = None
         self.sensor.save(update_fields=["relay"])
-        assert self.relay.apply_target_state() == RelayState.OFF
-        assert self.relay.mode == RelayMode.UNKNOWN
+        state, mode = self.relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.UNKNOWN
 
     def test_relays__servo_target_state_returns_off_when_sensor_is_stale(self):
         """Test that target_state opens the circuit when the sensor stopped reporting."""
@@ -212,8 +224,9 @@ class TestRelaysServoTargetState:
         Sensor.objects.filter(pk=self.sensor.pk).update(updated_at=timezone.now() - timedelta(minutes=30))
         self.sensor.refresh_from_db()
 
-        assert self.relay.apply_target_state() == RelayState.OFF
-        assert self.relay.mode == RelayMode.UNKNOWN
+        state, mode = self.relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.UNKNOWN
 
     def test_relays__servo_target_state_returns_on_when_temp_below_min(self):
         """Test that servo turns ON when temp is below target - hysteresis."""
@@ -221,8 +234,9 @@ class TestRelaysServoTargetState:
         self.sensor.save()
         SensorLogFactory(sensor=self.sensor, temp=Decimal("23.0"), created_at=timezone.now())
 
-        assert self.relay.apply_target_state() == RelayState.ON
-        assert self.relay.mode == RelayMode.BASIC
+        state, mode = self.relay.get_target_state()
+        assert state == RelayState.ON
+        assert mode == RelayMode.BASIC
 
     def test_relays__servo_target_state_returns_off_when_temp_above_max(self):
         """Test that servo turns OFF when temp is above target plus hysteresis."""
@@ -230,8 +244,9 @@ class TestRelaysServoTargetState:
         self.sensor.save()
         SensorLogFactory(sensor=self.sensor, temp=Decimal("27.0"), created_at=timezone.now())
 
-        assert self.relay.apply_target_state() == RelayState.OFF
-        assert self.relay.mode == RelayMode.BASIC
+        state, mode = self.relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.BASIC
 
     def test_relays__servo_target_state_returns_off_when_temp_in_range(self):
         """Test that servo turns OFF when temp is within hysteresis range."""
@@ -239,16 +254,18 @@ class TestRelaysServoTargetState:
         self.sensor.save()
         SensorLogFactory(sensor=self.sensor, temp=Decimal("25.0"), created_at=timezone.now())
 
-        assert self.relay.apply_target_state() == RelayState.OFF
-        assert self.relay.mode == RelayMode.FALLBACK
+        state, mode = self.relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.FALLBACK
 
     def test_relays__servo_target_state_returns_off_when_no_temp(self):
         """Test that target_state opens the circuit when sensor has no temperature reading."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
 
-        assert self.relay.apply_target_state() == RelayState.OFF
-        assert self.relay.mode == RelayMode.UNKNOWN
+        state, mode = self.relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.UNKNOWN
 
     def test_relays__servo_target_state_returns_off_when_no_target_temp(self):
         """Test that target_state opens the circuit when no target_temp is configured (no crash)."""
@@ -256,8 +273,9 @@ class TestRelaysServoTargetState:
         self.sensor.save()
         SensorLogFactory(sensor=self.sensor, temp=Decimal("23.0"), created_at=timezone.now())
 
-        assert self.relay.apply_target_state() == RelayState.OFF
-        assert self.relay.mode == RelayMode.UNKNOWN
+        state, mode = self.relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.UNKNOWN
 
 
 @pytest.mark.django_db
@@ -273,8 +291,9 @@ class TestRelaysTargetStateDispatch:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert relay.apply_target_state() == RelayState.ON
-            assert relay.mode == RelayMode.BASIC
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
 
     def test_relays__target_state_returns_servo_state_for_servo_type(self):
         """Test that target_state uses target_state for SERVO type."""
@@ -284,14 +303,16 @@ class TestRelaysTargetStateDispatch:
         sensor.save()
         SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
 
-        assert relay.apply_target_state() == RelayState.ON
-        assert relay.mode == RelayMode.BASIC
+        state, mode = relay.get_target_state()
+        assert state == RelayState.ON
+        assert mode == RelayMode.BASIC
 
     def test_relays__target_state_returns_unknown_for_unknown_type(self):
         """Test that target_state returns UNKNOWN for unknown relay types."""
         relay: Relay = RelayFactory(type=RelayType.VALVE)  # noqa
-        assert relay.apply_target_state() == RelayState.UNKNOWN
-        assert relay.mode == RelayMode.FALLBACK
+        state, mode = relay.get_target_state()
+        assert state == RelayState.UNKNOWN
+        assert mode == RelayMode.FALLBACK
 
 
 @pytest.mark.django_db
@@ -301,16 +322,18 @@ class TestRelaysWeatherModes:
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "20.0"}})
 
-        assert relay.apply_target_state() == RelayState.OFF
-        assert relay.mode == RelayMode.SUMMER
+        state, mode = relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.SUMMER
 
     def test_relays__pump_is_on_in_antifreeze(self):
         """Test that a PUMP runs continuously below -8°C."""
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "-10.0"}})
 
-        assert relay.apply_target_state() == RelayState.ON
-        assert relay.mode == RelayMode.ANTIFREEZE
+        state, mode = relay.get_target_state()
+        assert state == RelayState.ON
+        assert mode == RelayMode.ANTIFREEZE
 
     def test_relays__pump_runs_every_third_hour_in_midseason(self):
         """Test that a PUMP runs for the full first hour of every 3-hour window in midseason."""
@@ -319,8 +342,9 @@ class TestRelaysWeatherModes:
 
         local_time = datetime(2025, 1, 6, 9, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert relay.apply_target_state() == RelayState.ON
-            assert relay.mode == RelayMode.MIDSEASON
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.MIDSEASON
 
     def test_relays__pump_is_off_outside_every_third_hour_in_midseason(self):
         """Test that a PUMP is off during the two idle hours of every 3-hour window in midseason."""
@@ -329,8 +353,9 @@ class TestRelaysWeatherModes:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert relay.apply_target_state() == RelayState.OFF
-            assert relay.mode == RelayMode.MIDSEASON
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.MIDSEASON
 
     def test_relays__servo_stays_open_in_summer(self):
         """Test that a SERVO stays open (OFF) when outside temperature is 15°C or higher."""
@@ -341,8 +366,9 @@ class TestRelaysWeatherModes:
         SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "20.0"}})
 
-        assert relay.apply_target_state() == RelayState.OFF
-        assert relay.mode == RelayMode.SUMMER
+        state, mode = relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.SUMMER
 
     def test_relays__servo_stays_open_in_antifreeze(self):
         """Test that a SERVO stays open (OFF) below -8°C."""
@@ -353,8 +379,9 @@ class TestRelaysWeatherModes:
         SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "-10.0"}})
 
-        assert relay.apply_target_state() == RelayState.OFF
-        assert relay.mode == RelayMode.ANTIFREEZE
+        state, mode = relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.ANTIFREEZE
 
     def test_relays__servo_stays_open_every_third_hour_in_midseason(self):
         """Test that a SERVO stays open (OFF) in midseason."""
@@ -367,8 +394,9 @@ class TestRelaysWeatherModes:
 
         local_time = datetime(2025, 1, 6, 9, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert relay.apply_target_state() == RelayState.OFF
-            assert relay.mode == RelayMode.MIDSEASON
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.MIDSEASON
 
     def test_relays__servo_stays_open_outside_every_third_hour_in_midseason(self):
         """Test that a SERVO stays open (OFF) during the two idle hours of every 3-hour window in midseason."""
@@ -381,8 +409,9 @@ class TestRelaysWeatherModes:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert relay.apply_target_state() == RelayState.OFF
-            assert relay.mode == RelayMode.MIDSEASON
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.MIDSEASON
 
     @pytest.mark.parametrize(
         ("hour", "expected_state"),
@@ -404,8 +433,9 @@ class TestRelaysWeatherModes:
 
         local_time = datetime(2025, 1, 6, hour, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert relay.apply_target_state() == expected_state
-            assert relay.mode == RelayMode.MIDSEASON
+            state, mode = relay.get_target_state()
+            assert state == expected_state
+            assert mode == RelayMode.MIDSEASON
 
     @pytest.mark.parametrize(
         ("hour", "expected_state"),
@@ -432,8 +462,9 @@ class TestRelaysWeatherModes:
 
         local_time = datetime(2025, 1, 6, hour, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert relay.apply_target_state() == expected_state
-            assert relay.mode == RelayMode.MIDSEASON
+            state, mode = relay.get_target_state()
+            assert state == expected_state
+            assert mode == RelayMode.MIDSEASON
 
     @pytest.mark.parametrize("minute", (0, 30, 59))
     def test_relays__pump_midseason_active_window_spans_full_hour(self, minute):
@@ -443,8 +474,9 @@ class TestRelaysWeatherModes:
 
         local_time = datetime(2025, 1, 6, 9, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert relay.apply_target_state() == RelayState.ON
-            assert relay.mode == RelayMode.MIDSEASON
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.MIDSEASON
 
     @pytest.mark.parametrize("minute", (0, 30, 59))
     def test_relays__servo_midseason_active_window_spans_full_hour(self, minute):
@@ -458,8 +490,9 @@ class TestRelaysWeatherModes:
 
         local_time = datetime(2025, 1, 6, 9, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert relay.apply_target_state() == RelayState.OFF
-            assert relay.mode == RelayMode.MIDSEASON
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.MIDSEASON
 
 
 @pytest.mark.django_db
@@ -471,15 +504,17 @@ class TestRelaysForceState:
         """Test that target_state returns force_state when set to ON."""
         self.relay.force_state = RelayState.ON
         self.relay.save()
-        assert self.relay.apply_target_state() == RelayState.ON
-        assert self.relay.mode == RelayMode.FORCED
+        state, mode = self.relay.get_target_state()
+        assert state == RelayState.ON
+        assert mode == RelayMode.FORCED
 
     def test_relays__target_state_returns_force_state_when_set_to_off(self):
         """Test that target_state returns force_state when set to OFF."""
         self.relay.force_state = RelayState.OFF
         self.relay.save()
-        assert self.relay.apply_target_state() == RelayState.OFF
-        assert self.relay.mode == RelayMode.FORCED
+        state, mode = self.relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.FORCED
 
     def test_relays__target_state_ignores_schedule_when_force_state_set(self):
         """Test that target_state ignores schedule when force_state is set."""
@@ -491,8 +526,9 @@ class TestRelaysForceState:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.ON
-            assert self.relay.mode == RelayMode.FORCED
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.FORCED
 
     def test_relays__target_state_returns_schedule_when_force_state_is_null(self):
         """Test that target_state uses schedule when force_state is null."""
@@ -504,8 +540,9 @@ class TestRelaysForceState:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            assert self.relay.apply_target_state() == RelayState.ON
-            assert self.relay.mode == RelayMode.BASIC
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
 
 
 @pytest.mark.django_db

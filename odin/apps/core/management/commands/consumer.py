@@ -11,12 +11,14 @@ from redis.exceptions import RedisError
 
 from command_log.management.commands import LoggedCommand
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.db.utils import DatabaseError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from odin.apps.core.redis_bus import MessageType, RedisBus
-from odin.apps.relays.models import Relay
+from odin.apps.relays.models import Relay, RelayState
+from odin.apps.relays.services import RelayLogService
 from odin.apps.sensors.models import Sensor, SensorLog
 
 
@@ -106,16 +108,20 @@ class Command(LoggedCommand):
             logger.error(f"Failed to process sensor message: {e}")
 
     def process_relay_message(self, message: dict[str, Any]) -> None:
-        """Refresh a relay from its persisted state when a relay update arrives.
+        """Apply a relay state update and record the transition.
 
-        The persisted ``relays:state:<relay_id>`` key written by Coruscant is
-        the source of truth, so the message is treated as a wake-up signal and
-        duplicates (including ODIN's own control echoes) are harmless. Unknown
-        relay ids are ignored.
+        The ``relays:control`` envelope carries the authoritative ``state``, so it
+        is written to the relay and audited via ``RelayLogService``; the optional
+        ``user_id`` attributes the change to the acting user, falling back to the
+        system user (``settings.REDIS_BUS_USER_ID``) for automatic updates. Messages
+        with an unknown relay id or a state other than ``ON``/``OFF`` are ignored.
         """
         data = message.get("data")
-        relay_id = data.get("relay_id") if isinstance(data, dict) else None
-        if not relay_id:
+        if not data or not isinstance(data, dict):
+            logger.warning("Skipping relay message with missing data")
+            return
+
+        if not (relay_id := data.get("relay_id")):
             logger.warning("Skipping relay message with missing relay_id")
             return
 
@@ -124,7 +130,18 @@ class Command(LoggedCommand):
             logger.warning(f"Skipping relay message for unknown relay {relay_id!r}")
             return
 
-        relay.refresh_state()
+        if (state := data.get("state")) not in (RelayState.ON, RelayState.OFF):
+            logger.warning(f"Skipping relay message with invalid state {state!r} for relay {relay_id!r}")
+            return
+
+        before = RelayLogService.snapshot(relay)
+
+        relay.state = state
+        relay.save(update_fields=["state", "updated_at"])
+
+        user = User.objects.filter(pk=data.get("user_id") or settings.REDIS_BUS_USER_ID).first()
+        if not RelayLogService(relay, user=user).log_change(before):
+            logger.error(f"Relay log does not created for {relay_id!r}")
 
     def process_envelope(self, message: dict[str, Any]) -> None:
         data = message.get("data")

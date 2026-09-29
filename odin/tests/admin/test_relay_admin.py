@@ -49,7 +49,7 @@ class TestRelayAdminSaveModel:
         form.data = {}
 
         admin_instance.save_model(None, self.relay, form, change=True)
-        mock_publish_relay_control.assert_called_once_with(relay_id=self.relay.relay_id, state="OFF")
+        mock_publish_relay_control.assert_called_once_with(relay_id=self.relay.relay_id, state="OFF", user=None)
 
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
     def test_save_model_publishes_relay_control_on_add(self, mock_publish_relay_control):

@@ -10,6 +10,7 @@ from django.conf import settings
 
 from odin.apps.core.exceptions import RedisReadError
 from odin.apps.core.redis_bus import RedisBus
+from odin.tests.factories import UserFactory
 
 
 class TestRedisBus:
@@ -118,8 +119,19 @@ class TestRedisBus:
         assert mock_publish_message.call_args.args[0] == settings.REDIS_RELAYS_CHANNEL
         payload = mock_publish_message.call_args.kwargs["payload"]
         assert payload["type"] == "RELAY_STATE_UPDATE"
-        assert payload["data"] == {"relay_id": "relay_1", "state": "ON"}
+        assert payload["data"] == {"relay_id": "relay_1", "state": "ON", "user_id": None}
         assert "timestamp" in payload
+
+    @pytest.mark.django_db
+    @patch("odin.apps.core.redis_bus.RedisBus.publish_message")
+    def test_publish_relay_control_with_user(self, mock_publish_message: MagicMock) -> None:
+        """Test publish_relay_control attributes the acting user's pk."""
+        user = UserFactory()
+
+        RedisBus.publish_relay_control(relay_id="relay_1", state="OFF", user=user)
+
+        payload = mock_publish_message.call_args.kwargs["payload"]
+        assert payload["data"] == {"relay_id": "relay_1", "state": "OFF", "user_id": user.pk}
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
     def test_get_relay_latest_message_returns_data(self, mock_get_redis: MagicMock) -> None:

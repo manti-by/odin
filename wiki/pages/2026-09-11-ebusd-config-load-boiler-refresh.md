@@ -8,7 +8,7 @@ services: [ebusd, boiler]
 branch: -
 tickets: []
 tags: [ebus, ebusd, vaillant, boiler, systemd, http, config, proterm]
-related: [2026-08-11-proterm-lynx-25-ebus-protocol.md]
+related: [2026-08-11-proterm-lynx-25-ebus-protocol.md, 2026-09-17-mnt-206-boiler-mode-controller.md]
 ---
 
 # ebusd lost its device config (boiler reads all failed) + refresh timer disabled
@@ -220,6 +220,7 @@ If `messages` is back down to ~12–13, the daemon lost its config again → `su
 ## References
 
 - Related: [[2026-08-11-proterm-lynx-25-ebus-protocol]]
+- Related: [[2026-09-17-mnt-206-boiler-mode-controller]]
 - Code: `odin/apps/boiler/services.py` (`SETMODE_DEF` line 29, `refresh()` line 132, `_write()` line 186),
   `odin/apps/boiler/management/commands/boiler_set.py` (> **Note 2026-09-29 (Consistency Agent):**
   paths are historical — MNT-206 split the monolith into the `odin/apps/boiler/services/` package

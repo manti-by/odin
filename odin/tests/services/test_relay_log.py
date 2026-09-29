@@ -138,37 +138,7 @@ class TestRelayLogService:
 
 
 @pytest.mark.django_db
-class TestRelayLogApplyTargetState:
-    def test__apply_target_state_creates_log(self):
-        relay: Relay = RelayFactory(type=RelayType.PUMP, state=RelayState.OFF, mode=RelayMode.FALLBACK)
-        relay.context = {"schedule": {"periods": [{"start_time": "00:00", "end_time": "23:59", "target_state": "ON"}]}}
-        relay.save()
-
-        assert relay.apply_target_state() == RelayState.ON
-
-        log = relay.logs.first()
-        assert log is not None
-        assert log.old_state == RelayState.OFF
-        assert log.new_state == RelayState.ON
-
-    def test__apply_target_state_no_change__no_log(self):
-        relay: Relay = RelayFactory(
-            type=RelayType.PUMP, force_state=RelayState.ON, state=RelayState.ON, mode=RelayMode.FORCED
-        )
-
-        assert relay.apply_target_state() == RelayState.ON
-        assert relay.logs.count() == 0
-
-    def test__apply_target_state_stores_user(self):
-        user = UserFactory()
-        relay: Relay = RelayFactory(type=RelayType.PUMP, state=RelayState.OFF)
-        relay.context = {"schedule": {"periods": [{"start_time": "00:00", "end_time": "23:59", "target_state": "ON"}]}}
-        relay.save()
-
-        relay.apply_target_state(user=user)
-
-        assert relay.logs.first().updated_by == user
-
+class TestRelayTargetState:
     def test__target_state_property_is_pure(self):
         """Reading the property must not persist state/mode nor append an audit row."""
         relay: Relay = RelayFactory(type=RelayType.PUMP, state=RelayState.OFF, mode=RelayMode.FALLBACK)
@@ -201,7 +171,8 @@ class TestRelayLogRefreshState:
 @pytest.mark.django_db
 class TestRelayLogAdmin:
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control", return_value=True)
-    def test__admin_save_model_creates_log(self, mock_publish: MagicMock) -> None:
+    def test__admin_save_model_publishes_without_creating_log(self, mock_publish: MagicMock) -> None:
+        """Admin defers the audit row to the consumer; it only publishes control."""
         user = DjangoAdminUserFactory()
         relay: Relay = RelayFactory(type=RelayType.PUMP, state=RelayState.OFF, force_state=None)
 
@@ -213,15 +184,12 @@ class TestRelayLogAdmin:
 
         RelayAdmin(Relay, None).save_model(request, relay, form, change=True)
 
-        log = relay.logs.first()
-        assert log is not None
-        assert log.old_force_state is None
-        assert log.new_force_state == RelayState.ON
-        assert log.updated_by == user
+        mock_publish.assert_called_once_with(relay_id=relay.relay_id, state=RelayState.ON, user=user)
+        assert relay.logs.count() == 0
 
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control", return_value=True)
-    def test__admin_noop_save_attributes_recompute_to_system(self, mock_publish: MagicMock) -> None:
-        """A save that changes no tracked field logs the schedule-driven transition as system."""
+    def test__admin_save_model_publishes_schedule_target_state(self, mock_publish: MagicMock) -> None:
+        """The published state is the computed target state, not the stored one."""
         user = DjangoAdminUserFactory()
         relay: Relay = RelayFactory(
             type=RelayType.PUMP, state=RelayState.OFF, mode=RelayMode.FALLBACK, force_state=None
@@ -236,10 +204,8 @@ class TestRelayLogAdmin:
 
         RelayAdmin(Relay, None).save_model(request, relay, form, change=True)
 
-        log = relay.logs.first()
-        assert log is not None
-        assert log.new_state == RelayState.ON
-        assert log.updated_by is None
+        mock_publish.assert_called_once_with(relay_id=relay.relay_id, state=RelayState.ON, user=user)
+        assert relay.logs.count() == 0
 
 
 @pytest.mark.django_db

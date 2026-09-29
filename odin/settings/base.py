@@ -307,3 +307,7 @@ FIREBASE_CLOUD_MESSAGING_ADMIN_EMAIL = os.getenv("FIREBASE_CLOUD_MESSAGING_ADMIN
 
 UNET_USERNAME = os.getenv("UNET_USERNAME", "")
 UNET_PASSWORD = os.getenv("UNET_PASSWORD", "")
+
+# Default user for automatic relay logs
+
+REDIS_BUS_USER_ID = int(os.getenv("REDIS_BUS_USER_ID", 2))

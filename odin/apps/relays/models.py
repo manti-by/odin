@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from django.conf import settings
-from django.db import models, transaction
+from django.db import models
 from django.db.models import query
 from django.utils.translation import gettext_lazy as _
 
@@ -14,8 +14,6 @@ from odin.apps.core.redis_bus import RedisBus
 
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
-
     from odin.apps.sensors.models import Sensor
 
 logger = logging.getLogger(__name__)
@@ -127,41 +125,16 @@ class Relay(models.Model):
 
         return RelayTargetStateService(self).get_target_state()
 
-    def apply_target_state(self, user: User | None = None, before: dict[str, Any] | None = None) -> RelayState:
-        """Compute the target state/mode, persist them, and log the transition.
-
-        This is the explicit write path for the ``target_state`` computation; use it
-        instead of the read-only ``target_state`` property when a persisted update
-        (and its audit row) is intended. ``before`` can be supplied by callers that
-        already hold a snapshot taken earlier in the request.
-
-        Args:
-            user: the acting user, or None for system-driven changes.
-            before: optional snapshot of the relay taken before the change.
-
-        Returns:
-            The persisted target state.
-        """
-        from odin.apps.relays.services import RelayLogService
-
-        if before is None:
-            before = RelayLogService.snapshot(self)
-        with transaction.atomic():
-            self.state, self.mode = self.get_target_state()
-            self.save()
-            RelayLogService(self, user=user).log_change(before)
-        return self.state
-
     def refresh_state(self) -> str | None:
         """Refresh relay state from Redis and persist it.
 
         Fetches the latest state for this relay from Redis, updates the
         model, and saves the change. This is a reconciliation path (admin
-        rendering, SPA polling, pub/sub wake-ups) that can observe transient
-        states - including ODIN's own control echo before Coruscant confirms
-        it - so it deliberately does not append a RelayLog row. Audit rows are
-        written at the explicit command boundaries instead (API update, admin
-        save via ``apply_target_state``).
+        rendering, SPA polling) that can observe transient states - including
+        ODIN's own control echo before Coruscant confirms it - so it
+        deliberately does not append a RelayLog row. Audit rows are written
+        at the explicit command boundaries instead (API update, consumer
+        relay message handling).
 
         Returns:
             The state value from Redis if available, otherwise None.

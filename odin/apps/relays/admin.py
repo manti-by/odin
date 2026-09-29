@@ -16,7 +16,6 @@ from django.utils.translation import gettext_lazy as _
 from odin.apps.core.redis_bus import RedisBus
 
 from .models import Relay, RelayLog, RelayState, RelayType
-from .services import RelayLogService
 
 
 logger = logging.getLogger(__name__)
@@ -95,11 +94,6 @@ class RelayAdmin(admin.ModelAdmin):
         return super().change_view(request, object_id, form_url, extra_context)
 
     def save_model(self, request: HttpRequest, obj: Relay, form: ModelForm, change: bool):
-        before = None
-        if change and obj.pk:
-            if old := Relay.objects.filter(pk=obj.pk).first():
-                before = RelayLogService.snapshot(old)
-
         period_data: dict[int, dict[str, Any]] = defaultdict(dict)
         for field_name, value in form.data.items():
             if field_name.startswith("schedule-periods-") and len(parts := field_name.split("-")) >= 4:
@@ -129,21 +123,8 @@ class RelayAdmin(admin.ModelAdmin):
         with transaction.atomic():
             super().save_model(request, obj, form, change)
 
-            # The form has already mutated ``obj``; capture that result so the
-            # schedule/weather recompute below is only attributed to the admin when
-            # the form itself changed a tracked field, otherwise it is system-driven.
-            after_form = RelayLogService.snapshot(obj)
-            user = getattr(request, "user", None) if request is not None else None
-            if user is not None and not user.is_authenticated:
-                user = None
-            if before is not None and after_form == before:
-                user = None
-
-            state = obj.apply_target_state(user=user, before=before)
-
             published = RedisBus.publish_relay_control(
-                relay_id=obj.relay_id,
-                state=state,
+                relay_id=obj.relay_id, state=obj.target_state, user=getattr(request, "user", None)
             )
             if not published:
                 logger.error(f"Failed to publish relay control message to Redis for relay {obj.relay_id}")
