@@ -2,7 +2,7 @@
 
 import fcntl
 import socket
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -14,7 +14,7 @@ class EbusdError(Exception):
 
 
 @contextmanager
-def lock_state(lock_path: Path) -> Iterator[None]:
+def lock_state(lock_path: Path) -> Generator[None]:
     """Hold an exclusive interprocess lock shared with /usr/local/bin/boiler-set."""
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+") as fh:
