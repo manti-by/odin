@@ -155,6 +155,7 @@ def _parse_functions(source_root: Path) -> tuple[list[DocumentedFunction], list[
         except OSError, SyntaxError, UnicodeDecodeError:
             logger.warning(f"Unable to parse docstrings from {path}")
             continue
+
         collector = FunctionCollector(
             module_name=resolve_module_name(path, source_root),
             path=str(path.relative_to(source_root.parent)),
