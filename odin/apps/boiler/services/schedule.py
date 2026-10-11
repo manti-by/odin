@@ -5,8 +5,6 @@ The Protherm Lynx 25 runs a weekly hot-water cycle: a 55 °C boil on Saturday at
 occurrence is computed from the current local time.
 """
 
-from __future__ import annotations
-
 from datetime import datetime, timedelta
 
 from django.utils import timezone

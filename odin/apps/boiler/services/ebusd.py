@@ -1,7 +1,5 @@
 """Talk to the local ebusd daemon over its TCP text protocol."""
 
-from __future__ import annotations
-
 import fcntl
 import socket
 from collections.abc import Iterator

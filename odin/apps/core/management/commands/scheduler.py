@@ -16,5 +16,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             scheduler.start()
-        except (KeyboardInterrupt, SystemExit):
+        except KeyboardInterrupt, SystemExit:
             scheduler.shutdown()

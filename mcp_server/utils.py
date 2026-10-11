@@ -13,6 +13,6 @@ def resolve_limit(arguments: dict) -> int:
     """
     try:
         limit = int(arguments.get("limit", SEARCH["default_limit"]))
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return SEARCH["default_limit"]
     return min(max(limit, 1), SEARCH["max_results"])

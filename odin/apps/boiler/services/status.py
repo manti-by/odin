@@ -10,8 +10,6 @@ override as a live controller feed: a periodic ``refresh()`` (see the
 boiler-refresh.timer systemd unit) keeps long-running heating overrides applied.
 """
 
-from __future__ import annotations
-
 import logging
 import os
 import tempfile

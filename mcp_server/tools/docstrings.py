@@ -152,7 +152,7 @@ def _parse_functions(source_root: Path) -> tuple[list[DocumentedFunction], list[
     for path in list_source_files(source_root):
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        except (OSError, SyntaxError, UnicodeDecodeError):
+        except OSError, SyntaxError, UnicodeDecodeError:
             logger.warning(f"Unable to parse docstrings from {path}")
             continue
         collector = FunctionCollector(
