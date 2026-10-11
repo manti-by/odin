@@ -1,14 +1,15 @@
 [project]
 name = "odin"
-version = "1.24.4"
+version = "1.25.0"
 description = "Django application that provides several IoT dashboards and services for Coruscant and Centax projects."
 readme = "README.md"
-requires-python = ">=3.13.6,<3.14.0"
+requires-python = ">=3.14,<3.15.0"
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 authors = [{ name = "Alexander Chaika", email = "manti.by@gmail.com" }]
 
 dependencies = [
+    "asyncpg>=0.32.0",
     "django>=6.0.8,<6.1.0",
     "django-apscheduler>=0.7.0,<1.0.0",
     "django-command-log>=2.3.0,<2.4.0",
@@ -17,6 +18,7 @@ dependencies = [
     "djangorestframework>=3.18.1,<4.0.0",
     "gunicorn>=25.3.0,<26",
     "ipython>=9.17.1",
+    "mcp>=2.3.0",
     "pillow>=12.3.0,<13",
     "pre-commit>=4.6.2",
     "psycopg2-binary>=2.9.13,<3",
@@ -37,6 +39,7 @@ dev = [
     "debugpy>=1.8.22",
     "django-silk>=5.6.0",
     "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "pytest-django>=4.14.0",
     "pytest-factoryboy>=2.8.1",
     "uv-bump>=0.6.0",
@@ -46,6 +49,7 @@ dev = [
 log_cli = true
 log_cli_format = "%(levelname)s %(asctime)s %(message)s"
 django_find_project = true
+asyncio_mode = "auto"
 addopts = '-p no:warnings --color=yes --ds=odin.settings.test'
 norecursedirs = '''
 .git
@@ -57,6 +61,7 @@ norecursedirs = '''
 
 [tool.bandit]
 exclude_dirs = [
+    "mcp_server/tests/",
     "odin/settings/",
     "odin/tests/"
 ]
@@ -154,7 +159,8 @@ exclude = [
     ".ruff_cache",
     ".venv",
     "odin/settings/",
-    "odin/tests/"
+    "odin/tests/",
+    "mcp_server/tests/"
 ]
 
 [tool.ty.rules]

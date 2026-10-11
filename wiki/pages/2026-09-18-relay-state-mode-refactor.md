@@ -5,7 +5,7 @@ type: implementation
 status: resolved
 session_id: ses_relay_state_mode_refactor_2026_09_18
 services: [relays, core, dashboard, frontend]
-branch: -
+branch: master
 tickets: []
 tags: [relays, state, mode, review, tests, redis]
 related:
@@ -14,7 +14,6 @@ related:
   - 2026-09-19-mnt-215-midseason-mode
   - 2026-09-23-relay-mode-compute-on-read
 ---
-
 # Relay state/mode refactor — review, test sync, and fixes
 
 ## TL;DR
@@ -133,3 +132,8 @@ target on every request.
 ## References
 
 - Related: [[2026-09-11-relay-state-redis-consumer]], [[2026-09-11-add-related-relay-field]]
+- Related: [[2026-09-19-mnt-215-midseason-mode]] — MNT-215: Midseason mode
+- Related: [[2026-09-21-esp8266-indicator-icons]] — ESP8266 relay indicators: SVG icons + mode tooltip
+- Related: [[2026-09-22-mnt-217-relay-schedule-component]] — MNT-217: Relay schedule component
+- Related: [[2026-09-28-mnt-226-relay-state-log]] — MNT-226: Relay state log
+- Related: [[2026-10-11-midseason-pump-cadence-30min]] — Midseason pump cadence — 30 minutes every 2 hours

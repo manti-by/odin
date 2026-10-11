@@ -135,4 +135,6 @@ Cursor review requested changes on the initial implementation; both ERROR-level 
 
 ## References
 
+- Related: [[2026-09-23-mnt-218-split-dashboard-api]] — MNT-218: Split dashboard API
+- Related: [[2026-09-27-boiler-live-status-api]] — Boiler tile shows no temperatures — API returns override, not live status
 - External: https://linear.app/mnt/issue/MNT-208/boiler-dashboard

@@ -5,7 +5,7 @@ type: implementation
 status: resolved
 session_id: ses_f2dd2e2e6ffeugjpnpEXzSIr36
 services: [sensors, relays, api]
-branch: -
+branch: master
 tickets: []
 tags: [sensors, relays, telemetry, django, migrations, denormalization]
 related: [2026-07-16-sensor-model-queryset-manager]

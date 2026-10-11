@@ -110,7 +110,6 @@ Call `R…
 
 ## References
 
-- Related: [[2026-09-18-relay-state-mode-refactor]]
-- Related: [[2026-09-23-relay-mode-compute-on-read]]
-- Related: [[2026-09-11-relay-state-redis-consumer]]
+- Related: [[2026-09-22-mnt-217-relay-schedule-component]] — MNT-217: Relay schedule component
+- Related: [[2026-09-29-relay-log-consumer-fixes]] — Relay log consumer — review and fixes
 - External: https://linear.app/mnt/issue/MNT-226/relay-state-log

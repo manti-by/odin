@@ -1,4 +1,4 @@
-.PHONY: run shell migrate migrations messages locale static deploy test full-test verify check django-checks install update ci dump restore agent-instance wiki-dedup wiki-consistency frontend frontend-install frontend-dev frontend-lint frontend-typecheck frontend-check
+.PHONY: run shell migrate migrations messages locale static deploy test test-mcp check django-checks install update ci dump restore agent-instance wiki-dedup wiki-consistency frontend frontend-install frontend-dev frontend-lint frontend-typecheck frontend-check
 
 frontend-install:
 	bun install --cwd frontend
@@ -55,15 +55,10 @@ deploy:
 	make restart
 
 test:
-	uv run pytest -m "not views" --disable-warnings --ds=odin.settings.test odin/
-
-full-test:
 	uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/
 
-verify:
-	uv run ruff check .
-	uv run ruff format --check .
-	uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/
+test-mcp:
+	uv run pytest --create-db --disable-warnings mcp_server/
 
 check: frontend-check
 	git add .
@@ -82,7 +77,7 @@ update:
 	uv sync --all-extras --dev
 	uv run pre-commit autoupdate
 
-ci: install check django-checks full-test
+ci: install check django-checks test test-mcp
 
 dump:
 	pg_dump -h localhost -U odin -d odin > odin.sql

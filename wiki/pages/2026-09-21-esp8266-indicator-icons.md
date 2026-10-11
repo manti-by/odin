@@ -1,11 +1,11 @@
 ---
-title: 'ESP8266 relay indicators: SVG icons + mode tooltip'
-date: '2026-09-21'
+title: "ESP8266 relay indicators: SVG icons + mode tooltip"
+date: "2026-09-21"
 type: implementation
 status: resolved
 session_id: ses_f3beaf3e2ffeUG8I6vlzCO42fI
 services: [frontend]
-branch: -
+branch: master
 tickets: []
 tags: [frontend, esp8266, relay, indicators, svg]
 related: [2026-09-18-relay-state-mode-refactor, 2026-09-19-mnt-215-midseason-mode]
@@ -85,7 +85,7 @@ function relayIndicator(relay: DashboardRelay): ReactNode {
 ## Step 2 — Supporting components and styles
 
 - `AliveIndicator.tsx` — `AliveState` changed from `"alive" | "dead" | "heating" |
-  "cooling"` to `"alive" | "dead" | "unknown" | "ignored"`; added optional `title` prop.
+"cooling"` to `"alive" | "dead" | "unknown" | "ignored"`; added optional `title` prop.
 - `Icon.tsx` — added optional `title` prop (rendered on the `<img>`).
 - `dashboard.ts` — `DashboardRelay.state` / `mode` typed `string | null` (API can
   return null for un-refreshed relays).
@@ -114,5 +114,8 @@ frontend/src/pages/StyleguidePage.tsx:14
 - None
 
 ## References
+
+- Related: [[2026-09-22-mnt-217-relay-schedule-component]] — MNT-217: Relay schedule component
+- Related: [[2026-09-23-relay-mode-compute-on-read]] — Relay mode computed on read
 
 - Related: [[2026-09-18-relay-state-mode-refactor]]

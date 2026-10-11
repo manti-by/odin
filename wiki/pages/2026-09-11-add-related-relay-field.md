@@ -5,12 +5,11 @@ type: implementation
 status: resolved
 session_id: ses_f6ffdf675ffeR7UYywCIVhc4Er
 services: [main]
-branch: -
+branch: master
 tickets: []
 tags: [relays, django-admin, migrations]
 related: [2026-09-18-relay-state-mode-refactor, 2026-09-23-relay-mode-compute-on-read]
 ---
-
 # Add self-referential related_relay field to Relay
 
 ## TL;DR
@@ -81,7 +80,7 @@ or `autocomplete_fields` needed for the current relay count.
 ## Follow-ups
 
 - Resolve `RelayTargetStateService.get_servo_target_state()`'s `# TODO: Get related pump
-  state` using `self.relay.related_relay.state` (return `OFF` when the related pump is off).
+state` using `self.relay.related_relay.state` (return `OFF` when the related pump is off).
 - Optionally expose `related_relay` through the relays API serializer
   (`odin/api/v1/relays/serializers.py`).
 - Fix or land the uncommitted `services.py` WIP that currently reddens the relay tests.
@@ -93,6 +92,8 @@ or `autocomplete_fields` needed for the current relay count.
 > exposure is still absent from `odin/api/v1/relays/serializers.py`.
 
 ## References
+
+- Related: [[2026-09-11-relay-state-redis-consumer]] — Relay state sync — admin refresh and Redis consumer
 
 - Files: `odin/apps/relays/models.py`, `odin/apps/relays/admin.py`,
   `odin/apps/relays/migrations/0006_relay_related_relay.py`

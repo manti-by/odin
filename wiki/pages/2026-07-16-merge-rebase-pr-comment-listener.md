@@ -5,7 +5,7 @@ type: debug
 status: reference
 session_id: ses_0936c0b3bffeYCA4iZd2LjmKSn
 services: []
-branch: -
+branch: master
 tickets: []
 tags: [github, pr, notifications, merge, rebase]
 related:

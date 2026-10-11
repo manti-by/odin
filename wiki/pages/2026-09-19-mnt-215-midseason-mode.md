@@ -8,7 +8,8 @@ services: [Makefile, services, models, frontend, test_relays, pyproject, uv, .se
 branch: mnt-215-midseason-mode
 tickets: [MNT-215]
 tags: [wiki, feature, backend, frontend]
-related: [2026-09-18-relay-state-mode-refactor, 2026-09-21-esp8266-indicator-icons]
+related: [2026-09-18-relay-state-mode-refactor, 2026-09-21-esp8266-indicator-icons,
+  2026-10-11-midseason-pump-cadence-30min]
 ---
 # MNT-215: Midseason mode
 
@@ -61,8 +62,15 @@ Makefile                                        |   7 +-
 ## Build plan
 
 ## Implementation Plan
+
+> **Note 2026-10-11 (Consistency Agent):** the `hour % 3` predicate below was **superseded**. The
+> midseason pump cadence is now *30 minutes every 2 hours*, guarded by
+> `self.now.hour >= 6 and self.now.hour % 2 == 0 and self.now.minute < 30`
+> (`odin/apps/relays/services.py:101`). The servo rule and the `hour >= 6` night guard are
+> unchanged. See [[2026-10-11-midseason-pump-cadence-30min]].
+
 ### Key Technical Decisions
-- Window selection is based on `self.now.hour % 3 == 0`, using the modulus operator against the 24-hour clock.
+- Window selection is based on `self.now.hour % 3 == 0`, using the modulus operator against the 24-hour clock. *(superseded — see the note above)*
 - The pump runs only inside the active hour during the day: the guard is `self.now.hour >= 6 and self.now.hour % 3 == 0`, so night hours (0–5) never activate midseason heating.
 - Servos are always open (OFF) in midseason — the original pump↔servo inversion was removed, since a servo must not close while the pump cycles.
 - The `hour % 3` predicate is independent of `minute`, so the existing `get_current_period_from_schedule()` call only matters when the weather branch is skipped.
@@ -106,5 +114,7 @@ Follow-up changes in the working tree after the initial merge adjust the midseas
 
 ## References
 
-- Related: [[2026-09-18-relay-state-mode-refactor]]
+- Related: [[2026-09-18-relay-state-mode-refactor]] — established the compute-on-read `RelayMode` split this page extended
+- Related: [[2026-09-22-mnt-217-relay-schedule-component]] — MNT-217: Relay schedule component
+- Related: [[2026-09-23-relay-mode-compute-on-read]] — Relay mode computed on read
 - External: https://linear.app/mnt/issue/MNT-215/midseason-mode
