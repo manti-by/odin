@@ -231,8 +231,8 @@ def schedule_update_weather():
 - `perform_update` recomputes and persists `state`+`mode`, publishes via `RedisBus`, and records a
   `RelayLog` row (`odin/apps/relays/services.py:19`); servos link to their pump via the nullable
   `related_relay` self-FK.
-- Midseason: pump runs only in the active daytime hour (`hour >= 6 and hour % 3 == 0`); servos
-  stay open (`OFF, MIDSEASON`).
+- Midseason: pump runs only in the active daytime window (`hour >= 6 and hour % 2 == 0 and
+  minute < 30`); servos stay open (`OFF, MIDSEASON`).
 
 ### Sensor data
 

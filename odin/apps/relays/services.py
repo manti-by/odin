@@ -97,8 +97,8 @@ class RelayTargetStateService:
                 # Anti freeze mode, always on
                 return RelayState.ON, RelayMode.ANTIFREEZE
             elif 8 < outside_temp < 15:
-                # Midseason mode, should work for 1 hour every 3rd hour, but not at night
-                if self.now.hour >= 6 and self.now.hour % 3 == 0:
+                # Midseason mode, should work for 30 minutes every 2nd hour, but not at night
+                if self.now.hour >= 6 and self.now.hour % 2 == 0 and self.now.minute < 30:
                     return RelayState.ON, RelayMode.MIDSEASON
                 return RelayState.OFF, RelayMode.MIDSEASON
 
