@@ -134,10 +134,11 @@ def resolve_page(pages_root: Path, name: str) -> Path | None:
     slug = name.strip().removeprefix("pages/")
     if not slug.endswith(".md"):
         slug = f"{slug}.md"
-    target = (pages_root / slug).resolve()
+    root = pages_root.resolve()
+    target = (root / slug).resolve()
 
     try:
-        target.relative_to(pages_root)
+        target.relative_to(root)
     except ValueError:
         return None
     return target if target.is_file() else None

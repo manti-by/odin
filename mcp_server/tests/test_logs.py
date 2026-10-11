@@ -77,6 +77,20 @@ class TestTailFile:
         path.write_bytes(b"ok\n\xff\xfe\n")
         assert isinstance(tail_file(path, 2), str)
 
+    def test_tail_file__first_line_is_complete_across_a_block_boundary(self, tmp_path):
+        """The first requested line may straddle an 8192-byte read block."""
+        path = tmp_path / "long.log"
+        path.write_text("A" * 9000 + "\nB\n", encoding="utf-8")
+        result = tail_file(path, 2).splitlines()
+        assert len(result) == 2
+        assert result[0] == "A" * 8189
+        assert result[1] == "B"
+
+    def test_tail_file__long_first_line_is_not_truncated_mid_line(self, tmp_path):
+        path = tmp_path / "long.log"
+        path.write_text("start\n" + "X" * 20000 + "\nsecond\nthird\n", encoding="utf-8")
+        assert tail_file(path, 2) == "second\nthird"
+
 
 class TestCallTool:
     async def test_call_tool__lists_log_files_with_size_and_mtime(self, log_root):
@@ -95,6 +109,18 @@ class TestCallTool:
         result = await logs_call_tool("list_log_files", {})
         assert result.is_error is False
         assert result.content[0].text == "No log files found"
+
+    async def test_call_tool__omits_symlinks_pointing_outside_the_root(self, log_root, tmp_path):
+        outside = tmp_path / "secret.log"
+        outside.write_text("top secret\n", encoding="utf-8")
+        (log_root / "escape.log").symlink_to(outside)
+        _write(log_root, "real.log", "fine\n")
+
+        result = await logs_call_tool("list_log_files", {})
+        listed = result.content[0].text
+        assert "real.log" in listed
+        assert "escape.log" not in listed
+        assert "top secret" not in listed
 
     async def test_call_tool__missing_log_directory(self, tmp_path, monkeypatch):
         monkeypatch.setattr("mcp_server.tools.logs.LOG_ROOT_RESOLVED", tmp_path / "absent")

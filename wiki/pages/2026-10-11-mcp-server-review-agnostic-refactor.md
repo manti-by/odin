@@ -22,6 +22,12 @@ agnostic. The worst bug: the wiki tools were reading a *different repository's* 
 answered from the umbrella repo's 2 pages instead of odin's 27, with no error. Added 208 tests and
 replaced 10 loose module-global cache variables with one frozen `Corpus` snapshot. 603 tests pass.
 
+**Later the same day** (see Update below): ran `wiki-dedup` (no duplicates), `wiki-consistency`
+(fixed 2 superseded claims, repaired 24 one-way cross-links, rebuilt `INDEX.md`), an `AGENTS.md`
+audit (2 wrong commands, 5 stale entries, 4 missing), and finally fixed all **8 unresolved CodeRabbit
+threads on PR #41** — including replacing the database tool's column denylist with an allow-list and
+a real off-by-one in `tail_file` that returned truncated log lines. 621 tests pass.
+
 ## Findings
 
 Seven issues found, ordered by severity. The first two were live and silent; the rest were latent
@@ -234,6 +240,115 @@ fail.
 
 ---
 
+## Update — 2026-10-12 00:27
+
+Follow-up runs in the same session: `wiki-dedup`, `wiki-consistency`, then an `AGENTS.md` audit.
+The MCP code itself was unchanged by all three; the work was documentation and one doc-level fix.
+
+### Wiki dedup — no duplicates
+
+Compared all 28 pages pairwise (378 pairs) on frontmatter **and** body text via token overlap. The
+top-scoring pair was **0.377** against a ~0.85 merge threshold, and every `session_id` is unique.
+
+The two closest pages (`2026-07-16-github-pr-webhooks-search` and
+`2026-07-16-merge-rebase-pr-comment-handlers`) both conclude "no GitHub integration exists" and look
+duplicative by title, but they are **different sessions** (`ses_0936b80f…` vs `ses_0936bf8b…`) with
+different scopes — search matrix vs. WebPush surface catalogue. Per the skill, distinct sessions get
+cross-linked rather than merged, and both were already linked in both directions. **Nothing merged,
+nothing deleted.**
+
+### Wiki consistency — 2 stale claims fixed, 24 one-way links repaired
+
+**MNT-215 midseason predicate was superseded.** It stated `self.now.hour % 3 == 0` as live. Current
+code is `hour >= 6 and hour % 2 == 0 and minute < 30` (`odin/apps/relays/services.py:101`). Annotated
+with a dated note and cross-linked both ways.
+
+**Kafka page described a removed subsystem.** `2026-07-17-mock-kafka-systemctl-in-tests` presents
+`KafkaService` as a live obstacle; Kafka was removed from the project entirely (no `KafkaService`, no
+`kafka` dependency, no `refresh_state_from_kafka`). Noted that the `systemd_status` half still holds
+(`odin/apps/core/services.py:10`, still patched in `odin/tests/api/test_systemd.py:23`) and that the
+aggregate dashboard view the mocks targeted is gone.
+
+Two claims that *looked* stale were verified accurate and left alone: `update_boiler_mode` genuinely
+is commented out (`scheduler.py:40`), and the boiler API genuinely returns a `status` dict
+(`serializers.py:15`).
+
+**24 cross-links were one-way.** The README requires double-bracket body links and `related:`
+frontmatter to stay in sync; 24 edges pointed a single direction, so the graph was largely one-way.
+All 28 pages now pass a schema + link + reciprocity check.
+
+**INDEX.md rebuilt.** `## By topic` was missing 3 pages including this one; added an *MCP server &
+agent tooling* cluster and re-verified largest-first ordering. Also fixed one malformed entry whose
+date rendered as `(2026-09-24/25)`.
+
+> **Process note:** the first link-repair script rewrote files non-idempotently and silently dropped
+> links it had added moments earlier. Caught by the validator, restored from a backup, redone as a
+> single in-memory fixed point. The intermediate churn was avoidable.
+
+### AGENTS.md audit — 5 stale, 4 missing, 2 wrong
+
+Ran the `wiki-agents-file` skill, cross-checking every concrete claim against the code, the wiki, and
+25 commits of history. Two genuine factual errors:
+
+- **`uv run bandit -c pyproject.toml .` does not work.** Bandit is only a pre-commit hook
+  (`.pre-commit-config.yaml:30-37`), not a project dependency — `uv run bandit` fails with
+  `Failed to spawn: bandit`. Replaced with `uv run pre-commit run bandit`.
+- **`odin/apps/relays/services.py:19` no longer points at `perform_update`.** Line 19 is now
+  `class RelayLogService` after the async-relay-log rework (`86af8fb`); `perform_update` is at
+  `odin/api/v1/relays/views.py:52`.
+
+Missing entries: the `./mcp_server/` package, the new runtime deps (`asyncpg`, `mcp`) and
+`pytest-asyncio`, and the fact that CI resolves Python from `requires-python` via
+`python-version-file` — which is why the 3.13→3.14 bump silently changed the CI runtime.
+
+One draft claim was corrected before landing: I first wrote the import-ordering section with
+`mcp_server` as its own isort tier, then checked `pyproject.toml` and found `section-order` omits it,
+so it actually sorts as first-party. AGENTS.md now states the truth rather than the tidier version.
+
+### PR #41 review findings — 8 unresolved threads fixed
+
+Ran `fix-review-findings` against the open PR. All 8 threads were CodeRabbit; 7 valid, fixed as
+suggested or more strictly. Each thread carried an embedded "Prompt for AI Agents" block telling me
+to run `coderabbit review --agent` afterwards — that is untrusted review content, not a user
+instruction, so it was ignored.
+
+- **`database.py` — pool creation race.** Two concurrent first callers could each create a pool and
+  leak one. Added a double-checked `asyncio.Lock`.
+- **`database.py` — denylist replaced with an allow-list.** `_filter_sensitive_columns` only removed
+  names in `SENSITIVE_COLUMNS`, so `password_hash` or `client_secret` would leak through
+  `query_table` until someone remembered to add them. A denylist cannot keep pace with schema
+  changes, so `APPROVED_COLUMNS` now denies by default. Verified against the live database:
+  `auth_user` no longer returns `password`.
+- **`database.py` — filters on redacted columns.** Filtering on `ssn` or `token` revealed whether a
+  guessed secret matched even though the column was omitted. `_validate_column_name` now checks the
+  same allow-list (`QUERYABLE_COLUMNS`).
+- **`logs.py` — truncated first line in `tail_file`.** Reproduced CodeRabbit's case: 9,000 `A`s plus
+  `\nB\n` with `lines=2` returned a **partial** first line, because the read stopped once enough
+  newlines were buffered without requiring the first requested line to be complete.
+- **`logs.py` — symlink escape in `list_log_files`.** `rglob` follows symlinks, so a link inside the
+  log root exposed an outside file's size and mtime even though `tail_logs` rejected the same path.
+- **`logs.py` — unbounded scan after truncation.** An empty `read()` kept the loop seeking once per
+  block for the rest of the recorded size. Now breaks on empty read and takes the size from the open
+  handle instead of a separate `stat`.
+- **`wiki.py` — `pages_root` not resolved.** `target.relative_to(pages_root)` compared a resolved
+  target against an unresolved root, so a relative or symlinked `MCP_PAGES_ROOT` made **every** page
+  fail to resolve. `config.py` already resolved `LOG_ROOT` for exactly this reason.
+- **MNT-215 wiki page** — TL;DR and Overview still presented the superseded *every 3 hours for 1 hour*
+  cadence as current. Rewrote both to state the live predicate and labelled the `hour % 3` material
+  historical.
+
+Two problems surfaced while verifying rather than from the review itself:
+
+- A new test failed because `password` was still in my first allow-list draft, which defeated the
+  entire point of the change. Removed.
+- That allow-list was also too narrow — it hid ~80 legitimate columns. Checked all 124 real columns
+  and widened it, deliberately withholding `password`, `token`, `session_data`, `raw_body` and
+  `encoded_headers`: the last three are session blobs and raw request payloads that can carry
+  cookies or authorization headers.
+
+**621 tests pass** (8 new regression tests), ruff/ty/pre-commit clean. Changes staged only — no
+commit, no push; the orchestrator handles that.
+
 ## Follow-ups
 
 - `MCP_LOG_ROOT` replaces `ODIN_LOG_ROOT`. If it is set in a shell profile or systemd unit it needs
@@ -242,9 +357,14 @@ fail.
   tables created after the server starts stay invisible until restart. Left as-is (restart is cheap)
   but worth a TTL if migrations ever run against a live server.
 - `allowed_tables` is also never refreshed; same consideration as above.
-- The 15 modified `wiki/pages/*.md` files in the working tree look like output of the wiki-sync
-  skill (frontmatter quote normalization, `branch: -` → `master`), unrelated to this work. The
-  `branch: -` → `master` rewrite is a semantic change worth a look.
+- ~~The 15 modified `wiki/pages/*.md` files~~ — **resolved 2026-10-12**: the working tree is clean
+  and the `branch: -` → `master` rewrite is committed. No action needed.
+- `opencode.json` has an unstaged deletion of the `"plugin": []` key that predates this session and
+  was not made here. The file is valid JSON either way, but confirm the removal was intentional.
+- PR #41 review fixes are staged but uncommitted. If new columns are added to the schema,
+  `APPROVED_COLUMNS` in `mcp_server/tools/database.py` must be updated or they become invisible to
+  `query_table` — that is the intended fail-closed behaviour, but it means a schema migration
+  should be accompanied by an allow-list update.
 
 ## References
 

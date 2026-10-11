@@ -48,20 +48,37 @@ def tail_file(path: Path, lines: int) -> str:
     """
     lines = min(max(lines, 1), MAX_TAIL_LINES)
     BLOCK_SIZE = 8192
-    file_size = path.stat().st_size
-    if file_size == 0:
-        return ""
 
     with path.open("rb") as f:
+        # Size from the open handle, not a separate stat: the file may be
+        # truncated between the two calls.
+        f.seek(0, 2)
+        file_size = f.tell()
+        if file_size == 0:
+            return ""
+
         pos = file_size
         buffer = bytearray()
         newline_count = 0
 
-        while pos > 0 and newline_count < lines:
+        def complete() -> bool:
+            """Whether the buffer holds enough whole lines to answer the request."""
+            if newline_count < lines:
+                return False
+            # A trailing newline terminates the last line, so any line before it
+            # is complete. Without one we must also read back past the start of
+            # the first requested line, or return a fragment of it.
+            return not buffer or buffer[-1:] == b"\n" or b"\n" in buffer[1:-1]
+
+        while pos > 0 and not complete():
             read_size = min(BLOCK_SIZE, pos)
             pos -= read_size
             f.seek(pos)
             chunk = f.read(read_size)
+            if not chunk:
+                # Truncated after the size was read: stop rather than re-reading
+                # the same range once per block for the rest of the file.
+                break
             buffer[:0] = chunk
             newline_count += chunk.count(b"\n")
 
@@ -136,10 +153,17 @@ async def call_tool(name: str, arguments: dict | None) -> ToolResult:
             files = sorted(LOG_ROOT_RESOLVED.rglob("*.log"))
             result = []
             for f in files:
-                rel = f.relative_to(LOG_ROOT_RESOLVED)
-                size = f.stat().st_size
-                mtime = f.stat().st_mtime
-                result.append(f"{rel}  ({size:,} bytes, modified {mtime:.0f})")
+                # rglob follows symlinks, so a link inside the root can point
+                # outside it; confine before reading any metadata.
+                resolved = f.resolve()
+                try:
+                    rel = resolved.relative_to(LOG_ROOT_RESOLVED)
+                except ValueError:
+                    continue
+                if not resolved.is_file():
+                    continue
+                metadata = resolved.stat()
+                result.append(f"{rel}  ({metadata.st_size:,} bytes, modified {metadata.st_mtime:.0f})")
             if not result:
                 return ToolResult(content=[TextContent(type="text", text="No log files found")])
             return ToolResult(content=[TextContent(type="text", text="\n".join(result))])

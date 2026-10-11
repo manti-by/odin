@@ -9,7 +9,7 @@ by the plugin.
 
 _Newest first._
 
-- [MCP server review and project-agnostic refactor](pages/2026-10-11-mcp-server-review-agnostic-refactor.md) — Found and fixed two silent path bugs that made the wiki tools read another repository and the docstring index cover only the MCP server; replaced 10 cache globals with one frozen snapshot; made the server project-agnostic (603 passed) (2026-10-11)
+- [MCP server review and project-agnostic refactor](pages/2026-10-11-mcp-server-review-agnostic-refactor.md) — Fixed two silent path bugs that made the wiki tools read another repository and the docstring index cover only the MCP server; replaced 10 cache globals with one frozen snapshot; made the server project-agnostic; later added wiki dedup/consistency, an AGENTS.md audit, and fixes for all 8 unresolved PR #41 review threads (621 passed) (2026-10-11)
 - [Midseason pump cadence — 30 minutes every 2 hours](pages/2026-10-11-midseason-pump-cadence-30min.md) — Changed the midseason pump duty cycle from 1 hour every 3 hours to 30 minutes every 2 hours (6:00–6:30, 8:00–8:30, …), keeping the night guard and the always-open servo rule (98 passed) (2026-10-11)
 - [Relay log consumer — review and fixes](pages/2026-09-29-relay-log-consumer-fixes.md) — Reviewed the move of relay-log creation into the Redis consumer: fixed the system-user fallback, added ON/OFF validation, updated docstrings, and migrated the tests that still called the removed `apply_target_state()` (391 passed) (2026-09-29)
 - [MNT-226: Relay state log](pages/2026-09-28-mnt-226-relay-state-log.md) — Implementation of MNT-226: Relay state log (2026-09-28)

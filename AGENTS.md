@@ -241,7 +241,7 @@ def schedule_update_weather():
   exists (servo whose related pump is off).
 - `perform_update` recomputes and persists `state`+`mode`, publishes via `RedisBus`, and records a
   `RelayLog` row via `RelayLogService.log_change()` (`odin/api/v1/relays/views.py:52`,
-  `odin/apps/relays/services.py:36`); servos link to their pump via the nullable
+  `odin/apps/relays/services.py:34`); servos link to their pump via the nullable
   `related_relay` self-FK.
 - Midseason: pump runs only in the active daytime window (`hour >= 6 and hour % 2 == 0 and
   minute < 30`); servos stay open (`OFF, MIDSEASON`).
@@ -251,8 +251,8 @@ def schedule_update_weather():
 - Ingest contract: `POST /api/v1/sensors/logs/` takes a string `sensor_id` (unknown IDs stored
   with `sensor=None`); producers omit fields they cannot provide.
 - `Sensor.temp`/`humidity` are denormalized calibrated caches; `is_alive` derives from
-  `updated_at` (10 min threshold, `odin/apps/sensors/models.py:113`). `SensorLogManager.current()`
-  uses Postgres `DISTINCT ON (sensor)` (`odin/apps/sensors/models.py:131`).
+  `updated_at` (10 min threshold, `odin/apps/sensors/models.py:111`). `SensorLogManager.current()`
+  uses Postgres `DISTINCT ON (sensor)` (`odin/apps/sensors/models.py:129`).
 
 ## Code Style Guidelines
 
@@ -267,19 +267,20 @@ def schedule_update_weather():
 
 Use Ruff isort with this order:
 
-1. `__future__` imports
-2. Standard library imports
-3. Third-party imports
-4. First-party imports
-5. Django imports (also `rest_framework`, `django_rq`, `django_apscheduler`, `apscheduler`)
-6. Odin imports (`odin`) — configured in `[tool.ruff.lint.isort.sections]`
-7. Local folder imports
+1. Standard library imports
+2. Third-party imports
+3. First-party imports
+4. Django imports (also `rest_framework`, `django_rq`, `django_apscheduler`, `apscheduler`)
+5. Odin imports (`odin`) — configured in `[tool.ruff.lint.isort.sections]`
+6. Local folder imports
 
-`mcp_server` is not its own section; its imports sort as first-party (tier 4).
+`mcp_server` is not its own section; its imports sort as first-party (tier 3).
+
+Do **not** add `from __future__ import annotations` — it was removed project-wide in MNT-243
+(`0b181fb`) now that Python 3.14 supports the annotations natively. Use PEP 585/604 syntax
+directly (`models.ForeignKey[Sensor] | None`, `list[str]`, `Self`).
 
 ```python
-from __future__ import annotations
-
 import os
 from decimal import Decimal
 
@@ -314,7 +315,7 @@ def get_sensor_data(sensor_id: str) -> dict[str, Decimal] | None:
 
 #### Models
 
-- Use `__future__ import annotations` for forward references
+- Use PEP 585/604 annotation syntax natively (`X | None`, `list[str]`); no `__future__` import
 - Include `created_at` and `updated_at` timestamp fields
 - Use `verbose_name` and `verbose_name_plural` with translation support
 - Implement custom QuerySets and Managers for complex queries

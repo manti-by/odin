@@ -1,7 +1,8 @@
 import pytest
 
 from mcp_server.tools.database import (
-    SENSITIVE_COLUMNS,
+    APPROVED_COLUMNS,
+    QUERYABLE_COLUMNS,
     TABLE_NAME_RE,
     _filter_sensitive_columns,
     _validate_column_name,
@@ -55,7 +56,7 @@ class TestValidateTableName:
 
 
 class TestValidateColumnName:
-    def test_validate_column_name__returns_a_known_column(self):
+    def test_validate_column_name__returns_an_approved_column(self):
         assert _validate_column_name("relay_id", {"relay_id", "name"}) == "relay_id"
 
     def test_validate_column_name__rejects_an_unknown_column(self):
@@ -66,21 +67,43 @@ class TestValidateColumnName:
         with pytest.raises(ValueError, match="Invalid column name"):
             _validate_column_name('id" = $1 OR "1', {"id"})
 
+    @pytest.mark.parametrize("column", ["password_hash", "client_secret", "ssn", "api_key"])
+    def test_validate_column_name__rejects_unapproved_columns_present_in_the_table(self, column):
+        """A real column the allow-list omits must still be refused as a filter."""
+        with pytest.raises(ValueError, match="not approved"):
+            _validate_column_name(column, {column, "id"})
+
 
 class TestFilterSensitiveColumns:
-    def test_filter_sensitive_columns__removes_secret_values(self):
-        row = {"id": 1, "password": "hunter2", "api_key": "k", "relay_id": "PUMP"}
+    def test_filter_sensitive_columns__keeps_only_approved_columns(self):
+        row = {"id": 1, "password_hash": "x", "client_secret": "y", "relay_id": "PUMP"}
         assert _filter_sensitive_columns(row) == {"id": 1, "relay_id": "PUMP"}
 
-    def test_filter_sensitive_columns__matching_is_case_insensitive(self):
-        assert _filter_sensitive_columns({"Password": "x", "TOKEN": "y", "ok": 1}) == {"ok": 1}
+    def test_filter_sensitive_columns__drops_columns_it_has_never_heard_of(self):
+        """Allow-list semantics: an unknown column is denied by default."""
+        assert _filter_sensitive_columns({"id": 1, "brand_new_secret": "leak"}) == {"id": 1}
 
-    def test_filter_sensitive_columns__a_clean_row_is_unchanged(self):
-        row = {"id": 1, "name": "pump"}
+    def test_filter_sensitive_columns__an_approved_row_is_unchanged(self):
+        row = {"id": 1, "name": "pump", "relay_id": "PUMP"}
         assert _filter_sensitive_columns(row) == row
 
-    def test_sensitive_columns__cover_the_obvious_secrets(self):
-        assert {"password", "secret", "token", "api_key", "private_key"} <= SENSITIVE_COLUMNS
+    def test_approved_columns__cover_the_columns_the_tools_actually_use(self):
+        assert {"id", "relay_id", "name", "state", "mode", "sensor_id", "temp"} <= APPROVED_COLUMNS
+
+    def test_queryable_columns__match_the_approved_set(self):
+        assert QUERYABLE_COLUMNS == APPROVED_COLUMNS
+
+    def test_approved_columns__contain_no_obvious_secrets(self):
+        for secret in ("password", "password_hash", "secret", "client_secret", "token", "api_key"):
+            assert secret not in APPROVED_COLUMNS, secret
+
+    @pytest.mark.parametrize(
+        "column",
+        ["password", "token", "session_data", "raw_body", "encoded_headers", "client_secret", "password_hash"],
+    )
+    def test_approved_columns__withhold_credential_channels(self, column):
+        """Session blobs and raw request payloads can carry cookies or headers."""
+        assert column not in APPROVED_COLUMNS, column
 
 
 class TestCallToolValidation:

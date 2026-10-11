@@ -185,6 +185,11 @@ REDIS_BUS_USER_ID = int(os.getenv("REDIS_BUS_USER_ID", 2))
 
 - Log message `"Relay log does not created for ..."` is ungrammatical (left as-is).
 - Home-level `AGENTS.md` Redis contract for `relays:control` omits `user_id`.
+  - **Note 2026-10-12 (Consistency Agent):** re-checked — still open. The producer does send it
+    (`odin/apps/core/redis_bus.py:113`, documented in its own docstring at `:99-100`), but the
+    cross-repo contract in `../AGENTS.md` still shows only `{relay_id, state}`. That file is outside
+    this repo, so it is left untouched here; the fix belongs in the umbrella repo and would need a
+    coordinated PR per the cross-service contract rules.
 - Admin async logging: if Redis is down, `state`/`mode` update and the audit row are skipped
   (intended, but worth a documented degradation note).
 

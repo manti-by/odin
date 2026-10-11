@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import re
 
@@ -13,43 +14,193 @@ TABLE_NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 allowed_tables: set[str] | None = None
 
-SENSITIVE_COLUMNS = frozenset(
+# Columns that are readable and filterable. Anything absent is denied, so a
+# column added to the schema later (``password_hash``, ``client_secret``, ...)
+# is refused by default rather than leaking until someone remembers to redact
+# it. Denying by default is the only safe direction here: an allow-list cannot
+# be outpaced by new columns, a denylist can.
+APPROVED_COLUMNS: frozenset[str] = frozenset(
     (
-        "password",
-        "passwd",
-        "secret",
-        "token",
-        "api_key",
-        "apikey",
-        "private_key",
-        "privatekey",
-        "session_token",
-        "access_token",
-        "refresh_token",
-        "credit_card",
-        "cc_number",
-        "ssn",
-        "social_security",
+        # Django auth / sessions
+        "id",
+        "is_superuser",
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+        "is_staff",
+        "is_active",
+        "date_joined",
+        "last_login",
+        "is_authenticated",
+        "session_key",
+        "expire_date",
+        "data",
+        "user_id",
+        # Content types
+        "app_label",
+        "model",
+        "group_id",
+        "user_permissions_id",
+        "permission_id",
+        "content_type_id",
+        "codename",
+        "name",
+        # Sensors
+        "sensor_id",
+        "is_pump",
+        "is_servo",
+        "created_at",
+        "updated_at",
+        "context",
+        "force_state",
+        "mode",
+        "relay_id",
+        "sensor",
+        "related_relay_id",
+        "state",
+        "target_temp",
+        "temp",
+        "humidity",
+        "voltage",
+        "is_alive",
+        # Logging
+        "level",
+        "levelname",
+        "logger",
+        "message",
+        "msg",
+        "source",
+        "asctime",
+        "body",
+        "exception",
+        "exception_raised",
+        "filename",
+        "func_name",
+        "line_num",
+        "path",
+        "stacktrace",
+        "traceback",
+        # command_log / scheduler
+        "action_flag",
+        "action_time",
+        "app",
+        "app_name",
+        "command_name",
+        "end_time",
+        "exit_code",
+        "job_id",
+        "job_state",
+        "next_run_time",
+        "start_time",
+        "started_at",
+        "duration",
+        "run_time",
+        "time_taken",
+        "finished",
+        "finished_at",
+        "num_sql_queries",
+        "query",
+        "status_code",
+        "view_name",
+        "request_id",
+        "method",
+        "browser",
+        "meta_num_queries",
+        "meta_time",
+        "meta_time_spent_queries",
+        "profile_id",
+        "prof_file",
+        "pyprofile",
+        # Django admin log
+        "object_id",
+        "object_repr",
+        "change_message",
+        # Music
+        "album",
+        "artist",
+        "title",
+        "genre",
+        "year",
+        "duration",
+        "has_cover",
+        "provider",
+        "external_id",
+        # Weather / electricity / currency / misc scalars
+        "address",
+        "analysis",
+        "applied",
+        "avg",
+        "code",
+        "currency",
+        "date",
+        "dynamic",
+        "end_line_num",
+        "error",
+        "exchange_rate",
+        "exchange_rates",
+        "fetched_at",
+        "file",
+        "file_path",
+        "humidity_offset",
+        "identifier",
+        "is_admin",
+        "is_synced",
+        "is_visible",
+        "linked_sensor_id",
+        "meta",
+        "meta_num_queries",
+        "order",
+        "output",
+        "period",
+        "pressure",
+        "query_params",
+        "rate",
+        "scale",
+        "service",
+        "sqlquery_id",
+        "status",
+        "subscription",
+        "synced_at",
+        "temp_offset",
+        "timestamp",
+        "title",
+        "traffic_in",
+        "traffic_out",
+        "truncate_at",
+        "type",
+        "unit",
+        "value",
+        "variables",
     )
 )
 
+# Columns usable as equality filters. A denied column must not be usable as a
+# filter either: a match on a redacted column still leaks whether a guessed
+# secret is correct.
+QUERYABLE_COLUMNS: frozenset[str] = APPROVED_COLUMNS
+
 db_pool: asyncpg.Pool | None = None
+db_pool_lock: asyncio.Lock = asyncio.Lock()
 
 
 async def get_db_pool() -> asyncpg.Pool:
     """Return the lazily-initialized shared asyncpg connection pool.
 
     Creates the pool on first use from the settings-defined database
-    credentials and reuses it for the lifetime of the process.
+    credentials and reuses it for the lifetime of the process. Concurrent first
+    callers are serialized so a second pool is never created and leaked.
 
     Returns:
         asyncpg.Pool: The shared database connection pool.
     """
     global db_pool
     if db_pool is None:
-        from mcp_server.config import database_config
+        async with db_pool_lock:
+            if db_pool is None:
+                from mcp_server.config import database_config
 
-        db_pool = await asyncpg.create_pool(**database_config(), min_size=1, max_size=5)
+                db_pool = await asyncpg.create_pool(**database_config(), min_size=1, max_size=5)
     return db_pool
 
 
@@ -172,24 +323,31 @@ def _validate_table_name(table_name: str, allowed: set[str]) -> str:
     return table_name
 
 
-def _validate_column_name(column_name: str, allowed_columns: set[str]) -> str:
-    """Validate a column name against identifier rules and the table columns.
+def _validate_column_name(
+    column_name: str,
+    allowed_columns: set[str],
+    queryable_columns: frozenset[str] = QUERYABLE_COLUMNS,
+) -> str:
+    """Validate a column name against identifier rules, the table and the allow-list.
 
     Args:
         column_name: The column name to validate.
         allowed_columns: Set of columns that exist on the target table.
+        queryable_columns: Columns approved for reading and filtering.
 
     Returns:
         str: The validated column name.
 
     Raises:
-        ValueError: If the name is not a valid identifier or is not present in
-            the table.
+        ValueError: If the name is not a valid identifier, is not present in
+            the table, or is not approved.
     """
     if not TABLE_NAME_RE.match(column_name):
         raise ValueError(f"Invalid column name: {column_name}")
     if column_name not in allowed_columns:
         raise ValueError(f"Column not found: {column_name}")
+    if column_name not in queryable_columns:
+        raise ValueError(f"Column is not approved for querying: {column_name}")
     return column_name
 
 
@@ -212,15 +370,19 @@ async def _get_table_columns(pool: asyncpg.Pool, table_name: str) -> set[str]:
 
 
 def _filter_sensitive_columns(row: dict) -> dict:
-    """Drop sensitive columns (tokens, passwords, etc.) from a result row.
+    """Keep only approved columns in a result row.
+
+    Allow-list, not denylist: a column this function has never heard of is
+    dropped, so a secret added to the schema later cannot leak through
+    ``query_table`` by default.
 
     Args:
         row: A raw result row as a mapping.
 
     Returns:
-        dict: The row with any sensitive columns removed.
+        dict: The row restricted to approved columns.
     """
-    return {k: v for k, v in row.items() if k.lower() not in SENSITIVE_COLUMNS}
+    return {k: v for k, v in row.items() if k in APPROVED_COLUMNS}
 
 
 async def get_table_count(pool: asyncpg.Pool, table_name: str) -> dict:

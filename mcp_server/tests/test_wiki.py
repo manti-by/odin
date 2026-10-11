@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from mcp_server.tools.wiki import call_tool as wiki_call_tool
@@ -70,6 +72,24 @@ class TestResolvePage:
     @pytest.mark.parametrize("name", ["../secret.md", "../../etc/passwd", "sub/../../escape.md"])
     def test_resolve_page__rejects_traversal(self, pages_root, name):
         assert resolve_page(pages_root, name) is None
+
+    def test_resolve_page__works_when_the_root_is_not_pre_resolved(self, tmp_path, monkeypatch):
+        """A relative or symlinked root must still resolve its own pages."""
+        real = tmp_path / "real"
+        real.mkdir()
+        (real / "page.md").write_text("body", encoding="utf-8")
+        linked = tmp_path / "linked"
+        linked.symlink_to(real)
+
+        assert resolve_page(linked, "page.md") == (real / "page.md").resolve()
+
+    def test_resolve_page__works_with_a_relative_root(self, tmp_path, monkeypatch):
+        pages = tmp_path / "rel"
+        pages.mkdir()
+        (pages / "page.md").write_text("body", encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+
+        assert resolve_page(Path("rel"), "page.md") == (pages / "page.md").resolve()
 
     def test_resolve_page__missing_page_is_none(self, pages_root):
         assert resolve_page(pages_root, "absent.md") is None

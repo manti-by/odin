@@ -15,13 +15,21 @@ related: [2026-09-18-relay-state-mode-refactor, 2026-09-21-esp8266-indicator-ico
 
 ## TL;DR
 
-Midseason mode is activated every 3 hours for 1 hour, replacing the previous 10-minute activation every hour. The pump runs only inside the active hour and only during the day (`hour >= 6`); servos stay open (OFF) for the whole midseason window instead of inverting with the pump. The update was successfully implemented and all tests have passed. The change is reflected in the updated wiki page and Python files. The new logic uses the modulus operator to determine the activation time.
+Midseason mode activates the pump in the daytime window defined by
+`self.now.hour >= 6 and self.now.hour % 2 == 0 and self.now.minute < 30` — **30 minutes every 2 hours**
+— replacing the original *1 hour every 3 hours* (`hour >= 6 and hour % 3 == 0`, which this page
+describes as originally shipped) and the still-earlier 10-minute-every-hour rule. Servos stay open
+(`OFF, MIDSEASON`) for the whole midseason window rather than inverting with the pump. The
+`hour % 3` cadence below is historical; see [[2026-10-11-midseason-pump-cadence-30min]].
 
 ---
 
 ## Overview
 
-The implementation updated the relay state service in `odin/apps/relays/services.py` to enable midseason mode every 3 hours for 1 hour. Key changes include updates to the `get_pump_target_state` and `get_servo_target_state` methods, as well as the addition of a new wiki page `wiki/pages/2026-09-19-mnt-215-midseason-mode.md` and test updates in `odin/tests/models/test_relays.py`. A later refinement scoped the pump activation to daytime hours (`hour >= 6`) and made servos unconditionally open during midseason.
+The implementation updated the relay state service in `odin/apps/relays/services.py` to enable midseason mode on a repeating daytime window. Key changes include updates to the `get_pump_target_state` and `get_servo_target_state` methods, as well as the addition of a new wiki page `wiki/pages/2026-09-19-mnt-215-midseason-mode.md` and test updates in `odin/tests/models/test_relays.py`. A later refinement scoped the pump activation to daytime hours (`hour >= 6`) and made servos unconditionally open during midseason.
+
+The cadence shipped here was *1 hour every 3 hours*; it is now *30 minutes every 2 hours* — see the
+note above and [[2026-10-11-midseason-pump-cadence-30min]].
 
 ## Changed files
 
