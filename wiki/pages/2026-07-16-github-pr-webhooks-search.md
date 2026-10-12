@@ -5,7 +5,7 @@ type: investigation
 status: reference
 session_id: ses_0936b80f5ffeNAX9ALvMs62C4H
 services: []
-branch: -
+branch: master
 tickets: []
 tags: [github, webhooks, notifications, search]
 related:
@@ -27,11 +27,11 @@ The project (Odin — IoT dashboard for sensor management/weather/home-automatio
 
 ## Search scope
 
-| Keyword | Directories searched |
-|---|---|
-| `merge`, `rebase`, `pull_request`, `pr_comment`, `webhook` | `odin/apps/`, `odin/api/`, `odin/services/` |
-| `mark_read`, `mark_as_read`, `notification` | `odin/apps/`, `odin/api/`, `odin/static/js/` |
-| `github`, `pull request`, `pr` (app code) | Whole project |
+| Keyword                                                    | Directories searched                         |
+| ---------------------------------------------------------- | -------------------------------------------- |
+| `merge`, `rebase`, `pull_request`, `pr_comment`, `webhook` | `odin/apps/`, `odin/api/`, `odin/services/`  |
+| `mark_read`, `mark_as_read`, `notification`                | `odin/apps/`, `odin/api/`, `odin/static/js/` |
+| `github`, `pull request`, `pr` (app code)                  | Whole project                                |
 
 ## What was ruled out
 

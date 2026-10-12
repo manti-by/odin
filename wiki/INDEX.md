@@ -9,12 +9,13 @@ by the plugin.
 
 _Newest first._
 
+- [MCP server review and project-agnostic refactor](pages/2026-10-11-mcp-server-review-agnostic-refactor.md) — Fixed two silent path bugs that made the wiki tools read another repository and the docstring index cover only the MCP server; replaced 10 cache globals with one frozen snapshot; made the server project-agnostic; later added wiki dedup/consistency, an AGENTS.md audit, and fixes for all 8 unresolved PR #41 review threads (621 passed) (2026-10-11)
 - [Midseason pump cadence — 30 minutes every 2 hours](pages/2026-10-11-midseason-pump-cadence-30min.md) — Changed the midseason pump duty cycle from 1 hour every 3 hours to 30 minutes every 2 hours (6:00–6:30, 8:00–8:30, …), keeping the night guard and the always-open servo rule (98 passed) (2026-10-11)
 - [Relay log consumer — review and fixes](pages/2026-09-29-relay-log-consumer-fixes.md) — Reviewed the move of relay-log creation into the Redis consumer: fixed the system-user fallback, added ON/OFF validation, updated docstrings, and migrated the tests that still called the removed `apply_target_state()` (391 passed) (2026-09-29)
 - [MNT-226: Relay state log](pages/2026-09-28-mnt-226-relay-state-log.md) — Implementation of MNT-226: Relay state log (2026-09-28)
 - [Boiler tile shows no temperatures — API returns override, not live status](pages/2026-09-27-boiler-live-status-api.md) — `GET /api/v1/boiler/status/` returned only override-derived setpoints, so the tile showed `—` in panel mode; the API now also returns the same live ebusd fields as `boiler_status` and the tile renders Flow/Return/Tank temps (2026-09-27)
 - [Silk profiler unreachable — SPA catch-all shadows /silk/](pages/2026-09-24-silk-route-spa-catchall-shadow.md) — Local dev server was down, and `/silk/` also served the SPA `index.html` because the catch-all `re_path` didn't exclude `silk`; added `silk(?:$|/)` to the lookahead (2026-09-24)
-- [Sensor relation FKs and denormalized readings](pages/2026-09-24-sensor-fks-and-denormalized-readings.md) — Migrated `SensorLog.sensor`, `Sensor.relay`, and `Sensor.linked_sensor` from char columns to nullable FKs, dropped the legacy `*_old` columns, and cached `temp`/`humidity` on `Sensor`; `is_alive` now reads `updated_at` (2026-09-24/25)
+- [Sensor relation FKs and denormalized readings](pages/2026-09-24-sensor-fks-and-denormalized-readings.md) — Migrated `SensorLog.sensor`, `Sensor.relay`, and `Sensor.linked_sensor` from char columns to nullable FKs, dropped the legacy `*_old` columns, and cached `temp`/`humidity` on `Sensor`; `is_alive` now reads `updated_at` (2026-09-24)
 - [MNT-218: Split dashboard API](pages/2026-09-23-mnt-218-split-dashboard-api.md) — Split the aggregate dashboard API into per-model endpoints under `odin/api/v1/` and moved the SPA to per-tile hooks/APIs; removed the old `core/dashboard/` view, serializer, and services (2026-09-23)
 - [Relay mode computed on read](pages/2026-09-23-relay-mode-compute-on-read.md) — `SERVO-BR`/`SERVO-HL` showed different modes because `mode` is a persisted snapshot; compute `mode`/`target_state` on read via `Relay.get_target_state()` in the CRUD and dashboard serializers (2026-09-23)
 - [MNT-217: Relay schedule component](pages/2026-09-22-mnt-217-relay-schedule-component.md) — Added the relay schedule modal, schedule-aware relay serializers with period-overlap validation, and schedule API endpoints (2026-09-22)
@@ -51,6 +52,8 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [MNT-217: Relay schedule component](pages/2026-09-22-mnt-217-relay-schedule-component.md)
 - [Relay mode computed on read](pages/2026-09-23-relay-mode-compute-on-read.md)
 - [MNT-226: Relay state log](pages/2026-09-28-mnt-226-relay-state-log.md)
+- [Relay log consumer — review and fixes](pages/2026-09-29-relay-log-consumer-fixes.md)
+- [Midseason pump cadence — 30 minutes every 2 hours](pages/2026-10-11-midseason-pump-cadence-30min.md)
 
 ### Boiler / eBus control
 
@@ -83,3 +86,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 
 - [Fix type errors and verify CI flow](pages/2026-07-16-fix-type-errors-ci-flow.md)
 - [Mock Kafka and systemctl in dashboard tests for CI](pages/2026-07-17-mock-kafka-systemctl-in-tests.md)
+
+### MCP server & agent tooling
+
+- [MCP server review and project-agnostic refactor](pages/2026-10-11-mcp-server-review-agnostic-refactor.md)

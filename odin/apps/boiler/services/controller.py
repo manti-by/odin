@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 
 from odin.apps.boiler.services.mode import BoilerMode, BoilerModeService

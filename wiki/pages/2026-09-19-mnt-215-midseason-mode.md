@@ -8,19 +8,28 @@ services: [Makefile, services, models, frontend, test_relays, pyproject, uv, .se
 branch: mnt-215-midseason-mode
 tickets: [MNT-215]
 tags: [wiki, feature, backend, frontend]
-related: [2026-09-18-relay-state-mode-refactor, 2026-09-21-esp8266-indicator-icons]
+related: [2026-09-18-relay-state-mode-refactor, 2026-09-21-esp8266-indicator-icons,
+  2026-10-11-midseason-pump-cadence-30min]
 ---
 # MNT-215: Midseason mode
 
 ## TL;DR
 
-Midseason mode is activated every 3 hours for 1 hour, replacing the previous 10-minute activation every hour. The pump runs only inside the active hour and only during the day (`hour >= 6`); servos stay open (OFF) for the whole midseason window instead of inverting with the pump. The update was successfully implemented and all tests have passed. The change is reflected in the updated wiki page and Python files. The new logic uses the modulus operator to determine the activation time.
+Midseason mode activates the pump in the daytime window defined by
+`self.now.hour >= 6 and self.now.hour % 2 == 0 and self.now.minute < 30` — **30 minutes every 2 hours**
+— replacing the original *1 hour every 3 hours* (`hour >= 6 and hour % 3 == 0`, which this page
+describes as originally shipped) and the still-earlier 10-minute-every-hour rule. Servos stay open
+(`OFF, MIDSEASON`) for the whole midseason window rather than inverting with the pump. The
+`hour % 3` cadence below is historical; see [[2026-10-11-midseason-pump-cadence-30min]].
 
 ---
 
 ## Overview
 
-The implementation updated the relay state service in `odin/apps/relays/services.py` to enable midseason mode every 3 hours for 1 hour. Key changes include updates to the `get_pump_target_state` and `get_servo_target_state` methods, as well as the addition of a new wiki page `wiki/pages/2026-09-19-mnt-215-midseason-mode.md` and test updates in `odin/tests/models/test_relays.py`. A later refinement scoped the pump activation to daytime hours (`hour >= 6`) and made servos unconditionally open during midseason.
+The implementation updated the relay state service in `odin/apps/relays/services.py` to enable midseason mode on a repeating daytime window. Key changes include updates to the `get_pump_target_state` and `get_servo_target_state` methods, as well as the addition of a new wiki page `wiki/pages/2026-09-19-mnt-215-midseason-mode.md` and test updates in `odin/tests/models/test_relays.py`. A later refinement scoped the pump activation to daytime hours (`hour >= 6`) and made servos unconditionally open during midseason.
+
+The cadence shipped here was *1 hour every 3 hours*; it is now *30 minutes every 2 hours* — see the
+note above and [[2026-10-11-midseason-pump-cadence-30min]].
 
 ## Changed files
 
@@ -61,8 +70,15 @@ Makefile                                        |   7 +-
 ## Build plan
 
 ## Implementation Plan
+
+> **Note 2026-10-11 (Consistency Agent):** the `hour % 3` predicate below was **superseded**. The
+> midseason pump cadence is now *30 minutes every 2 hours*, guarded by
+> `self.now.hour >= 6 and self.now.hour % 2 == 0 and self.now.minute < 30`
+> (`odin/apps/relays/services.py:101`). The servo rule and the `hour >= 6` night guard are
+> unchanged. See [[2026-10-11-midseason-pump-cadence-30min]].
+
 ### Key Technical Decisions
-- Window selection is based on `self.now.hour % 3 == 0`, using the modulus operator against the 24-hour clock.
+- Window selection is based on `self.now.hour % 3 == 0`, using the modulus operator against the 24-hour clock. *(superseded — see the note above)*
 - The pump runs only inside the active hour during the day: the guard is `self.now.hour >= 6 and self.now.hour % 3 == 0`, so night hours (0–5) never activate midseason heating.
 - Servos are always open (OFF) in midseason — the original pump↔servo inversion was removed, since a servo must not close while the pump cycles.
 - The `hour % 3` predicate is independent of `minute`, so the existing `get_current_period_from_schedule()` call only matters when the weather branch is skipped.
@@ -106,5 +122,7 @@ Follow-up changes in the working tree after the initial merge adjust the midseas
 
 ## References
 
-- Related: [[2026-09-18-relay-state-mode-refactor]]
+- Related: [[2026-09-18-relay-state-mode-refactor]] — established the compute-on-read `RelayMode` split this page extended
+- Related: [[2026-09-22-mnt-217-relay-schedule-component]] — MNT-217: Relay schedule component
+- Related: [[2026-09-23-relay-mode-compute-on-read]] — Relay mode computed on read
 - External: https://linear.app/mnt/issue/MNT-215/midseason-mode

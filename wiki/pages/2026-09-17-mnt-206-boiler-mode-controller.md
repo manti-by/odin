@@ -109,4 +109,5 @@ The implementation plan for the BoilerModeService is as follows:
 
 ## References
 
+- Related: [[2026-09-11-ebusd-config-load-boiler-refresh]] — ebusd lost its device config (boiler reads all failed) + refresh timer disabled
 - External: https://linear.app/mnt/issue/MNT-206/boiler-mode-controller

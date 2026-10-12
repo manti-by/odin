@@ -5,14 +5,13 @@ type: debug
 status: resolved
 session_id: ses_opencode_2026-08-24-react-spa-dev
 services: [frontend, core]
-branch: -
+branch: master
 tickets: []
 tags: [react, vite, strictmode, dev-server, dashboard, typescript]
 related:
   - 2026-07-21-react-frontend-pr-review-fixes.md
   - 2026-09-23-mnt-218-split-dashboard-api.md
 ---
-
 # Fix React SPA dev-mode issues: docs, proxy, base path, StrictMode Loading bug
 
 ## TL;DR
@@ -227,6 +226,8 @@ export default defineConfig(({ mode }) => ({
 
 ## References
 
-- Related: [[2026-07-21-react-frontend-pr-review-fixes]]
+- Related: [[2026-07-21-react-frontend-pr-review-fixes]] — React frontend PR review — apply CodeRabbit + coding-guideline fixes
+- Related: [[2026-09-23-mnt-218-split-dashboard-api]] — replaced the `useDashboardData` hook this page debugged
+- Related: [[2026-09-24-silk-route-spa-catchall-shadow]] — Silk profiler unreachable — SPA catch-all shadows /silk/
 - External: [facebook/react#26315 — `useRef` cleanup in StrictMode refers to second ref twice](https://github.com/facebook/react/issues/26315)
 - External: [React docs — `<StrictMode>` / Fixing bugs found by re-running Effects in development](https://react.dev/reference/react/StrictMode)

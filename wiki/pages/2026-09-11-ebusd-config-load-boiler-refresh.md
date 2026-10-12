@@ -5,7 +5,7 @@ type: debug
 status: resolved
 session_id: ses_ebusd_config_refresh_2026_09_11
 services: [ebusd, boiler]
-branch: -
+branch: master
 tickets: []
 tags: [ebus, ebusd, vaillant, boiler, systemd, http, config, proterm]
 related: [2026-08-11-proterm-lynx-25-ebus-protocol.md, 2026-09-17-mnt-206-boiler-mode-controller.md]
@@ -171,6 +171,7 @@ this timer to keep long-running overrides applied; it was never turned on.
 
    `info` then reports `messages: 230` and
    `address 08: …, loaded "vaillant/bai.308523.inc", "vaillant/08.bai.csv"`.
+
 3. **Enable the refresh timer**: `sudo systemctl enable --now boiler-refresh.timer`.
 
 ## Verification

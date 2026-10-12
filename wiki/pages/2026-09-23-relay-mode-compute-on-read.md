@@ -5,7 +5,7 @@ type: implementation
 status: resolved
 session_id: ses_f36363e46ffe9xrDG6f28XcHL8
 services: [api, relays]
-branch: -
+branch: master
 tickets: []
 tags: [relays, mode, api, dashboard, serializers]
 related:
@@ -14,7 +14,6 @@ related:
   - 2026-09-21-esp8266-indicator-icons
   - 2026-09-23-mnt-218-split-dashboard-api
 ---
-
 # Relay mode computed on read
 
 ## TL;DR
@@ -30,7 +29,7 @@ live target decision.
 
 ## Overview
 
-The two servos looked different because they *were* different in the database — but only in
+The two servos looked different because they _were_ different in the database — but only in
 the stored `mode` column, not in the live computation. Diagnosing with the real service showed
 both compute to the same mode; one had simply not been recomputed since the pump's stored
 state changed.
@@ -172,6 +171,11 @@ SERVO-HL  stored mode=IGNORED   | RelaySerializer=MIDSEASON | Dashboard=MIDSEASO
   state feeding them can lag.
 
 ## References
+
+- Related: [[2026-09-11-add-related-relay-field]] — Add self-referential related_relay field to Relay
+- Related: [[2026-09-28-mnt-226-relay-state-log]] — MNT-226: Relay state log
+- Related: [[2026-09-29-relay-log-consumer-fixes]] — Relay log consumer — review and fixes
+- Related: [[2026-10-11-midseason-pump-cadence-30min]] — Midseason pump cadence — 30 minutes every 2 hours
 
 - Related: [[2026-09-19-mnt-215-midseason-mode]]
 - Related: [[2026-09-18-relay-state-mode-refactor]]

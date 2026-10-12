@@ -5,12 +5,11 @@ type: implementation
 status: resolved
 session_id: ses_f6fa428f0ffeMnvUy6e1mzal4k
 services: [relays, sensors, core]
-branch: -
+branch: master
 tickets: []
 tags: [redis, pubsub, relays, django-admin, consumer, systemd]
 related: [2026-09-11-add-related-relay-field.md, 2026-09-18-relay-state-mode-refactor.md]
 ---
-
 # Relay state sync — admin refresh and Redis consumer
 
 ## TL;DR
@@ -163,5 +162,8 @@ def process_relay_message(self, message: dict[str, Any]) -> None:
   to `cached_property` and empty `odin/apps/relays/management/*/__init__.py` files removed.
 
 ## References
+
+- Related: [[2026-09-28-mnt-226-relay-state-log]] — MNT-226: Relay state log
+- Related: [[2026-09-29-relay-log-consumer-fixes]] — Relay log consumer — review and fixes
 
 - Related: [[2026-09-11-add-related-relay-field]]

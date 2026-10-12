@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from decimal import Decimal, InvalidOperation
 from typing import Any

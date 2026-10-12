@@ -5,12 +5,11 @@ type: investigation
 status: reference
 session_id: ses_0962f4978ffe74aY6KpTYHBzEk
 services: [sensors]
-branch: -
+branch: master
 tickets: []
 tags: [models, queryset, manager]
 related: [2026-09-24-sensor-fks-and-denormalized-readings]
 ---
-
 # Sensor Model QuerySet and Manager Investigation
 
 ## TL;DR
@@ -95,5 +94,7 @@ Custom manager on `SensorLog` with a `current()` method returning the latest log
 - None
 
 ## References
+
+- Related: [[2026-07-16-fix-type-errors-ci-flow]] — Fix type errors and verify CI flow
 
 - **File:** `odin/apps/sensors/models.py`

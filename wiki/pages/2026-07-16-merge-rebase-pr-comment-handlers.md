@@ -5,7 +5,7 @@ type: investigation
 status: resolved
 session_id: ses_0936bf8b4ffeicx7i5kyhe8LEa
 services: []
-branch: -
+branch: master
 tickets: []
 tags: [github, pr, webhooks, notifications, pr-comments]
 related:
@@ -43,23 +43,23 @@ Searched for `mark_read`, `mark_as_read`, notification read-state models, and vi
 
 ### Tangential matches (false positives)
 
-| File | Match | Why irrelevant |
-|---|---|---|
-| `.github/workflows/checks.yml` | `pull_request:` | CI workflow trigger, not code |
-| `.pre-commit-config.yaml` | `check-merge-conflict` | Pre-commit hook, not runtime |
-| `odin/tests/api/test_relays.py` | "merges" in docstring | About relay schedule merging |
-| `odin/tests/api/test_sensors.py` | "merges" in docstring | About sensor data merging |
+| File                             | Match                  | Why irrelevant                |
+| -------------------------------- | ---------------------- | ----------------------------- |
+| `.github/workflows/checks.yml`   | `pull_request:`        | CI workflow trigger, not code |
+| `.pre-commit-config.yaml`        | `check-merge-conflict` | Pre-commit hook, not runtime  |
+| `odin/tests/api/test_relays.py`  | "merges" in docstring  | About relay schedule merging  |
+| `odin/tests/api/test_sensors.py` | "merges" in docstring  | About sensor data merging     |
 
 ## Searched
 
-| Area | Keywords | Result |
-|------|----------|--------|
-| All Python/JS/HTML source | `merge`, `rebase`, `pull_request`, `pr_comment` | Only unrelated hits: migration comments, test fixture comments, AGENTS.md workflow docs |
-| All source | `webhook` | No matches |
-| All source | `mark_read`, `mark_as_read` | No matches |
-| All source | `notification` + read state | `webpush.py` sends push notifications but no read tracking; no `Notification` model with read/unread field |
-| `odin/apps/`, `odin/api/` | Any GitHub/diff/PR endpoint or handler | None |
-| `.github/workflows/` | CI triggers on `pull_request` | Standard CI — not an application webhook handler |
+| Area                      | Keywords                                        | Result                                                                                                     |
+| ------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| All Python/JS/HTML source | `merge`, `rebase`, `pull_request`, `pr_comment` | Only unrelated hits: migration comments, test fixture comments, AGENTS.md workflow docs                    |
+| All source                | `webhook`                                       | No matches                                                                                                 |
+| All source                | `mark_read`, `mark_as_read`                     | No matches                                                                                                 |
+| All source                | `notification` + read state                     | `webpush.py` sends push notifications but no read tracking; no `Notification` model with read/unread field |
+| `odin/apps/`, `odin/api/` | Any GitHub/diff/PR endpoint or handler          | None                                                                                                       |
+| `.github/workflows/`      | CI triggers on `pull_request`                   | Standard CI — not an application webhook handler                                                           |
 
 ## Existing notification surface
 

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -24,17 +22,17 @@ def get_weather_chart_data(start: datetime | None = None, end: datetime | None =
 
         try:
             temp.append(float(entry.data["temp"]["avg"]))
-        except (KeyError, TypeError, ValueError):
+        except KeyError, TypeError, ValueError:
             temp.append(None)
 
         try:
             humidity.append(float(entry.data["humidity"]))
-        except (KeyError, TypeError, ValueError):
+        except KeyError, TypeError, ValueError:
             humidity.append(None)
 
         try:
             pressure.append(int(entry.data["pressure"]))
-        except (KeyError, TypeError, ValueError):
+        except KeyError, TypeError, ValueError:
             pressure.append(None)
 
     return {

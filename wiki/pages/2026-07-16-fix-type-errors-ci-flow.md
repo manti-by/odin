@@ -5,7 +5,7 @@ type: implementation
 status: resolved
 session_id: ses_0962f911dffeNV7Q0xyksdxnmJ
 services: [core, sensors, relays, currency]
-branch: -
+branch: master
 tickets: []
 tags: [typing, ci, type-checking]
 related: [2026-07-16-sensor-model-queryset-manager.md]
@@ -30,6 +30,7 @@ annotations). After fixing, `ty check` passed cleanly and `make ci` was run
 end-to-end.
 
 Three rounds of CI:
+
 1. **No PostgreSQL** — `psycopg2.OperationalError`, tests wouldn't even start.
 2. **PostgreSQL configured** — 185/193 passed; 8 env-only failures (Redis, systemctl).
 3. **After sourcing .env + fixing test stubs** — 193/193 green.
@@ -74,14 +75,15 @@ which are not valid Python syntax in that context.
 
 ## CI Results
 
-| Step       | Status | Detail |
-|------------|--------|--------|
-| install    | ✅     | `uv sync` passed |
-| check      | ✅     | `ty check` + pre-commit clean |
-| django     | ✅     | migrations + system check |
-| full-test  | ✅     | 193/193 passed (after 3 rounds) |
+| Step      | Status | Detail                          |
+| --------- | ------ | ------------------------------- |
+| install   | ✅     | `uv sync` passed                |
+| check     | ✅     | `ty check` + pre-commit clean   |
+| django    | ✅     | migrations + system check       |
+| full-test | ✅     | 193/193 passed (after 3 rounds) |
 
 Round 3 details:
+
 - **2 test stubs fixed** — `test_core_admin` and `test_check_swap` were missing
   `subprocess.run` mocks for the `DEBUG=False` release path.
 - **6 Redis/systemctl tests** — resolved once Redis was running locally and

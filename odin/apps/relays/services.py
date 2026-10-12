@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import copy
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
@@ -76,7 +74,7 @@ class RelayTargetStateService:
             try:
                 start_time = timezone.datetime.strptime(period["start_time"], "%H:%M").time()
                 end_time = timezone.datetime.strptime(period["end_time"], "%H:%M").time()
-            except (KeyError, ValueError):
+            except KeyError, ValueError:
                 continue
 
             if start_time <= end_time and start_time <= current_time < end_time:

@@ -6,7 +6,7 @@ status: resolved
 updated: 2026-08-18
 session_id: ses_ebus_proterm_lynx_25_investigation
 services: [ebusd, boiler]
-branch: -
+branch: master
 tickets: []
 tags: [ebus, vaillant, proterm, icar, boiler, protocol]
 related: [2026-09-11-ebusd-config-load-boiler-refresh.md]
@@ -131,10 +131,10 @@ Proterm Lynx 25 MKO   ──eBus──►   ICAR shield c6   ──TCP:9999─�
 - There is no separate "mixed mode temperature" — mixed = `auto` with both setpoints supplied.
 - Current live values (read 2026-08-11 17:57–17:58, boiler boiling-only at 45 °C as expected):
   - `FlowTempDesired` = `30.00 °C` (heating setpoint, dormant while in `water`)
-  - `HwcTempDesired`  = `45.00 °C` (boiling setpoint)
+  - `HwcTempDesired` = `45.00 °C` (boiling setpoint)
   - `StorageTempDesired` = `45.00 °C` (storage/tank setpoint, kept in sync with HWC)
-  - `FlowTempMax`     = `83.31 °C`, `ReturnTempMax` = `68.25 °C`
-  - `StorageTemp`     = `44.44 °C` (ok), `HwcTemp` = `-13.50 °C` (cutoff — HWC NTC not wired on this unit)
+  - `FlowTempMax` = `83.31 °C`, `ReturnTempMax` = `68.25 °C`
+  - `StorageTemp` = `44.44 °C` (ok), `HwcTemp` = `-13.50 °C` (cutoff — HWC NTC not wired on this unit)
   - `ModulationDesired` = `44.2 %`, `PumpPowerDesired` = `auto`, `ExternalHwcSwitch` = `off`
   - `OutdoorstempSensor` = `-60.44 °C` (cutoff — outside sensor not installed)
 
@@ -212,7 +212,7 @@ model SetMode { hcmode: hcmode; ... }
 ```
 
 The `@passive` attribute marks SetMode as a message that is broadcast by a master controller
-(calorMatic / multiMATIC / sensoCOMFORT) and consumed by the boiler — ebusd is *not* allowed
+(calorMatic / multiMATIC / sensoCOMFORT) and consumed by the boiler — ebusd is _not_ allowed
 to initiate the write itself. `find -V SetMode` confirms this with
 `bai SetMode = no data stored [ZZ=08, passive write]`, and `find -w` does **not** list SetMode
 among the actively-writable messages. Without a calorMatic on the bus, ebusd has no
@@ -233,13 +233,13 @@ Verified 2026-08-11 with `--enablehex` enabled and the daemon restarted. Sent th
 raw SetMode message with three different payloads and watched the boiler's broadcasts
 for ~30 s after each:
 
-| Source | Payload (mode, flow, hwc) | Bus response | HwcTempDesired after 30 s |
-|--------|---------------------------|--------------|---------------------------|
-| 31 (ebusd) | `water 30 45` (identical to current) | `/ 00` (ACK) | `45.00` (unchanged) |
-| 31 (ebusd) | `water 30 46` (HWC differs by 1 °C)  | `/ 00` (ACK) | `45.00` (unchanged) |
-| 00       | `water 30 46`                            | `/ 00` (ACK) | `45.00` (unchanged) |
-| 03       | `water 30 46`                            | `/ 00` (ACK) | `45.00` (unchanged) |
-| 31 (ebusd) | `off  0  0` (mode change)              | `/ 01 01` (NACK) | `45.00` (unchanged) |
+| Source     | Payload (mode, flow, hwc)            | Bus response     | HwcTempDesired after 30 s |
+| ---------- | ------------------------------------ | ---------------- | ------------------------- |
+| 31 (ebusd) | `water 30 45` (identical to current) | `/ 00` (ACK)     | `45.00` (unchanged)       |
+| 31 (ebusd) | `water 30 46` (HWC differs by 1 °C)  | `/ 00` (ACK)     | `45.00` (unchanged)       |
+| 00         | `water 30 46`                        | `/ 00` (ACK)     | `45.00` (unchanged)       |
+| 03         | `water 30 46`                        | `/ 00` (ACK)     | `45.00` (unchanged)       |
+| 31 (ebusd) | `off  0  0` (mode change)            | `/ 01 01` (NACK) | `45.00` (unchanged)       |
 
 So the eBus protocol-level path works for any master (boiler sends an ACK), but the
 boiler's application layer only honours SetMode from a paired Vaillant controller
@@ -272,6 +272,7 @@ ebusctl hex -s 31 feb51606 002d230b0826                    # Vdatetime BTI+BDA (
 ```
 
 ebusd decoded the IdAnswer correctly:
+
 ```
 [update notice] sent update-read Broadcast IdAnswer QQ=31: Vaillant;VR900;0100;0100
 ```
@@ -279,19 +280,19 @@ ebusd decoded the IdAnswer correctly:
 Then sent SetMode heat/50/45 (different payload from current state, so we should
 have seen a NACK if the boiler was still rejecting us):
 
-| Variation | SetMode bus response | `HwcTempDesired` 30 s later |
-|-----------|----------------------|-----------------------------|
-| Boot sequence + SetMode from source 31 | `/ 00` ACK | `45.00` (unchanged) |
-| Boot sequence + SetMode from source 00 | `/ 00` ACK | `45.00` (unchanged) |
-| Boot sequence + SetMode from source 03 | `/ 00` ACK | `45.00` (unchanged) |
-| Sustained heartbeat (60 s) + SetMode from 00 | `/ 00` ACK | `45.00` (unchanged) |
+| Variation                                    | SetMode bus response | `HwcTempDesired` 30 s later |
+| -------------------------------------------- | -------------------- | --------------------------- |
+| Boot sequence + SetMode from source 31       | `/ 00` ACK           | `45.00` (unchanged)         |
+| Boot sequence + SetMode from source 00       | `/ 00` ACK           | `45.00` (unchanged)         |
+| Boot sequence + SetMode from source 03       | `/ 00` ACK           | `45.00` (unchanged)         |
+| Sustained heartbeat (60 s) + SetMode from 00 | `/ 00` ACK           | `45.00` (unchanged)         |
 
 So the boiler ACK-s the messages at the eBus protocol level regardless of source or
 identity, but the application layer never applies the SetMode payload. The boiler
 state at the end (`FlowTempDesired=30, HwcTempDesired=45, StorageTempDesired=45,
 Status02 hwcmode=off, pumpstate=off`) was identical to the starting state.
 
-**Reason this doesn't work:** Vaillant's pairing is a *two-sided* handshake. The
+**Reason this doesn't work:** Vaillant's pairing is a _two-sided_ handshake. The
 boiler has to be put into a "pairing window" — usually by holding a button on the
 boiler for several seconds — and only during that window does it accept a new
 controller's identity into its non-volatile trusted-masters table. Without that
@@ -302,7 +303,7 @@ exposed on the bus (none of the `bai` messages control it).
 
 **Conclusion:** the only paths to remote control of this boiler are
 (a) buy and physically pair a calorMatic / multiMATIC / sensoCOMFORT, then use
-    `ebusctl`/`Ebusd` to send SetMode to *its* master address, or
+`ebusctl`/`Ebusd` to send SetMode to _its_ master address, or
 (b) replace the boiler firmware — out of scope.
 The Python service stays read-only on this firmware.
 
@@ -326,9 +327,9 @@ Findings:
 - The only things direct ICAR would unlock that `hex` does not:
   (a) back-to-back frame bursts without ebusd's per-message pacing,
   (b) sending `answer`-style responses to the boiler's broadcasts (would need
-      `ebusctl answer` with `--enablehex --answer` — already enabled in this
-      session but the boiler never broadcast anything that looked like a poll
-      request, just its own Status broadcasts),
+  `ebusctl answer` with `--enablehex --answer` — already enabled in this
+  session but the boiler never broadcast anything that looked like a poll
+  request, just its own Status broadcasts),
   (c) bypassing ebusd's message-DB lookup (irrelevant — `hex` already does this).
 - Even with (a), (b), (c), the boiler's application layer response to SetMode
   is the same: `/ 00` ACK from any non-paired source, `/ 01 01` NACK from any
@@ -367,15 +368,15 @@ ebusctl hex 08b510070300000000000000    # water mode, flow=0, hwc=0 (all-zero pa
 
 Per-field payload layout for SetMode (matches the TypeSpec definition):
 
-| offset | field              | type | encoding             |
-|--------|--------------------|------|----------------------|
-| 0      | `hcmode`           | UCH  | 0=auto 1=off 2=heat 3=water |
-| 1      | `flowtempdesired`  | D1C  | byte = °C × 2        |
-| 2      | `hwctempdesired`   | D1C  | byte = °C × 2        |
-| 3      | `hwcflowtempdesired` | UCH | °C (1 byte)          |
-| 4      | `ign`              | IGN  | ignore               |
-| 5      | bitfield (disablehc / disablehwctapping / disablehwcload) | bits |  |
-| 6      | bitfield (remoteControlHcPump / releaseBackup / releaseCooling) | bits | |
+| offset | field                                                           | type | encoding                    |
+| ------ | --------------------------------------------------------------- | ---- | --------------------------- |
+| 0      | `hcmode`                                                        | UCH  | 0=auto 1=off 2=heat 3=water |
+| 1      | `flowtempdesired`                                               | D1C  | byte = °C × 2               |
+| 2      | `hwctempdesired`                                                | D1C  | byte = °C × 2               |
+| 3      | `hwcflowtempdesired`                                            | UCH  | °C (1 byte)                 |
+| 4      | `ign`                                                           | IGN  | ignore                      |
+| 5      | bitfield (disablehc / disablehwctapping / disablehwcload)       | bits |                             |
+| 6      | bitfield (remoteControlHcPump / releaseBackup / releaseCooling) | bits |                             |
 
 So `SetMode auto, flow=55, hwc=45` becomes
 `08 b5 10 07 00 6e 5a 00 00 00 00` (NN=07, hcmode=00, flow=0x6E, hwc=0x5A, rest=00),
@@ -407,11 +408,11 @@ Both will hit the same passive-write restriction until a Proterm-specific config
 
 ## Mapping to the three required modes
 
-| Mode    | SetMode arg | Temperatures sent in the same write        |
-| ------- | ----------- | ------------------------------------------- |
-| Boiling | `water`     | `flowtempdesired` + `hwctempdesired`        |
-| Heating | `heat`      | `flowtempdesired` + `hwctempdesired`        |
-| Mixed   | `auto`      | `flowtempdesired` + `hwctempdesired`        |
+| Mode    | SetMode arg | Temperatures sent in the same write  |
+| ------- | ----------- | ------------------------------------ |
+| Boiling | `water`     | `flowtempdesired` + `hwctempdesired` |
+| Heating | `heat`      | `flowtempdesired` + `hwctempdesired` |
+| Mixed   | `auto`      | `flowtempdesired` + `hwctempdesired` |
 
 There is no separate "mixed temperature" — Mixed means both `flowtempdesired` (heating) and
 `hwctempdesired` (boiling) are active simultaneously under `auto` mode arbitration.

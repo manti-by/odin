@@ -15,6 +15,10 @@ It uses Django 6 with Django REST Framework, PostgreSQL, Redis, and modern Pytho
   and a read API in `./odin/api/v1/boiler/` (`GET /api/v1/boiler/status/`); talks to the local
   `ebusd` daemon
 - Tests in `./odin/tests/`
+- Standalone MCP server in `./mcp_server/` — stdio server exposing read tools over the database,
+  source docstrings, the wiki and the log directory. Project-specific values (roots, server name,
+  Django settings module) live in `mcp_server/config.py`; the rest of the package is
+  project-agnostic. Its tests are in `./mcp_server/tests/`
 - React + TypeScript SPA (Vite + Bun + Biome) in `./frontend/` — dashboard UI, built to `frontend/dist/`
 - Public-facing Django templates/static JS/CSS are no longer rendered (orphans still on disk
   under `./odin/templates/` and `./odin/static/{css,js}/`, slated for deletion); only the Django
@@ -138,6 +142,12 @@ uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/tests/
 # Run single test method
 uv run pytest --create-db --disable-warnings --ds=odin.settings.test odin/tests/api/test_sensors.py::TestSensorsAPI::test_sensors__list
 
+# MCP server tests (no database required)
+uv run pytest mcp_server/tests/
+
+# Everything
+uv run pytest mcp_server/tests/ odin/
+
 # Run with coverage (if available)
 uv run pytest --cov=odin --cov-report=term-missing odin/
 ```
@@ -154,7 +164,8 @@ uv run pre-commit run
 uv run ruff check .                 # Backend lint
 uv run ruff format .                # Backend format
 uv run ty check                     # Backend type checking (also runs via `make check`)
-uv run bandit -c pyproject.toml .   # Backend security analysis
+uv run pre-commit run bandit        # Backend security analysis (bandit is a pre-commit hook,
+                                     #   not a project dependency — `uv run bandit` does not resolve)
 make frontend-check                 # Frontend lint (Biome) + typecheck (tsc)
 ```
 
@@ -229,7 +240,8 @@ def schedule_update_weather():
 - `RelayState` is `ON`/`OFF`/`UNKNOWN` only (`IGNORED` was removed); `RelayMode.IGNORED` still
   exists (servo whose related pump is off).
 - `perform_update` recomputes and persists `state`+`mode`, publishes via `RedisBus`, and records a
-  `RelayLog` row (`odin/apps/relays/services.py:19`); servos link to their pump via the nullable
+  `RelayLog` row via `RelayLogService.log_change()` (`odin/api/v1/relays/views.py:52`,
+  `odin/apps/relays/services.py:34`); servos link to their pump via the nullable
   `related_relay` self-FK.
 - Midseason: pump runs only in the active daytime window (`hour >= 6 and hour % 2 == 0 and
   minute < 30`); servos stay open (`OFF, MIDSEASON`).
@@ -239,13 +251,14 @@ def schedule_update_weather():
 - Ingest contract: `POST /api/v1/sensors/logs/` takes a string `sensor_id` (unknown IDs stored
   with `sensor=None`); producers omit fields they cannot provide.
 - `Sensor.temp`/`humidity` are denormalized calibrated caches; `is_alive` derives from
-  `updated_at` (10 min threshold). `SensorLogManager.current()` uses `DISTINCT ON (sensor)`.
+  `updated_at` (10 min threshold, `odin/apps/sensors/models.py:111`). `SensorLogManager.current()`
+  uses Postgres `DISTINCT ON (sensor)` (`odin/apps/sensors/models.py:129`).
 
 ## Code Style Guidelines
 
 ### Python Standards
 
-- Python 3.13.x (`requires-python = ">=3.13.6,<3.14.0"`) with type hints encouraged
+- Python 3.14.x (`requires-python = ">=3.14,<3.15.0"`) with type hints encouraged
 - Ensure code style consistency using Ruff
 - Line length 120 characters
 - Indentation 4 spaces
@@ -254,17 +267,20 @@ def schedule_update_weather():
 
 Use Ruff isort with this order:
 
-1. `__future__` imports
-2. Standard library imports
-3. Third-party imports
-4. First-party imports
-5. Django imports (also `rest_framework`, `django_rq`, `django_apscheduler`, `apscheduler`)
-6. Odin imports
-7. Local folder imports
+1. Standard library imports
+2. Third-party imports
+3. First-party imports
+4. Django imports (also `rest_framework`, `django_rq`, `django_apscheduler`, `apscheduler`)
+5. Odin imports (`odin`) — configured in `[tool.ruff.lint.isort.sections]`
+6. Local folder imports
+
+`mcp_server` is not its own section; its imports sort as first-party (tier 3).
+
+Do **not** add `from __future__ import annotations` — it was removed project-wide in MNT-243
+(`0b181fb`) now that Python 3.14 supports the annotations natively. Use PEP 585/604 syntax
+directly (`models.ForeignKey[Sensor] | None`, `list[str]`, `Self`).
 
 ```python
-from __future__ import annotations
-
 import os
 from decimal import Decimal
 
@@ -299,7 +315,7 @@ def get_sensor_data(sensor_id: str) -> dict[str, Decimal] | None:
 
 #### Models
 
-- Use `__future__ import annotations` for forward references
+- Use PEP 585/604 annotation syntax natively (`X | None`, `list[str]`); no `__future__` import
 - Include `created_at` and `updated_at` timestamp fields
 - Use `verbose_name` and `verbose_name_plural` with translation support
 - Implement custom QuerySets and Managers for complex queries
@@ -349,6 +365,10 @@ class Sensor(models.Model):
 - Manage Python dependencies via **[uv](https://github.com/astral-sh/uv)** and **virtual environments**.
 - Manage frontend (JS/TS) dependencies via **[Bun](https://bun.sh/)** — `bun install` in `./frontend/`.
 - The pinned Bun version lives in `frontend/package.json` (`packageManager`); CI uses the same version.
+- `asyncpg` (MCP database tools) and `mcp` are runtime deps; `pytest-asyncio` is a dev dep enabling
+  `asyncio_mode = "auto"`. `bandit` is not a project dep — it runs through pre-commit only.
+- CI resolves the Python version from `requires-python` via `python-version-file: "pyproject.toml"`,
+  so bumping that field changes the CI runtime.
 
 ## Testing
 
@@ -476,7 +496,7 @@ Python-only pre-commit hooks are configured in `.pre-commit-config.yaml`:
 
 - Ruff (linting and formatting)
 - Bandit (security analysis)
-- pyupgrade (Python 3.13+ syntax)
+- pyupgrade (Python 3.14+ syntax)
 - validate-pyproject (checks on pyproject.toml)
 
 Frontend checks are not part of pre-commit; they run via `make frontend-check`
@@ -496,6 +516,8 @@ Frontend checks are not part of pre-commit; they run via `make frontend-check`
 - Use systemd for service management
 - `make deploy` builds the SPA (`make frontend`) before `collectstatic` and
   reloads nginx, so the React build artifacts are always served fresh
+- The MCP server is launched by the agent client, not by systemd: `uv run python -m mcp_server.main`
+  (registered in `opencode.json`). It reads only, so it needs no separate service unit
 
 ## Common Issues
 

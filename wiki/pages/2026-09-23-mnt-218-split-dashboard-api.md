@@ -14,7 +14,8 @@ services: [CurrencyTile, Ds18b20SensorsTile, Esp8266SensorsTile, SystemErrorsTil
 branch: mnt-218-split-dashboard-api
 tickets: [MNT-218]
 tags: [wiki, feature, backend]
-related: [2026-09-18-mnt-208-boiler-dashboard]
+related: [2026-09-18-mnt-208-boiler-dashboard, 2026-08-24-react-spa-dev-mode-debug,
+  2026-07-17-mock-kafka-systemctl-in-tests]
 ---
 # MNT-218: Split dashboard API
 
@@ -264,5 +265,9 @@ The plan involves splitting the existing dashboard API into smaller APIs for eac
 
 ## References
 
-- Related: [[2026-09-18-mnt-208-boiler-dashboard]]
+- Related: [[2026-07-17-mock-kafka-systemctl-in-tests]] — mocked the aggregate dashboard view removed here
+- Related: [[2026-07-21-react-frontend-pr-review-fixes]] — React frontend PR review — apply CodeRabbit + coding-guideline fixes
+- Related: [[2026-08-24-react-spa-dev-mode-debug]] — its `useDashboardData` hook was replaced by the per-tile polling this change introduced
+- Related: [[2026-09-18-mnt-208-boiler-dashboard]] — Boiler dashboard tile added against the aggregate endpoint
+- Related: [[2026-09-23-relay-mode-compute-on-read]] — Relay mode computed on read
 - External: https://linear.app/mnt/issue/MNT-218/split-dashboard-api
