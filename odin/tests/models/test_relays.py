@@ -160,9 +160,9 @@ class TestServoPeriodOverride:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            # Should use period target_temp (25.0), temp 22.0 < 25.0 - 1.0 = 24.0, so ON
+            # Should use period target_temp (25.0), temp 22.0 < 25.0 - 1.0 = 24.0, so OFF
             state, mode = self.relay.get_target_state()
-            assert state == RelayState.ON
+            assert state == RelayState.OFF
             assert mode == RelayMode.BASIC
 
     def test_relays__servo_uses_zero_period_target_temp(self):
@@ -176,9 +176,9 @@ class TestServoPeriodOverride:
 
         local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
-            # 10.0 > 0 + 1.0, so the circuit closes instead of regulating against the sensor's 20.0
+            # 10.0 > 0 + 1.0, so the circuit opens instead of regulating against the sensor's 20.0
             state, mode = self.relay.get_target_state()
-            assert state == RelayState.OFF
+            assert state == RelayState.ON
             assert mode == RelayMode.BASIC
 
 
@@ -228,24 +228,24 @@ class TestRelaysServoTargetState:
         assert state == RelayState.OFF
         assert mode == RelayMode.UNKNOWN
 
-    def test_relays__servo_target_state_returns_on_when_temp_below_min(self):
-        """Test that servo turns ON when temp is below target - hysteresis."""
+    def test_relays__servo_target_state_returns_off_when_temp_below_min(self):
+        """Test that servo turns OFF when temp is below target - hysteresis."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
         SensorLogFactory(sensor=self.sensor, temp=Decimal("23.0"), created_at=timezone.now())
 
         state, mode = self.relay.get_target_state()
-        assert state == RelayState.ON
+        assert state == RelayState.OFF
         assert mode == RelayMode.BASIC
 
-    def test_relays__servo_target_state_returns_off_when_temp_above_max(self):
-        """Test that servo turns OFF when temp is above target plus hysteresis."""
+    def test_relays__servo_target_state_returns_on_when_temp_above_max(self):
+        """Test that servo turns ON when temp is above target plus hysteresis."""
         self.sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         self.sensor.save()
         SensorLogFactory(sensor=self.sensor, temp=Decimal("27.0"), created_at=timezone.now())
 
         state, mode = self.relay.get_target_state()
-        assert state == RelayState.OFF
+        assert state == RelayState.ON
         assert mode == RelayMode.BASIC
 
     def test_relays__servo_target_state_returns_off_when_temp_in_range(self):
@@ -304,7 +304,7 @@ class TestRelaysTargetStateDispatch:
         SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
 
         state, mode = relay.get_target_state()
-        assert state == RelayState.ON
+        assert state == RelayState.OFF
         assert mode == RelayMode.BASIC
 
     def test_relays__target_state_returns_unknown_for_unknown_type(self):

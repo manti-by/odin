@@ -142,10 +142,10 @@ class RelayTargetStateService:
             return RelayState.OFF, RelayMode.UNKNOWN
 
         if sensor.temp < target_temp - sensor.temp_hysteresis:
-            return RelayState.ON, RelayMode.BASIC
+            return RelayState.OFF, RelayMode.BASIC
 
         if sensor.temp > target_temp + sensor.temp_hysteresis:
-            return RelayState.OFF, RelayMode.BASIC
+            return RelayState.ON, RelayMode.BASIC
 
         return RelayState.OFF, RelayMode.FALLBACK
 
