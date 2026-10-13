@@ -92,7 +92,7 @@ class RedisBus:
         return False
 
     @classmethod
-    def publish_relay_control(cls, relay_id: str, state: str, user: User | None = None) -> bool:
+    def publish_relay_control(cls, relay_id: str, state: str, mode: str | None, user: User | None = None) -> bool:
         """Publish a relay control command to the relays channel.
 
         Publishes the canonical envelope
@@ -103,6 +103,7 @@ class RedisBus:
         Args:
             relay_id: Identifier of the relay to control.
             state: Desired relay state value ("ON" or "OFF").
+            mode: Current relay mode.
             user: Acting user, or None for a system-driven update.
 
         Returns:
@@ -110,7 +111,7 @@ class RedisBus:
         """
         message = {
             "type": MessageType.RELAY_STATE_UPDATE.value,
-            "data": {"relay_id": relay_id, "state": state, "user_id": user.pk if user else None},
+            "data": {"relay_id": relay_id, "state": state, "mode": mode, "user_id": user.pk if user else None},
             "timestamp": datetime.now().isoformat(),
         }
         return cls.publish_message(settings.REDIS_RELAYS_CHANNEL, payload=message)

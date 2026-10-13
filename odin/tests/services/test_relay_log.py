@@ -184,7 +184,9 @@ class TestRelayLogAdmin:
 
         RelayAdmin(Relay, None).save_model(request, relay, form, change=True)
 
-        mock_publish.assert_called_once_with(relay_id=relay.relay_id, state=RelayState.ON, user=user)
+        mock_publish.assert_called_once_with(
+            relay_id=relay.relay_id, state=RelayState.ON, mode=RelayMode.FORCED, user=user
+        )
         assert relay.logs.count() == 0
 
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control", return_value=True)
@@ -204,7 +206,9 @@ class TestRelayLogAdmin:
 
         RelayAdmin(Relay, None).save_model(request, relay, form, change=True)
 
-        mock_publish.assert_called_once_with(relay_id=relay.relay_id, state=RelayState.ON, user=user)
+        mock_publish.assert_called_once_with(
+            relay_id=relay.relay_id, state=RelayState.ON, mode=RelayMode.BASIC, user=user
+        )
         assert relay.logs.count() == 0
 
 

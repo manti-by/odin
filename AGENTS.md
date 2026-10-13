@@ -245,6 +245,17 @@ def schedule_update_weather():
   `related_relay` self-FK.
 - Midseason: pump runs only in the active daytime window (`hour >= 6 and hour % 2 == 0 and
   minute < 30`); servos stay open (`OFF, MIDSEASON`).
+- `RedisBus.publish_relay_control(relay_id, state, mode, user)` requires `mode` and puts it in the
+  envelope. Both call sites publish the **freshly computed** pair, not the stored column: the API
+  view recomputes it in `perform_update` and passes the acting user
+  (`odin/api/v1/relays/views.py:77`); `RelayAdmin.save_model` publishes
+  `obj.get_target_state()` (`odin/apps/relays/admin.py:126`). Passing `obj.mode` there would send a
+  stale mode next to a fresh state.
+- The `consumer` command applies both `state` and `mode` from a `RELAY_STATE_UPDATE` envelope
+  (`odin/apps/core/management/commands/consumer.py:108`); coruscant echoes the mode it read from
+  `GET /api/v1/relays/<relay_id>/`. A missing, `null` or unknown mode leaves the stored column
+  untouched, so valve updates from an older coruscant never clobber it. `Relay.refresh_state()`
+  applies `mode` from `relays:state:<relay_id>` on the same terms.
 
 ### Sensor data
 

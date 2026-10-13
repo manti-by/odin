@@ -123,8 +123,9 @@ class RelayAdmin(admin.ModelAdmin):
         with transaction.atomic():
             super().save_model(request, obj, form, change)
 
+            state, mode = obj.get_target_state()
             published = RedisBus.publish_relay_control(
-                relay_id=obj.relay_id, state=obj.target_state, user=getattr(request, "user", None)
+                relay_id=obj.relay_id, state=state, mode=mode, user=getattr(request, "user", None)
             )
             if not published:
                 logger.error(f"Failed to publish relay control message to Redis for relay {obj.relay_id}")

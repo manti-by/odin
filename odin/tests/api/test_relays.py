@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
+from odin.apps.core.models import Auth
 from odin.apps.relays.models import Relay, RelayMode, RelayState, RelayType
 from odin.apps.sensors.models import Sensor
 from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory
@@ -174,7 +175,10 @@ class TestRelaysUpdateAPI:
         assert self.relay.context["schedule"]["periods"] == [
             {"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}
         ]
-        mock_publish.assert_called_once_with(relay_id=self.relay.relay_id, state=self.relay.state)
+        acting_user = Auth.objects.get().user
+        mock_publish.assert_called_once_with(
+            relay_id=self.relay.relay_id, state=self.relay.state, mode=self.relay.mode, user=acting_user
+        )
 
     @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
     def test_relays__update_schedule_replaces_existing_schedule(self, mock_publish):

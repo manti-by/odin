@@ -6,7 +6,7 @@ import pytest
 
 from django.conf import settings
 
-from odin.apps.relays.models import Relay, RelayState
+from odin.apps.relays.models import Relay, RelayMode, RelayState
 from odin.apps.sensors.models import SensorLog
 from odin.tests.factories import RelayFactory, SensorFactory, UserFactory
 
@@ -77,6 +77,43 @@ class TestConsumeSensorsCommand:
             self.command.process_message(self._relay_message())
 
         assert Relay.objects.get(relay_id="PUMP-1").logs.first().updated_by == user
+
+    def test_process_message__applies_mode(self):
+        relay = RelayFactory(relay_id="SERVO-SR", state=RelayState.OFF, mode=RelayMode.FALLBACK)
+
+        self.command.process_message(self._relay_message(relay_id="SERVO-SR", mode=RelayMode.BASIC.value))
+
+        relay.refresh_from_db()
+        assert relay.mode == RelayMode.BASIC
+        log = relay.logs.first()
+        assert log is not None
+        assert log.old_mode == RelayMode.FALLBACK
+        assert log.new_mode == RelayMode.BASIC
+
+    def test_process_message__ignores_missing_mode(self):
+        relay = RelayFactory(relay_id="PUMP-1", state=RelayState.OFF, mode=RelayMode.BASIC)
+
+        self.command.process_message(self._relay_message())
+
+        relay.refresh_from_db()
+        assert relay.mode == RelayMode.BASIC
+
+    def test_process_message__ignores_null_mode(self):
+        relay = RelayFactory(relay_id="PUMP-1", state=RelayState.OFF, mode=RelayMode.BASIC)
+
+        self.command.process_message(self._relay_message(mode=None))
+
+        relay.refresh_from_db()
+        assert relay.mode == RelayMode.BASIC
+
+    def test_process_message__ignores_invalid_mode(self):
+        relay = RelayFactory(relay_id="PUMP-1", state=RelayState.OFF, mode=RelayMode.BASIC)
+
+        self.command.process_message(self._relay_message(mode="NONSENSE"))
+
+        relay.refresh_from_db()
+        assert relay.state == RelayState.ON
+        assert relay.mode == RelayMode.BASIC
 
     def test_process_message__ignores_unknown_relay(self):
         self.command.process_message(self._relay_message(relay_id="unknown"))

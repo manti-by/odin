@@ -7,7 +7,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from odin.apps.relays.admin import RelayAdmin
-from odin.apps.relays.models import Relay, RelayType
+from odin.apps.relays.models import Relay, RelayMode, RelayType
 from odin.tests.factories import DjangoAdminUserFactory, RelayFactory
 
 
@@ -49,7 +49,9 @@ class TestRelayAdminSaveModel:
         form.data = {}
 
         admin_instance.save_model(None, self.relay, form, change=True)
-        mock_publish_relay_control.assert_called_once_with(relay_id=self.relay.relay_id, state="OFF", user=None)
+        mock_publish_relay_control.assert_called_once_with(
+            relay_id=self.relay.relay_id, state="OFF", mode=RelayMode.FORCED, user=None
+        )
 
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
     def test_save_model_publishes_relay_control_on_add(self, mock_publish_relay_control):

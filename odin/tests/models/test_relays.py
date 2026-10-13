@@ -581,6 +581,30 @@ class TestRelaysRefreshState:
         mock_get_state.assert_called_once_with(self.relay.relay_id)
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_relay_latest_message")
+    def test_relays__refresh_state_updates_mode(self, mock_get_state):
+        """Test that refresh_state applies the mode reported alongside the state."""
+        mock_get_state.return_value = {"data": {"state": "OFF", "mode": RelayMode.MIDSEASON.value}}
+
+        state = self.relay.refresh_state()
+
+        assert state == "OFF"
+        self.relay.refresh_from_db()
+        assert self.relay.mode == RelayMode.MIDSEASON
+
+    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_latest_message")
+    def test_relays__refresh_state_ignores_missing_or_invalid_mode(self, mock_get_state: MagicMock) -> None:
+        """A payload without a known mode leaves the stored mode untouched."""
+        mock_get_state.return_value = {"data": {"state": "OFF"}}
+        assert self.relay.refresh_state() == "OFF"
+        self.relay.refresh_from_db()
+        assert self.relay.mode is None
+
+        mock_get_state.return_value = {"data": {"state": "ON", "mode": "NONSENSE"}}
+        assert self.relay.refresh_state() == "ON"
+        self.relay.refresh_from_db()
+        assert self.relay.mode is None
+
+    @patch("odin.apps.core.redis_bus.RedisBus.get_relay_latest_message")
     def test_relays__get_relay_data_raises_error_when_not_found(self, mock_get_state: MagicMock) -> None:
         """Test that refresh_state returns None when relay state is missing."""
         mock_get_state.return_value = None

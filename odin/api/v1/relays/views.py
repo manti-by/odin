@@ -75,5 +75,8 @@ class RelayRetrieveUpdateView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin
                 RelayLogService(item, user=user).log_change(before)
 
             if item.state in (RelayState.ON, RelayState.OFF):
-                if not RedisBus.publish_relay_control(relay_id=item.relay_id, state=item.state):
+                published = RedisBus.publish_relay_control(
+                    relay_id=item.relay_id, state=item.state, mode=item.mode, user=user
+                )
+                if not published:
                     logger.error(f"Failed to publish relay control message to Redis for relay {item.relay_id}")

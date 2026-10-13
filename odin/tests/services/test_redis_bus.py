@@ -114,12 +114,12 @@ class TestRedisBus:
     @patch("odin.apps.core.redis_bus.RedisBus.publish_message")
     def test_publish_relay_control(self, mock_publish_message: MagicMock) -> None:
         """Test publish_relay_control formats the canonical envelope correctly."""
-        RedisBus.publish_relay_control(relay_id="relay_1", state="ON")
+        RedisBus.publish_relay_control(relay_id="relay_1", state="ON", mode=None)
         assert mock_publish_message.call_count == 1
         assert mock_publish_message.call_args.args[0] == settings.REDIS_RELAYS_CHANNEL
         payload = mock_publish_message.call_args.kwargs["payload"]
         assert payload["type"] == "RELAY_STATE_UPDATE"
-        assert payload["data"] == {"relay_id": "relay_1", "state": "ON", "user_id": None}
+        assert payload["data"] == {"relay_id": "relay_1", "state": "ON", "mode": None, "user_id": None}
         assert "timestamp" in payload
 
     @pytest.mark.django_db
@@ -128,10 +128,15 @@ class TestRedisBus:
         """Test publish_relay_control attributes the acting user's pk."""
         user = UserFactory()
 
-        RedisBus.publish_relay_control(relay_id="relay_1", state="OFF", user=user)
+        RedisBus.publish_relay_control(relay_id="relay_1", state="OFF", mode="BASIC", user=user)
 
         payload = mock_publish_message.call_args.kwargs["payload"]
-        assert payload["data"] == {"relay_id": "relay_1", "state": "OFF", "user_id": user.pk}
+        assert payload["data"] == {
+            "relay_id": "relay_1",
+            "state": "OFF",
+            "mode": "BASIC",
+            "user_id": user.pk,
+        }
 
     @patch("odin.apps.core.redis_bus.RedisBus.get_redis")
     def test_get_relay_latest_message_returns_data(self, mock_get_redis: MagicMock) -> None:

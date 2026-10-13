@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from odin.apps.core.redis_bus import MessageType, RedisBus
-from odin.apps.relays.models import Relay, RelayState
+from odin.apps.relays.models import Relay, RelayMode, RelayState
 from odin.apps.relays.services import RelayLogService
 from odin.apps.sensors.models import Sensor, SensorLog
 
@@ -110,32 +110,43 @@ class Command(LoggedCommand):
 
         The ``relays:control`` envelope carries the authoritative ``state``, so it
         is written to the relay and audited via ``RelayLogService``; the optional
-        ``user_id`` attributes the change to the acting user, falling back to the
-        system user (``settings.REDIS_BUS_USER_ID``) for automatic updates. Messages
-        with an unknown relay id or a state other than ``ON``/``OFF`` are ignored.
+        ``mode`` (computed by ODIN and reported back by coruscant) is applied
+        alongside it when present and valid, and the optional ``user_id``
+        attributes the change to the acting user, falling back to the system user
+        (``settings.REDIS_BUS_USER_ID``) for automatic updates. Messages with an
+        unknown relay id, a state other than ``ON``/``OFF`` or an unknown mode are
+        ignored.
         """
         data = message.get("data")
         if not data or not isinstance(data, dict):
-            logger.warning("Skipping relay message with missing data")
+            logger.error("Skipping relay message with missing data")
             return
 
         if not (relay_id := data.get("relay_id")):
-            logger.warning("Skipping relay message with missing relay_id")
+            logger.error("Skipping relay message with missing relay_id")
             return
 
         relay = Relay.objects.filter(relay_id=relay_id).first()
         if relay is None:
-            logger.warning(f"Skipping relay message for unknown relay {relay_id!r}")
+            logger.error(f"Skipping relay message for unknown relay {relay_id!r}")
             return
 
-        if (state := data.get("state")) not in (RelayState.ON, RelayState.OFF):
-            logger.warning(f"Skipping relay message with invalid state {state!r} for relay {relay_id!r}")
+        if (state := data.get("state")) not in RelayState.values:
+            logger.error(f"Skipping relay message with invalid state {state!r} for relay {relay_id!r}")
             return
 
         before = RelayLogService.snapshot(relay)
 
         relay.state = state
-        relay.save(update_fields=["state", "updated_at"])
+        update_fields = ["state"]
+
+        if (mode := data.get("mode")) in RelayMode.values:
+            relay.mode = mode
+            update_fields.append("mode")
+        else:
+            logger.warning(f"Ignoring invalid mode {mode!r} for relay {relay_id!r}")
+
+        relay.save(update_fields=[*update_fields, "updated_at"])
 
         user = User.objects.filter(pk=data.get("user_id") or settings.REDIS_BUS_USER_ID).first()
         if not RelayLogService(relay, user=user).log_change(before):

@@ -126,13 +126,13 @@ class Relay(models.Model):
     def refresh_state(self) -> str | None:
         """Refresh relay state from Redis and persist it.
 
-        Fetches the latest state for this relay from Redis, updates the
-        model, and saves the change. This is a reconciliation path (admin
-        rendering, SPA polling) that can observe transient states - including
-        ODIN's own control echo before Coruscant confirms it - so it
-        deliberately does not append a RelayLog row. Audit rows are written
-        at the explicit command boundaries instead (API update, consumer
-        relay message handling).
+        Fetches the latest state (and mode, when the producer reported one)
+        for this relay from Redis, updates the model, and saves the change.
+        This is a reconciliation path (admin rendering, SPA polling) that can
+        observe transient states - including ODIN's own control echo before
+        Coruscant confirms it - so it deliberately does not append a RelayLog
+        row. Audit rows are written at the explicit command boundaries instead
+        (API update, consumer relay message handling).
 
         Returns:
             The state value from Redis if available, otherwise None.
@@ -141,16 +141,25 @@ class Relay(models.Model):
             message = RedisBus.get_relay_latest_message(self.relay_id)
         except RedisReadError:
             logger.error(f"Failed to get state from Redis for relay {self.relay_id}")
-            return None
+            return
 
         if message is None:
             logger.error(f"There are no messages for relay {self.relay_id}")
-            return None
+            return
 
-        if state := message.get("data", {}).get("state"):
+        data = message.get("data", {})
+        if (state := data.get("state")) in RelayState.values:
             self.state = state
-            self.save(update_fields=["state", "updated_at"])
-            return state
+            update_fields = ["state"]
+
+        if (mode := data.get("mode")) in RelayMode.values:
+            self.mode = mode
+            update_fields.append("mode")
+
+        if update_fields:
+            self.save(update_fields=[*update_fields, "updated_at"])
+
+        return state
 
 
 class RelayLog(models.Model):
