@@ -8,7 +8,7 @@ services: [mcp-server, tools]
 branch: master
 tickets: []
 tags: [mcp, review, refactor, caching, paths, project-agnostic, tests]
-related: []
+related: [2026-09-23-relay-mode-compute-on-read.md]
 ---
 
 # MCP server review and project-agnostic refactor
@@ -260,8 +260,8 @@ nothing deleted.**
 ### Wiki consistency — 2 stale claims fixed, 24 one-way links repaired
 
 **MNT-215 midseason predicate was superseded.** It stated `self.now.hour % 3 == 0` as live. Current
-code is `hour >= 6 and hour % 2 == 0 and minute < 30` (`odin/apps/relays/services.py:101`). Annotated
-with a dated note and cross-linked both ways.
+code is `hour >= 6 and hour % 2 == 0 and minute < 30` (`odin/apps/relays/services.py:107`, shifted from
+`:101` by the MNT-250 schedule cycle on 2026-10-16). Annotated with a dated note and cross-linked both ways.
 
 **Kafka page described a removed subsystem.** `2026-07-17-mock-kafka-systemctl-in-tests` presents
 `KafkaService` as a live obstacle; Kafka was removed from the project entirely (no `KafkaService`, no

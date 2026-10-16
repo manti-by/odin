@@ -8,7 +8,9 @@ services: [frontend]
 branch: master
 tickets: []
 tags: [frontend, esp8266, relay, indicators, svg]
-related: [2026-09-18-relay-state-mode-refactor, 2026-09-19-mnt-215-midseason-mode]
+related: [2026-09-18-relay-state-mode-refactor.md, 2026-09-19-mnt-215-midseason-mode.md,
+  2026-09-22-mnt-217-relay-schedule-component.md, 2026-09-23-relay-mode-compute-on-read.md,
+  2026-10-15-mnt-250-schedule-cycle-rule.md]
 ---
 # ESP8266 relay indicators: SVG icons + mode tooltip
 
@@ -50,6 +52,16 @@ dot must not be swallowed by the icon branches:
 - `state=OFF` → `cooling` SVG icon
 - `state=IGNORED` → grey dot
 - anything else / null → red dot
+
+> **Note 2026-10-16 (Consistency Agent):** the `ON`/`OFF` icon mapping above was **flipped** by commit
+> `cecdd76` "Fix relay indicators" (2026-09-23, no wiki page of its own). The live code in
+> `frontend/src/components/tile/Esp8266SensorsTile.tsx:32-35` is `state=ON → cooling`,
+> `state=OFF → heating`. The `IGNORED` / `UNKNOWN` mode branches above are unchanged and still current.
+>
+> A new mode, `CYCLE`, now also flows through this helper
+> ([[2026-10-15-mnt-250-schedule-cycle-rule]]). It hits neither `switch` branch, so a relay in the
+> cycle renders by `state` like any other — `cooling` when `ON`, `heating` when `OFF` — with `CYCLE`
+> visible only in the tooltip. That is intentional for now; see the MNT-250 page's follow-ups.
 
 Tooltip (`title`) falls back `mode ?? state`. Removed the `sensor-row__mode` block
 entirely.

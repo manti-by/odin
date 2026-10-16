@@ -42,6 +42,7 @@ class RelayMode(models.TextChoices):
     SUMMER = "SUMMER", _("Summer")
     MIDSEASON = "MIDSEASON", _("Midseason")
     BASIC = "BASIC", _("Basic")
+    CYCLE = "CYCLE", _("Cycle")
     ANTIFREEZE = "ANTIFREEZE", _("Antifreeze")
 
 

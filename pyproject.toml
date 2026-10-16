@@ -1,6 +1,6 @@
 [project]
 name = "odin"
-version = "1.25.1"
+version = "1.25.2"
 description = "Django application that provides several IoT dashboards and services for Coruscant and Centax projects."
 readme = "README.md"
 requires-python = ">=3.14,<3.15.0"

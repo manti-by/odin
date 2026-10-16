@@ -8,11 +8,10 @@ services: [relays, core, dashboard, frontend]
 branch: master
 tickets: []
 tags: [relays, state, mode, review, tests, redis]
-related:
-  - 2026-09-11-relay-state-redis-consumer
-  - 2026-09-11-add-related-relay-field
-  - 2026-09-19-mnt-215-midseason-mode
-  - 2026-09-23-relay-mode-compute-on-read
+related: [2026-09-11-add-related-relay-field.md, 2026-09-11-relay-state-redis-consumer.md,
+  2026-09-19-mnt-215-midseason-mode.md, 2026-09-21-esp8266-indicator-icons.md,
+  2026-09-22-mnt-217-relay-schedule-component.md, 2026-09-23-relay-mode-compute-on-read.md,
+  2026-09-28-mnt-226-relay-state-log.md, 2026-10-11-midseason-pump-cadence-30min.md]
 ---
 # Relay state/mode refactor — review, test sync, and fixes
 
@@ -50,6 +49,12 @@ minutes — pump and servo are exactly opposite in midseason.
 > `to_representation` override.
 
 ## Step 1 — Sync model tests to the single-value `target_state`
+
+> **Note 2026-10-16 (Consistency Agent):** the persistence claim below is **obsolete**. On 2026-09-18
+> `Relay.target_state` did write `self.state` / `self.mode`; [[2026-09-23-relay-mode-compute-on-read]]
+> replaced that with a pure `get_target_state()` that persists nothing. So `assert relay.mode == ...`
+> after reading `target_state` now observes a **stale stored value**, not the computed one — always assert
+> on `get_target_state()` instead. `models.py:119` is now `:116-118`.
 
 `Relay.target_state` (`odin/apps/relays/models.py:119`) now computes
 `RelayTargetStateService(self).get_target_state()`, persists `self.state`/`self.mode`, and returns

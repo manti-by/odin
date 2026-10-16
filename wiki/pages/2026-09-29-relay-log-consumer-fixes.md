@@ -9,8 +9,8 @@ services: [consumer, redis_bus, relays-admin, relays-models, settings, test_cons
 branch: master
 tickets: []
 tags: [relay, consumer, redis, code-review, tests]
-related: [2026-09-28-mnt-226-relay-state-log, 2026-09-23-relay-mode-compute-on-read,
-  2026-09-11-relay-state-redis-consumer]
+related: [2026-09-11-relay-state-redis-consumer.md, 2026-09-23-relay-mode-compute-on-read.md,
+  2026-09-28-mnt-226-relay-state-log.md, 2026-10-15-mnt-250-schedule-cycle-rule.md]
 ---
 # Relay log consumer — review and fixes
 
@@ -91,6 +91,8 @@ snapshot and `RelayLogService` import) were cleaned up — no behavior change.
 
 **Fix:** test updated for the new shape plus a user-attribution case. Note the home-level
 `AGENTS.md` Redis contract still documents `relays:control` as `{relay_id, state}`.
+(> **Note 2026-10-16 (Consistency Agent):** no longer true — `../AGENTS.md:94` now documents
+`mode` and `user_id` in that envelope.)
 
 ### 6. Setting type + orphaned references — Low
 
@@ -149,6 +151,13 @@ REDIS_BUS_USER_ID = int(os.getenv("REDIS_BUS_USER_ID", 2))
   assert mode == RelayMode.BASIC
   ```
 
+  > **Note 2026-10-16 (Consistency Agent):** this snippet is now **clock-dependent**. On 2026-10-16
+  > MNT-250 added a time-based rule to the schedule branch ([[2026-10-15-mnt-250-schedule-cycle-rule]]),
+  > so any such test that does not patch `timezone.localtime` returns `CYCLE` instead of `BASIC` whenever
+  > it runs between `:00` and `:29` of an even hour. `test_relays.py` now carries an autouse fixture pinning
+  > the clock for exactly this reason. Treat a bare `assert mode == RelayMode.BASIC` in any test module as a
+  > latent flake until the clock is pinned.
+
 - `odin/tests/commands/test_consumer.py` — replaced the two `get_relay_latest_message`
   mock tests with apply-and-audit tests: log created, `updated_by` from `user_id`, system
   fallback, unknown relay, invalid/missing state. Added a `_relay_message` helper.
@@ -190,6 +199,11 @@ REDIS_BUS_USER_ID = int(os.getenv("REDIS_BUS_USER_ID", 2))
     cross-repo contract in `../AGENTS.md` still shows only `{relay_id, state}`. That file is outside
     this repo, so it is left untouched here; the fix belongs in the umbrella repo and would need a
     coordinated PR per the cross-service contract rules.
+  - **Note 2026-10-16 (Consistency Agent):** **closed — the contract was updated.** The umbrella
+    `../AGENTS.md:94` now documents
+    `{ "relay_id", "state", "mode", "user_id" }` for the ODIN → coruscant control envelope, with
+    `user_id` described at `:101`, and the Coruscant → ODIN envelope at `:106`. Both statements in the
+    2026-10-12 note above are therefore stale.
 - Admin async logging: if Redis is down, `state`/`mode` update and the audit row are skipped
   (intended, but worth a documented degradation note).
 

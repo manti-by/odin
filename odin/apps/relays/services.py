@@ -64,6 +64,14 @@ class RelayTargetStateService:
         self.weather = Weather.objects.current()
         self.now = timezone.localtime()
 
+    def is_cycle_window(self) -> bool:
+        """Whether the relay must be forced into its open circuit position for the current cycle slot.
+
+        A half-open [H:00, H:30) on even local hours, anchored at local midnight. Unlike midseason
+        there is no night guard: the cycle runs around the clock.
+        """
+        return self.now.hour % 2 == 0 and self.now.minute < 30
+
     def get_current_period_from_schedule(self) -> dict | None:
         schedule = self.relay.context.get("schedule", {})
         if not (periods := schedule.get("periods", [])):
@@ -100,6 +108,10 @@ class RelayTargetStateService:
                     return RelayState.ON, RelayMode.MIDSEASON
                 return RelayState.OFF, RelayMode.MIDSEASON
 
+        # Schedule branch, forced open circuit for 30 minutes every 2 hours
+        if self.is_cycle_window():
+            return RelayState.ON, RelayMode.CYCLE
+
         # Default target state from schedule
         if period := self.get_current_period_from_schedule():
             if "target_state" in period:
@@ -130,6 +142,10 @@ class RelayTargetStateService:
             elif 8 < outside_temp < 15:
                 # Midseason mode, servos are always open
                 return RelayState.OFF, RelayMode.MIDSEASON
+
+        # Schedule branch, forced open circuit for 30 minutes every 2 hours
+        if self.is_cycle_window():
+            return RelayState.OFF, RelayMode.CYCLE
 
         # Get target temp from schedule
         target_temp = sensor.target_temp

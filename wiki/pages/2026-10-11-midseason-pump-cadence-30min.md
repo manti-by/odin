@@ -8,8 +8,8 @@ services: [relays-services, test_relays, AGENTS]
 branch: master
 tickets: []
 tags: [relays, midseason, pump, schedule, tests]
-related: [2026-09-19-mnt-215-midseason-mode, 2026-09-23-relay-mode-compute-on-read,
-  2026-09-18-relay-state-mode-refactor]
+related: [2026-09-18-relay-state-mode-refactor.md, 2026-09-19-mnt-215-midseason-mode.md,
+  2026-09-23-relay-mode-compute-on-read.md, 2026-10-15-mnt-250-schedule-cycle-rule.md]
 ---
 
 # Midseason pump cadence — 30 minutes every 2 hours
@@ -59,8 +59,16 @@ Notes on the predicate:
 - **`minute < 30`** — a half-open interval `[H:00, H:30)`, so the pump is off from `:30` onward.
 - **Day guard unchanged** — confirmed with the user that hours 0–5 stay off; the example
   "2:00–2:30, 4:00–4:30" describes the cadence shape, not a request to heat at night.
-- Servo branch (`services.py:132-134`) is deliberately untouched: midseason always returns
+- Servo branch (`services.py:142-144`) is deliberately untouched: midseason always returns
   `(OFF, MIDSEASON)`, so a servo never closes while the pump cycles.
+
+> **Note 2026-10-16 (Consistency Agent):** the servo midseason branch moved from `services.py:132-134`
+> to `:142-144` when the MNT-250 schedule cycle was added below it. The rule itself is unchanged.
+>
+> This cadence is also **not** the only one with that shape. [[2026-10-15-mnt-250-schedule-cycle-rule]]
+> added a second, similar-looking rule in the *schedule* branch — `hour % 2 == 0 and minute < 30`,
+> mode `CYCLE` — which deliberately has **no** night guard. Midseason keeps `hour >= 6`. Do not merge
+> the two; a reader skimming for "the 30-minutes-every-2-hours rule" will otherwise pick the wrong one.
 
 ## Step 2 — Tests in `odin/tests/models/test_relays.py`
 

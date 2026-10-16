@@ -8,7 +8,8 @@ services: [services, test_boiler_mode_controller, pyproject, uv]
 branch: mnt-206-boiler-mode-controller
 tickets: [MNT-206]
 tags: [wiki, backend, feature]
-related: [2026-09-18-mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron]
+related: [2026-09-11-ebusd-config-load-boiler-refresh.md,
+  2026-09-18-mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron.md]
 ---
 # MNT-206: Boiler mode controller
 

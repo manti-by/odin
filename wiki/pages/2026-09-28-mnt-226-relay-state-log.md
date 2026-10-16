@@ -9,8 +9,9 @@ services: [views, admin, 0010_relaylog, models, services, test_sensors_dashboard
 branch: mnt-226-relay-state-log
 tickets: [MNT-226]
 tags: [wiki, feature, backend]
-related: [2026-09-18-relay-state-mode-refactor, 2026-09-23-relay-mode-compute-on-read,
-  2026-09-11-relay-state-redis-consumer]
+related: [2026-09-11-relay-state-redis-consumer.md, 2026-09-18-relay-state-mode-refactor.md,
+  2026-09-22-mnt-217-relay-schedule-component.md, 2026-09-23-relay-mode-compute-on-read.md,
+  2026-09-29-relay-log-consumer-fixes.md, 2026-10-15-mnt-250-schedule-cycle-rule.md]
 ---
 # MNT-226: Relay state log
 
@@ -86,6 +87,10 @@ Create a new `RelayLog` model in `odin/apps/relays/models.py` with the following
 - `relay`: ForeignKey to `Relay`
 - `old_state`, `new_state`: nullable CharField with `RelayState.choices`
 - `old_mode`, `new_mode`: nullable CharField with `RelayMode.choices`
+  (> **Note 2026-10-16 (Consistency Agent):** `RelayMode` gained `CYCLE` on 2026-10-16
+  ([[2026-10-15-mnt-250-schedule-cycle-rule]]), which required migration
+  `0011_alter_relay_mode_alter_relaylog_new_mode_and_more` — a third `AlterField` on top of the two
+  above. Adding a mode to that enum is never just a model edit: it always means three migrations.)
 - `old_force_state`, `new_force_state`: nullable CharField with `RelayState.active_choices()`
 - `old_context`, `new_context`: nullable JSONField
 - `updated_by`: nullable ForeignKey to `AUTH_USER_MODEL`

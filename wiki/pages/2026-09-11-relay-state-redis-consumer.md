@@ -8,7 +8,8 @@ services: [relays, sensors, core]
 branch: master
 tickets: []
 tags: [redis, pubsub, relays, django-admin, consumer, systemd]
-related: [2026-09-11-add-related-relay-field.md, 2026-09-18-relay-state-mode-refactor.md]
+related: [2026-09-11-add-related-relay-field.md, 2026-09-18-relay-state-mode-refactor.md,
+  2026-09-28-mnt-226-relay-state-log.md, 2026-09-29-relay-log-consumer-fixes.md]
 ---
 # Relay state sync — admin refresh and Redis consumer
 
