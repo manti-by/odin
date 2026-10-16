@@ -14,8 +14,9 @@ services: [CurrencyTile, Ds18b20SensorsTile, Esp8266SensorsTile, SystemErrorsTil
 branch: mnt-218-split-dashboard-api
 tickets: [MNT-218]
 tags: [wiki, feature, backend]
-related: [2026-09-18-mnt-208-boiler-dashboard, 2026-08-24-react-spa-dev-mode-debug,
-  2026-07-17-mock-kafka-systemctl-in-tests]
+related: [2026-07-17-mock-kafka-systemctl-in-tests.md, 2026-07-21-react-frontend-pr-review-fixes.md,
+  2026-08-24-react-spa-dev-mode-debug.md, 2026-09-18-mnt-208-boiler-dashboard.md,
+  2026-09-23-relay-mode-compute-on-read.md]
 ---
 # MNT-218: Split dashboard API
 

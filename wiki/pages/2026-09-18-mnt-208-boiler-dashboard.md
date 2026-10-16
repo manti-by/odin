@@ -10,7 +10,7 @@ services: [BoilerTile, useBoilerStatus, boiler, DashboardPage, tiles, __init__, 
 branch: mnt-208-boiler-dashboard
 tickets: [MNT-208]
 tags: [wiki, frontend, feature]
-related: []
+related: [2026-09-23-mnt-218-split-dashboard-api.md, 2026-09-27-boiler-live-status-api.md]
 ---
 # MNT-208: Boiler dashboard
 

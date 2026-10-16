@@ -8,11 +8,11 @@ services: [api, relays]
 branch: master
 tickets: []
 tags: [relays, mode, api, dashboard, serializers]
-related:
-  - 2026-09-19-mnt-215-midseason-mode
-  - 2026-09-18-relay-state-mode-refactor
-  - 2026-09-21-esp8266-indicator-icons
-  - 2026-09-23-mnt-218-split-dashboard-api
+related: [2026-09-11-add-related-relay-field.md, 2026-09-18-relay-state-mode-refactor.md,
+  2026-09-19-mnt-215-midseason-mode.md, 2026-09-21-esp8266-indicator-icons.md,
+  2026-09-23-mnt-218-split-dashboard-api.md, 2026-09-28-mnt-226-relay-state-log.md,
+  2026-09-29-relay-log-consumer-fixes.md, 2026-10-11-midseason-pump-cadence-30min.md,
+  2026-10-15-mnt-250-schedule-cycle-rule.md]
 ---
 # Relay mode computed on read
 
@@ -154,9 +154,14 @@ SERVO-HL  stored mode=IGNORED   | RelaySerializer=MIDSEASON | Dashboard=MIDSEASO
 
 > **Note 2026-09-29 (Consistency Agent):** the `(OFF, IGNORED)` computation above vs `MIDSEASON` here
 > is not a contradiction — the related pump's stored state flipped between the two reads (noted at
-> 10 ms apart above). Pump OFF yields `(OFF, IGNORED)` (`odin/apps/relays/services.py:119-121`);
-> pump ON in midseason yields `(OFF, MIDSEASON)` (`:132-134`). Both serializers agree in each read
+> 10 ms apart above). Pump OFF yields `(OFF, IGNORED)` (`odin/apps/relays/services.py:129-131`);
+> pump ON in midseason yields `(OFF, MIDSEASON)` (`:142-144`; both line refs shifted on 2026-10-16 when
+> the MNT-250 schedule cycle was added). Both serializers agree in each read
 > because both call `get_target_state()` on the same pump state.
+>
+> **Note 2026-10-16 (Consistency Agent):** the mode set has grown since this page. `RelayMode` now also
+> has `CYCLE`, returned by the schedule branch's 30-minutes-every-2-hours rule
+> ([[2026-10-15-mnt-250-schedule-cycle-rule]]). Any page listing "the modes" is missing it.
 
 ---
 

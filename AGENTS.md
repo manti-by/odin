@@ -152,13 +152,26 @@ uv run pytest mcp_server/tests/ odin/
 uv run pytest --cov=odin --cov-report=term-missing odin/
 ```
 
+Makefile targets (what CI actually runs — `make ci` = `install check django-checks test test-mcp`,
+`Makefile:80`):
+
+```bash
+make test        # pytest over odin/ only
+make test-mcp    # pytest over mcp_server/
+make ci          # the full CI pipeline, in order
+```
+
+PostgreSQL must be running for `make test` — `test.py` inherits the Postgres config from `base.py`
+and every DB-backed test errors with `OperationalError` otherwise. `make django-checks` uses the
+in-memory SQLite settings and needs no server; `mcp_server/tests/` needs no database at all.
+
 ### Code Quality
 
 ```bash
 # Run all pre-commit hooks
 uv run pre-commit run
 
-# Note: `make check` also runs `git add .` before `ty check` + pre-commit (Makefile:65-68)
+# Note: `make check` also runs `git add .` before `ty check` + pre-commit (Makefile:63-66)
 
 # Individual tools
 uv run ruff check .                 # Backend lint
@@ -192,7 +205,9 @@ make frontend-check                 # Frontend lint (Biome) + typecheck (tsc)
 
 ### Background Tasks
 
-- RQ (`django-rq`) is configured but has no live jobs; when adding one:
+- RQ (`django-rq`) is wired in but idle: the admin UI is mounted at `admin/rq/`
+  (`odin/urls.py:29`) and `odin/apps/core/scheduler.py:12` holds a `default` queue handle, yet nothing
+  in the tree calls `enqueue` and there are no `queue_*` jobs. When adding one:
 - Define jobs as additional functions with prefix `queue_`
 - Configure queue names for different priority levels
 
@@ -243,16 +258,22 @@ def schedule_update_weather():
   `RelayLog` row via `RelayLogService.log_change()` (`odin/api/v1/relays/views.py:52`,
   `odin/apps/relays/services.py:34`); servos link to their pump via the nullable
   `related_relay` self-FK.
-- Midseason: pump runs only in the active daytime window (`hour >= 6 and hour % 2 == 0 and
-  minute < 30`); servos stay open (`OFF, MIDSEASON`).
+- Midseason (`8 < outside_temp < 15`): pump runs only in the active daytime window (`hour >= 6 and
+  hour % 2 == 0 and minute < 30`); servos stay open (`OFF, MIDSEASON`) for the whole band.
+- Schedule cycle: when none of the higher-priority rules applies (`FORCED`, servo `UNKNOWN`,
+  servo `IGNORED`, `SUMMER`, `ANTIFREEZE`, `MIDSEASON`), the relay is forced open for 30 minutes
+  every 2 hours — `hour % 2 == 0 and minute < 30`, **no night guard**, so 00:00–00:30 runs too
+  (`odin/apps/relays/services.py:67`). Pump `(ON, CYCLE)`, servo `(OFF, CYCLE)`. Outside the
+  window the schedule applies as usual (`BASIC`, or `FALLBACK` with no matching period). Midseason
+  keeps its own, *different* night guard — do not merge the two rules.
 - `RedisBus.publish_relay_control(relay_id, state, mode, user)` requires `mode` and puts it in the
   envelope. Both call sites publish the **freshly computed** pair, not the stored column: the API
   view recomputes it in `perform_update` and passes the acting user
-  (`odin/api/v1/relays/views.py:77`); `RelayAdmin.save_model` publishes
+  (`odin/api/v1/relays/views.py:78`); `RelayAdmin.save_model` publishes
   `obj.get_target_state()` (`odin/apps/relays/admin.py:126`). Passing `obj.mode` there would send a
   stale mode next to a fresh state.
 - The `consumer` command applies both `state` and `mode` from a `RELAY_STATE_UPDATE` envelope
-  (`odin/apps/core/management/commands/consumer.py:108`); coruscant echoes the mode it read from
+  (`odin/apps/core/management/commands/consumer.py:140-144`); coruscant echoes the mode it read from
   `GET /api/v1/relays/<relay_id>/`. A missing, `null` or unknown mode leaves the stored column
   untouched, so valve updates from an older coruscant never clobber it. `Relay.refresh_state()`
   applies `mode` from `relays:state:<relay_id>` on the same terms.
@@ -503,12 +524,12 @@ class SensorConnectionError(SensorError):
 
 ## Pre-commit Hooks
 
-Python-only pre-commit hooks are configured in `.pre-commit-config.yaml`:
+`.pre-commit-config.yaml` combines generic file hygiene hooks with the Python toolchain:
 
-- Ruff (linting and formatting)
-- Bandit (security analysis)
-- pyupgrade (Python 3.14+ syntax)
-- validate-pyproject (checks on pyproject.toml)
+- Generic (`pre-commit-hooks`): fix-byte-order-marker, check-merge-conflict, debug-statements,
+  detect-private-key, requirements-txt-fixer
+- Python: pyupgrade (Python 3.14+ syntax), ruff (linting), ruff-format, validate-pyproject,
+  bandit (security analysis)
 
 Frontend checks are not part of pre-commit; they run via `make frontend-check`
 (`biome check` + `tsc -b --noEmit`) and the `frontend-checks` job in CI.

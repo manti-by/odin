@@ -48,5 +48,16 @@ machine-queryable — you can grep for a ticket, a service, or a tag across all 
 ## Cross-linking
 
 Link related pages inline with `[[filename-without-.md]]` (e.g. `[[2026-07-09-otel-ssl-cert-debug]]`)
-and mirror them in the `related:` frontmatter list. Cross-links are what turn a folder of notes
-into a knowledge graph - always link back to prior pages on the same subsystem.
+and mirror them in the `related:` frontmatter list. Note that the body link omits the extension while
+`related:` keeps it - that difference is intentional, not a broken link.
+
+Cross-links are what turn a folder of notes into a knowledge graph - always link back to prior pages
+on the same subsystem.
+
+## Legacy exceptions
+
+The no-GFM-tables rule in the umbrella `AGENTS.md` landed on 2026-08-24. Four pages predate it and
+still contain tables: `2026-07-16-fix-type-errors-ci-flow`, `2026-07-16-github-pr-webhooks-search`,
+`2026-07-16-merge-rebase-pr-comment-handlers`, `2026-08-11-proterm-lynx-25-ebus-protocol`. They are
+left as written - they were correct when authored, and the eBus payload tables lose information as
+bullet lists. Do not reformat them in a consistency pass; new pages must follow the rule.

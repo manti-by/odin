@@ -8,7 +8,7 @@ services: [sensors]
 branch: master
 tickets: []
 tags: [models, queryset, manager]
-related: [2026-09-24-sensor-fks-and-denormalized-readings]
+related: [2026-07-16-fix-type-errors-ci-flow.md, 2026-09-24-sensor-fks-and-denormalized-readings.md]
 ---
 # Sensor Model QuerySet and Manager Investigation
 

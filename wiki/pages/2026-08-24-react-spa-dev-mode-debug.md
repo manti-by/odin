@@ -8,9 +8,8 @@ services: [frontend, core]
 branch: master
 tickets: []
 tags: [react, vite, strictmode, dev-server, dashboard, typescript]
-related:
-  - 2026-07-21-react-frontend-pr-review-fixes.md
-  - 2026-09-23-mnt-218-split-dashboard-api.md
+related: [2026-07-21-react-frontend-pr-review-fixes.md, 2026-09-23-mnt-218-split-dashboard-api.md,
+  2026-09-24-silk-route-spa-catchall-shadow.md]
 ---
 # Fix React SPA dev-mode issues: docs, proxy, base path, StrictMode Loading bug
 

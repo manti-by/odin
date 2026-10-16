@@ -8,8 +8,9 @@ services: [Makefile, services, models, frontend, test_relays, pyproject, uv, .se
 branch: mnt-215-midseason-mode
 tickets: [MNT-215]
 tags: [wiki, feature, backend, frontend]
-related: [2026-09-18-relay-state-mode-refactor, 2026-09-21-esp8266-indicator-icons,
-  2026-10-11-midseason-pump-cadence-30min]
+related: [2026-09-18-relay-state-mode-refactor.md, 2026-09-21-esp8266-indicator-icons.md,
+  2026-09-22-mnt-217-relay-schedule-component.md, 2026-09-23-relay-mode-compute-on-read.md,
+  2026-10-11-midseason-pump-cadence-30min.md, 2026-10-15-mnt-250-schedule-cycle-rule.md]
 ---
 # MNT-215: Midseason mode
 
@@ -74,8 +75,14 @@ Makefile                                        |   7 +-
 > **Note 2026-10-11 (Consistency Agent):** the `hour % 3` predicate below was **superseded**. The
 > midseason pump cadence is now *30 minutes every 2 hours*, guarded by
 > `self.now.hour >= 6 and self.now.hour % 2 == 0 and self.now.minute < 30`
-> (`odin/apps/relays/services.py:101`). The servo rule and the `hour >= 6` night guard are
-> unchanged. See [[2026-10-11-midseason-pump-cadence-30min]].
+> (`odin/apps/relays/services.py:107`; it was `:101` until the MNT-250 schedule cycle shifted it).
+> The servo rule and the `hour >= 6` night guard are unchanged. See
+> [[2026-10-11-midseason-pump-cadence-30min]].
+>
+> **Note 2026-10-16 (Consistency Agent):** MNT-250 did **not** touch midseason — band, cadence and night
+> guard are all as documented above. It added a separate, night-guard-free `CYCLE` rule in the *schedule*
+> branch, which looks similar but is a different decision path. See
+> [[2026-10-15-mnt-250-schedule-cycle-rule]].
 
 ### Key Technical Decisions
 - Window selection is based on `self.now.hour % 3 == 0`, using the modulus operator against the 24-hour clock. *(superseded — see the note above)*

@@ -8,7 +8,8 @@ services: [main]
 branch: master
 tickets: []
 tags: [relays, django-admin, migrations]
-related: [2026-09-18-relay-state-mode-refactor, 2026-09-23-relay-mode-compute-on-read]
+related: [2026-09-11-relay-state-redis-consumer.md, 2026-09-18-relay-state-mode-refactor.md,
+  2026-09-23-relay-mode-compute-on-read.md]
 ---
 # Add self-referential related_relay field to Relay
 
