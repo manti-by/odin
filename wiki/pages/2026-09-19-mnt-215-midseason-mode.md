@@ -75,7 +75,9 @@ Makefile                                        |   7 +-
 > **Note 2026-10-11 (Consistency Agent):** the `hour % 3` predicate below was **superseded**. The
 > midseason pump cadence is now *30 minutes every 2 hours*, guarded by
 > `self.now.hour >= 6 and self.now.hour % 2 == 0 and self.now.minute < 30`
-> (`odin/apps/relays/services.py:107`; it was `:101` until the MNT-250 schedule cycle shifted it).
+> (`odin/apps/relays/services.py:107`; it was `:101` until the MNT-250 schedule cycle shifted it,
+> and the predicate itself moved to `services.py:136-140` on 2026-10-22 when MNT-253 extracted the
+> band check into `get_weather_mode()` at `:101`).
 > The servo rule and the `hour >= 6` night guard are unchanged. See
 > [[2026-10-11-midseason-pump-cadence-30min]].
 >

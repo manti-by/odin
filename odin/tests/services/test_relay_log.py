@@ -12,6 +12,9 @@ from odin.apps.relays.services import RelayLogService
 from odin.tests.factories import DjangoAdminUserFactory, RelayFactory, UserFactory
 
 
+pytestmark = pytest.mark.usefixtures("pin_clock_outside_cycle_window")
+
+
 @pytest.mark.django_db
 class TestRelayLogService:
     def setup_method(self) -> None:

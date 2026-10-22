@@ -88,6 +88,22 @@ class Weather(models.Model):
         return self.temp_display_localized(self.temp_max)
 
     @property
+    def humidity(self) -> Decimal | None:
+        if (humidity := self.data.get("humidity")) is not None:
+            return Decimal(humidity)
+        return None
+
+    @property
+    def wind_speed(self) -> Decimal | None:
+        wind = self.data.get("wind")
+        if not isinstance(wind, dict):
+            return None
+        for key in ("speed", "gusts"):
+            if (speed := wind.get(key)) is not None:
+                return Decimal(speed)
+        return None
+
+    @property
     def pressure(self) -> int | None:
         if pressure := self.data.get("pressure"):
             return int(pressure * 100 / 133.32)

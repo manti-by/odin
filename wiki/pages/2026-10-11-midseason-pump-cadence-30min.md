@@ -9,7 +9,8 @@ branch: master
 tickets: []
 tags: [relays, midseason, pump, schedule, tests]
 related: [2026-09-18-relay-state-mode-refactor.md, 2026-09-19-mnt-215-midseason-mode.md,
-  2026-09-23-relay-mode-compute-on-read.md, 2026-10-15-mnt-250-schedule-cycle-rule.md]
+  2026-09-23-relay-mode-compute-on-read.md, 2026-10-15-mnt-250-schedule-cycle-rule.md,
+  2026-10-22-mnt-253-midseason-humidity-wind-research.md]
 ---
 
 # Midseason pump cadence — 30 minutes every 2 hours
@@ -69,6 +70,12 @@ Notes on the predicate:
 > added a second, similar-looking rule in the *schedule* branch — `hour % 2 == 0 and minute < 30`,
 > mode `CYCLE` — which deliberately has **no** night guard. Midseason keeps `hour >= 6`. Do not merge
 > the two; a reader skimming for "the 30-minutes-every-2-hours rule" will otherwise pick the wrong one.
+>
+> **Note 2026-10-22 (Consistency Agent):** MNT-253 moved the whole weather band classification into a
+> shared `RelayTargetStateService.get_weather_mode()` (`services.py:101`), so the servo midseason
+> branch cited above is now the two-liner at `services.py:164-166` and the pump cadence predicate
+> sits at `services.py:136-140`. Behaviour unchanged — see
+> [[2026-10-22-mnt-253-midseason-humidity-wind-research]].
 
 ## Step 2 — Tests in `odin/tests/models/test_relays.py`
 

@@ -10,8 +10,8 @@ services: [SelectField, SubmitButton, TextField, Icon, Esp8266SensorsTile, Relay
 branch: mnt-217-relay-schedule-component
 tickets: [MNT-217]
 tags: [wiki, feature, frontend, backend]
-related: [2026-09-18-relay-state-mode-refactor, 2026-09-19-mnt-215-midseason-mode,
-  2026-09-21-esp8266-indicator-icons, 2026-09-28-mnt-226-relay-state-log]
+related: [2026-09-18-relay-state-mode-refactor.md, 2026-09-19-mnt-215-midseason-mode.md,
+  2026-09-21-esp8266-indicator-icons.md, 2026-09-28-mnt-226-relay-state-log.md]
 ---
 # MNT-217: Relay schedule component
 

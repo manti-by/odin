@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 import pytest
 
 from django.test.client import Client
@@ -6,13 +8,24 @@ from rest_framework.test import APIClient
 from odin.tests.factories import AuthFactory
 
 
+# Odd hour, minute 30: a time that never falls inside the 30-minute relay schedule cycle window
+OUTSIDE_CYCLE_WINDOW = datetime(2025, 1, 6, 10, 30, 0, tzinfo=UTC)
+
+
+@pytest.fixture
+def pin_clock_outside_cycle_window(monkeypatch):
+    """Keep the relay schedule branch out of the cycle window unless a test says otherwise.
+
+    The relay cycle fires on every even hour for its first 30 minutes, so any test that reaches
+    the schedule branch without pinning the clock would otherwise depend on when the suite runs.
+    Tests that assert the cycle itself patch `timezone.localtime` themselves.
+    """
+    monkeypatch.setattr("odin.apps.relays.services.timezone.localtime", lambda *args, **kwargs: OUTSIDE_CYCLE_WINDOW)
+
+
 @pytest.fixture
 def client():
     return Client(HTTP_HOST="odin.local")
-
-
-@pytest.fixture
-def auth_token(db):
     return AuthFactory().token
 
 

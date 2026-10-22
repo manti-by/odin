@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from odin.apps.relays.models import RelayLog, RelayMode, RelayState, RelayType
 from odin.apps.weather.models import Weather
+from odin.apps.weather.services import apparent_temp
 
 
 if TYPE_CHECKING:
@@ -59,6 +60,11 @@ class RelayLogService:
 
 
 class RelayTargetStateService:
+    ANTIFREEZE_TEMP = Decimal("-8")
+    MIDSEASON_TEMP_MIN = Decimal("8")
+    SUMMER_TEMP_MIN = Decimal("15")
+    MIDSEASON_EXTENDED_TEMP_MAX = Decimal("20")
+
     def __init__(self, relay: Relay):
         self.relay = relay
         self.weather = Weather.objects.current()
@@ -92,17 +98,42 @@ class RelayTargetStateService:
 
         return None
 
+    def get_weather_mode(self) -> RelayMode | None:
+        """Classify the outside weather into a heating mode, or None when no band applies.
+
+        Antifreeze and the lower midseason edge stay on the raw temperature: the fail-safe heat
+        answer must not depend on fetched humidity/wind. Above 15 °C the Steadman apparent
+        temperature extends midseason up to 20 °C, so a windy warm day keeps cycling radiators.
+        """
+        if not self.weather or (outside_temp := self.weather.temp) is None:
+            return None
+
+        if outside_temp < self.ANTIFREEZE_TEMP:
+            return RelayMode.ANTIFREEZE
+
+        if outside_temp >= self.SUMMER_TEMP_MIN:
+            feels_like = apparent_temp(outside_temp, self.weather.humidity, self.weather.wind_speed)
+            extended_midseason = (
+                outside_temp < self.MIDSEASON_EXTENDED_TEMP_MAX
+                and feels_like is not None
+                and feels_like < self.SUMMER_TEMP_MIN
+            )
+            return RelayMode.MIDSEASON if extended_midseason else RelayMode.SUMMER
+
+        if outside_temp > self.MIDSEASON_TEMP_MIN:
+            return RelayMode.MIDSEASON
+
+        return None
+
     def get_pump_target_state(self) -> tuple[RelayState, RelayMode]:
-        # Check outside temp to decide what mode to use
-        if self.weather and (outside_temp := self.weather.temp) is not None:
-            # Summer mode, disable everything
-            if outside_temp >= 15:
-                # Summer mode, always off
-                return RelayState.OFF, RelayMode.SUMMER
-            elif outside_temp < -8:
+        match self.get_weather_mode():
+            case RelayMode.ANTIFREEZE:
                 # Anti freeze mode, always on
                 return RelayState.ON, RelayMode.ANTIFREEZE
-            elif 8 < outside_temp < 15:
+            case RelayMode.SUMMER:
+                # Summer mode, always off
+                return RelayState.OFF, RelayMode.SUMMER
+            case RelayMode.MIDSEASON:
                 # Midseason mode, should work for 30 minutes every 2nd hour, but not at night
                 if self.now.hour >= 6 and self.now.hour % 2 == 0 and self.now.minute < 30:
                     return RelayState.ON, RelayMode.MIDSEASON
@@ -130,18 +161,9 @@ class RelayTargetStateService:
             if related_relay.is_pump and not related_relay.is_on:
                 return RelayState.OFF, RelayMode.IGNORED
 
-        # Check outside temp to decide what mode to use
-        if self.weather and (outside_temp := self.weather.temp) is not None:
-            # Summer mode, disable everything
-            if outside_temp >= 15:
-                # Summer mode, do not close
-                return RelayState.OFF, RelayMode.SUMMER
-            elif outside_temp < -8:
-                # Anti freeze mode, do not close
-                return RelayState.OFF, RelayMode.ANTIFREEZE
-            elif 8 < outside_temp < 15:
-                # Midseason mode, servos are always open
-                return RelayState.OFF, RelayMode.MIDSEASON
+        # Summer, antifreeze and midseason all keep the servo open (OFF)
+        if (mode := self.get_weather_mode()) is not None:
+            return RelayState.OFF, mode
 
         # Schedule branch, forced open circuit for 30 minutes every 2 hours
         if self.is_cycle_window():
