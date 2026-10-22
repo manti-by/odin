@@ -251,12 +251,12 @@ def schedule_update_weather():
 
 - `Relay.state`/`Relay.mode` are persisted columns, but the API computes `mode`/`target_state` on
   read via `Relay.get_target_state()` — never trust the stored `mode` in responses
-  (`odin/api/v1/relays/serializers.py:40`).
+  (`odin/api/v1/relays/serializers.py:42`).
 - `RelayState` is `ON`/`OFF`/`UNKNOWN` only (`IGNORED` was removed); `RelayMode.IGNORED` still
   exists (servo whose related pump is off).
 - `perform_update` recomputes and persists `state`+`mode`, publishes via `RedisBus`, and records a
   `RelayLog` row via `RelayLogService.log_change()` (`odin/api/v1/relays/views.py:52`,
-  `odin/apps/relays/services.py:34`); servos link to their pump via the nullable
+  `odin/apps/relays/services.py:35`); servos link to their pump via the nullable
   `related_relay` self-FK.
 - Weather bands come from `RelayTargetStateService.get_weather_mode()` (`odin/apps/relays/services.py:101`),
   shared by pumps and servos; `ANTIFREEZE` (`outside_temp < -8`) and the lower midseason edge
@@ -267,21 +267,23 @@ def schedule_update_weather():
   15 °C the band extends to `outside_temp < 20` while the Steadman apparent temperature
   (`odin/apps/weather/services.py:apparent_temp`, `AT = Ta + 0.33e − 0.70ws − 4.00`) is `< 15` —
   a windy warm day keeps cycling the pump, a calm one stays `SUMMER`. Any missing `humidity`/
-  `wind_speed` degrades to the raw-temp band (MNT-253).
+  `wind_speed` degrades to the raw-temp band (MNT-253). Mind that `WeatherManager.current()` is
+  ageless — with no fresh hour row it returns the **last** `Weather` row no matter how old it is
+  (`odin/apps/weather/models.py:15-21`), so the gate can act on stale weather.
 - Schedule cycle: when none of the higher-priority rules applies (`FORCED`, servo `UNKNOWN`,
   servo `IGNORED`, `SUMMER`, `ANTIFREEZE`, `MIDSEASON`), the relay is forced open for 30 minutes
   every 2 hours — `hour % 2 == 0 and minute < 30`, **no night guard**, so 00:00–00:30 runs too
-  (`odin/apps/relays/services.py:67`). Pump `(ON, CYCLE)`, servo `(OFF, CYCLE)`. Outside the
+  (`odin/apps/relays/services.py:73`). Pump `(ON, CYCLE)`, servo `(OFF, CYCLE)`. Outside the
   window the schedule applies as usual (`BASIC`, or `FALLBACK` with no matching period). Midseason
   keeps its own, *different* night guard — do not merge the two rules.
 - `RedisBus.publish_relay_control(relay_id, state, mode, user)` requires `mode` and puts it in the
   envelope. Both call sites publish the **freshly computed** pair, not the stored column: the API
   view recomputes it in `perform_update` and passes the acting user
   (`odin/api/v1/relays/views.py:78`); `RelayAdmin.save_model` publishes
-  `obj.get_target_state()` (`odin/apps/relays/admin.py:126`). Passing `obj.mode` there would send a
+  `obj.get_target_state()` (`odin/apps/relays/admin.py:127`). Passing `obj.mode` there would send a
   stale mode next to a fresh state.
 - The `consumer` command applies both `state` and `mode` from a `RELAY_STATE_UPDATE` envelope
-  (`odin/apps/core/management/commands/consumer.py:140-144`); coruscant echoes the mode it read from
+  (`odin/apps/core/management/commands/consumer.py:140-145`); coruscant echoes the mode it read from
   `GET /api/v1/relays/<relay_id>/`. A missing, `null` or unknown mode leaves the stored column
   untouched, so valve updates from an older coruscant never clobber it. `Relay.refresh_state()`
   applies `mode` from `relays:state:<relay_id>` on the same terms.

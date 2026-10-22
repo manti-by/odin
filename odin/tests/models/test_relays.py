@@ -12,20 +12,7 @@ from odin.apps.sensors.models import Sensor
 from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory, WeatherFactory
 
 
-# Odd hour, minute 30: a time that never falls inside the 30-minute schedule cycle window
-OUTSIDE_CYCLE_WINDOW = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
-
-
-@pytest.fixture(autouse=True)
-def pin_clock_outside_cycle_window():
-    """Keep the schedule branch out of the cycle window unless a test says otherwise.
-
-    The cycle fires on every even hour for its first 30 minutes, so any test that reaches the
-    schedule branch without pinning the clock would otherwise depend on when the suite runs.
-    Tests that assert the cycle itself patch `timezone.localtime` themselves.
-    """
-    with patch("odin.apps.relays.services.timezone.localtime", return_value=OUTSIDE_CYCLE_WINDOW):
-        yield
+pytestmark = pytest.mark.usefixtures("pin_clock_outside_cycle_window")
 
 
 @pytest.mark.django_db
