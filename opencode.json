@@ -4,7 +4,8 @@
     "servers": {
       "ODIN": {
         "type": "local",
-        "command": ["uv", "run", "python", "-m", "mcp_server.main"]
+        "command": ["uv", "run", "python", "-m", "mcp_server.main"],
+        "environment": { "POSTGRES_HOST": "192.168.1.100" }
       },
       "WI": {
         "type": "local",
