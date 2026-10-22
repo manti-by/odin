@@ -530,6 +530,130 @@ class TestRelaysWeatherModes:
 
 
 @pytest.mark.django_db
+class TestRelaysApparentTempGate:
+    """MNT-253: above 15 °C the feels-like temperature extends midseason up to 20 °C.
+
+    Below 15 °C the raw band stays authoritative, so wind can never pull a warm day out of
+    summer or push a cold one into antifreeze.
+    """
+
+    @staticmethod
+    def _at(hour: int, minute: int) -> datetime:
+        return datetime(2025, 1, 6, hour, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+
+    @staticmethod
+    def _weather(temp: str, humidity: str | None = "85", wind_speed: str | None = "5") -> None:
+        data: dict = {"temp": {"avg": temp}}
+        if humidity is not None:
+            data["humidity"] = humidity
+        if wind_speed is not None:
+            data["wind"] = {"speed": wind_speed}
+        WeatherFactory(period=timezone.now(), data=data)
+
+    @staticmethod
+    def _pump() -> Relay:
+        return RelayFactory(type=RelayType.PUMP)  # noqa
+
+    @staticmethod
+    def _servo() -> Relay:
+        relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
+        return relay
+
+    def test_relays__pump_enters_midseason_on_a_windy_warm_day(self):
+        """16 °C at 85 % humidity and 5 m/s feels like 13.6 °C, so the pump keeps cycling."""
+        relay = self._pump()
+        self._weather(temp="16")
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.MIDSEASON
+
+    def test_relays__pump_stays_in_summer_on_a_calm_warm_day(self):
+        """The same 16 °C with a 1 m/s wind feels like 16.4 °C and stays summer."""
+        relay = self._pump()
+        self._weather(temp="16", wind_speed="1")
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.SUMMER
+
+    @pytest.mark.parametrize(("humidity", "wind_speed"), ((None, "5"), ("85", None), (None, None)))
+    def test_relays__pump_falls_back_to_raw_temp_when_weather_is_incomplete(self, humidity, wind_speed):
+        """A missing humidity or wind degenerates to the pre-MNT-253 raw-temp band."""
+        relay = self._pump()
+        self._weather(temp="16", humidity=humidity, wind_speed=wind_speed)
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.SUMMER
+
+    def test_relays__pump_ignores_feels_like_at_and_above_the_extended_edge(self):
+        """20 °C with 21 m/s feels like 9 °C, but the extension is capped at 20 °C."""
+        relay = self._pump()
+        self._weather(temp="20", humidity="100", wind_speed="21")
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.SUMMER
+
+    def test_relays__pump_keeps_the_raw_lower_edge_in_midseason(self):
+        """Wind may not lower the 8 °C edge: 8.0 °C falling to -0.2 °C feels-like is still not midseason."""
+        relay = self._pump()
+        self._weather(temp="8.0", wind_speed="10")
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.CYCLE
+
+    def test_relays__pump_keeps_midseason_inside_the_raw_band_regardless_of_feels_like(self):
+        """12 °C at 10 m/s feels like 4.7 °C, but the raw band still classifies it as midseason."""
+        relay = self._pump()
+        self._weather(temp="12", wind_speed="10")
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.MIDSEASON
+
+    def test_relays__pump_antifreeze_stays_on_raw_temp(self):
+        """-7.9 °C at 10 m/s feels like -18 °C, but antifreeze must not trigger above the raw -8 °C edge."""
+        relay = self._pump()
+        self._weather(temp="-7.9", wind_speed="10")
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.CYCLE
+
+    def test_relays__servo_stays_open_in_extended_midseason(self):
+        relay = self._servo()
+        self._weather(temp="16")
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 45)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.MIDSEASON
+
+    def test_relays__servo_stays_open_in_summer_on_a_calm_warm_day(self):
+        relay = self._servo()
+        self._weather(temp="16", wind_speed="1")
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 45)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.SUMMER
+
+
+@pytest.mark.django_db
 class TestRelaysScheduleCycle:
     """MNT-250: the schedule branch forces the relay open for 30 minutes every 2 hours."""
 
@@ -617,7 +741,8 @@ class TestRelaysScheduleCycle:
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 45)):
             state, mode = relay.get_target_state()
-            assert state == RelayState.ON
+            # 23 °C sits below the 25 °C target minus the 1 °C hysteresis, so the circuit opens
+            assert state == RelayState.OFF
             assert mode == RelayMode.BASIC
 
     @pytest.mark.parametrize("hour", (0, 2, 4, 6, 8, 12, 18, 22))
