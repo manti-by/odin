@@ -35,3 +35,7 @@ class TestWeatherWindSpeed:
     @pytest.mark.parametrize("data", ({}, {"wind": None}, {"wind": {"speed": None, "gusts": None}}))
     def test_weather__wind_speed_returns_none_when_missing(self, data):
         assert make_weather(data).wind_speed is None
+
+    @pytest.mark.parametrize("wind", ("5", 5, ["5"], True))
+    def test_weather__wind_speed_returns_none_when_wind_is_not_a_dict(self, wind):
+        assert make_weather({"wind": wind}).wind_speed is None

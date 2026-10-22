@@ -95,7 +95,9 @@ class Weather(models.Model):
 
     @property
     def wind_speed(self) -> Decimal | None:
-        wind = self.data.get("wind") or {}
+        wind = self.data.get("wind")
+        if not isinstance(wind, dict):
+            return None
         for key in ("speed", "gusts"):
             if (speed := wind.get(key)) is not None:
                 return Decimal(speed)
