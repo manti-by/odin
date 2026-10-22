@@ -8,7 +8,7 @@ services: [sensors, relays, api]
 branch: master
 tickets: []
 tags: [sensors, relays, telemetry, django, migrations, denormalization]
-related: [2026-07-16-sensor-model-queryset-manager]
+related: [2026-07-16-sensor-model-queryset-manager.md]
 ---
 
 # Sensor relation FKs and denormalized readings

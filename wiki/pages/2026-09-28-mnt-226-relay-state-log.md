@@ -100,7 +100,12 @@ Create a new `RelayLog` model in `odin/apps/relays/models.py` with the following
 Create a `RelayLogService` class in `odin/apps/relays/services.py` with a `log_change` method to create a `RelayLog` row when at least one tracked field changes.
 
 ### Step 3: Wire Explicit Calls
-Call `R…
+
+> **Note 2026-10-22 (Consistency Agent):** the session text below was truncated mid-sentence.
+> Completed from the shipped code (see also [[2026-09-29-relay-log-consumer-fixes]]): snapshot the
+> relay with `RelayLogService.snapshot()` before a mutation, then call
+> `RelayLogService.log_change(before)` after persisting it — in the Redis consumer under
+> `RELAY_STATE_UPDATE` handling, in the relay API `perform_update`, and in `RelayAdmin.save_model`.
 
 ## Test Results
 

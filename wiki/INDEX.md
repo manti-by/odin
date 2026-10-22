@@ -23,7 +23,7 @@ _Newest first._
 - [Relay mode computed on read](pages/2026-09-23-relay-mode-compute-on-read.md) — `SERVO-BR`/`SERVO-HL` showed different modes because `mode` is a persisted snapshot; compute `mode`/`target_state` on read via `Relay.get_target_state()` in the CRUD and dashboard serializers (2026-09-23)
 - [MNT-217: Relay schedule component](pages/2026-09-22-mnt-217-relay-schedule-component.md) — Added the relay schedule modal, schedule-aware relay serializers with period-overlap validation, and schedule API endpoints (2026-09-22)
 - [ESP8266 relay indicators: SVG icons + mode tooltip](pages/2026-09-21-esp8266-indicator-icons.md) — Replaced `is_on`-based dots with ON/OFF SVG icons plus grey/red dots for UNKNOWN/IGNORED modes, and moved the relay `mode` into a `title` tooltip (2026-09-21)
-- [MNT-215: Midseason mode](pages/2026-09-19-mnt-215-midseason-mode.md) — Midseason runs the pump only in the active daytime hour (`hour >= 6 and hour % 3 == 0`) and keeps servos open; `RelayState.IGNORED` was removed (2026-09-19)
+- [MNT-215: Midseason mode](pages/2026-09-19-mnt-215-midseason-mode.md) — Introduced midseason mode with the (then) 1-hour-every-3-hours pump cadence and always-open servos; `RelayState.IGNORED` removed; cadence later superseded to 30 min every 2 h and the band gate extended by apparent temperature (2026-09-19)
 - [MNT-207: Wire boiler mode controller into scheduler tick / cron](pages/2026-09-18-mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron.md) — Added `BoilerModeController`/`run_boiler_mode_controller` and a 5-minute `update_boiler_mode` scheduler job — the job is currently commented out (disabled 2026-09-22) (2026-09-18)
 - [MNT-208: Boiler dashboard](pages/2026-09-18-mnt-208-boiler-dashboard.md) — Added the boiler dashboard tile and `GET /api/v1/boiler/status/`, plus `schedule.py`/`mode.py`/`status.py` support; fixed the Saturday boil/clear schedule and the tile error guard (2026-09-18)
 - [Relay state/mode refactor — review, test sync, and fixes](pages/2026-09-18-relay-state-mode-refactor.md) — Reviewed and synced the relay `state`/`mode` column refactor, fixed API update not populating `state` and reads overwriting it; 259 tests green (2026-09-18)
@@ -45,7 +45,7 @@ _Newest first._
 
 _Topic clusters maintained by the Consistency Agent; topics with the most pages first._
 
-### Relay control (state, mode, schedules, indicators)
+### Relay control (state, mode, schedules, midseason/weather gate, indicators)
 
 - [Add self-referential related_relay field to Relay](pages/2026-09-11-add-related-relay-field.md)
 - [Relay state sync — admin refresh and Redis consumer](pages/2026-09-11-relay-state-redis-consumer.md)
@@ -58,6 +58,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [Relay log consumer — review and fixes](pages/2026-09-29-relay-log-consumer-fixes.md)
 - [Midseason pump cadence — 30 minutes every 2 hours](pages/2026-10-11-midseason-pump-cadence-30min.md)
 - [MNT-250 spec review — schedule cycle rule](pages/2026-10-15-mnt-250-schedule-cycle-rule.md)
+- [MNT-253 — Midseason humidity & wind research](pages/2026-10-22-mnt-253-midseason-humidity-wind-research.md)
 
 ### Boiler / eBus control
 

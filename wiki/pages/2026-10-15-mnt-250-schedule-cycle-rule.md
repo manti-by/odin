@@ -8,8 +8,9 @@ services: [relays-services, test_relays, AGENTS]
 branch: master
 tickets: [MNT-250]
 tags: [relays, midseason, schedule, pump, servo, spec-review, mode]
-related: [2026-10-11-midseason-pump-cadence-30min, 2026-09-19-mnt-215-midseason-mode,
-  2026-09-23-relay-mode-compute-on-read, 2026-09-22-mnt-217-relay-schedule-component]
+related: [2026-10-11-midseason-pump-cadence-30min.md, 2026-09-19-mnt-215-midseason-mode.md,
+  2026-09-23-relay-mode-compute-on-read.md, 2026-09-22-mnt-217-relay-schedule-component.md,
+  2026-10-22-mnt-253-midseason-humidity-wind-research.md]
 ---
 
 # MNT-250 spec review — schedule cycle rule
@@ -108,6 +109,15 @@ The rule itself:
 - Applies when weather data is missing or `temp is None` too, since the rule is time-based — note
   `WeatherManager.current()` falls back to the last row regardless of age
   (`odin/apps/weather/models.py:15-21`).
+
+> **Note 2026-10-22 (Consistency Agent):** every `services.py` line ref in this page shifted when
+> MNT-253 moved the weather-band classification into a shared `get_weather_mode()`
+> (`services.py:101-126`). As of that change: force_state → `services.py:190-192`; servo
+> `(OFF, UNKNOWN)` → `:156-157`; `(OFF, IGNORED)` → `:160-162`; the midseason predicate lives inside
+> `get_weather_mode()` and the pump cadence is `:136-140`; the pump cycle return is `:142-144` and
+> the servo's `:168-170`. Rules unchanged except midseason's 15 °C top edge, which now extends to
+> 20 °C when the Steadman apparent temperature is below 15 —
+> [[2026-10-22-mnt-253-midseason-humidity-wind-research]].
 
 ## Decisions taken
 

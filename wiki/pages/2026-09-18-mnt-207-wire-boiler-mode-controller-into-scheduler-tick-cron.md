@@ -9,7 +9,7 @@ services: [__init__, controller, mode, scheduler, test_boiler_mode_controller, p
 branch: mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron
 tickets: [MNT-207]
 tags: [wiki, backend, feature]
-related: [2026-09-17-mnt-206-boiler-mode-controller]
+related: [2026-09-17-mnt-206-boiler-mode-controller.md]
 ---
 # MNT-207: Wire boiler mode controller into scheduler tick / cron
 

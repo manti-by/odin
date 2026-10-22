@@ -16,20 +16,29 @@ related: [2026-09-19-mnt-215-midseason-mode.md, 2026-10-11-midseason-pump-cadenc
 ## TL;DR
 
 The midseason gate (`8 < temp < 15`) uses only dry-bulb outside temperature, while the same temp
-feels very different with wind and humidity. Research answer: replace the raw-temp band with the
-**Steadman apparent temperature** `AT = Ta + 0.33e − 0.70ws − 4.00` — the standard index that
-combines temperature, relative humidity and wind into one number. Pogoda.by already stores `RH`,
+feels very different with wind and humidity. Research answer: gate the band's **top edge** on the **Steadman apparent temperature**
+`AT = Ta + 0.33e − 0.70ws − 4.00` — the standard index that combines temperature, relative humidity
+and wind into one number — while the bottom edge stays on the raw temperature. Pogoda.by already stores `RH`,
 `WINDSP` and `GUST` in `Weather.data`; only the computed index and the band check are missing.
 Fallback rule: any missing input → fall back to today's temp band (fail-safe = current behavior).
+
+> **Note 2026-10-22 (Consistency Agent):** the *revised* asymmetric proposal below is now implemented
+> on branch `opencode/feature/mnt-253-midseason-updates` (PR #44, In Review, not merged as of
+> 2026-10-22). `apparent_temp()` lives in `odin/apps/weather/services.py`; the band classification
+> moved into a shared `RelayTargetStateService.get_weather_mode()`; missing humidity/wind still
+> degrade to the exact pre-MNT-253 behaviour. The `Weather.apparent_temp` *property* from the
+> original proposal was dropped to avoid a circular import with `services.py`.
 
 ---
 
 ## Net effect
 
-Changing `8 < outside_temp < 15` to `8 < AT < 15` makes midseason react to what the weather actually
-does to the house: windy days push the pump schedule up earlier (AT drops ~0.7 °C per m/s of wind),
-dry calm days keep the house in summer/others modes longer. It is a single-variable swap, not three
-new thresholds, and it is calibratable later against indoor sensor history.
+The gate is **asymmetric, not a single-variable swap**: the raw bottom edge `8 < ta` stays, and the
+top edge becomes a feels-like extension — midseason also covers `15 <= ta < 20` when `AT < 15`.
+Windy warm days keep cycling the radiators (AT drops ~0.7 °C per m/s of wind), while calm-humid
+mornings stay in `SUMMER` instead of silently widening it. Antifreeze stays raw-temp-only so the
+fail-safe heat answer never depends on a fetched humidity/wind field. The classification is
+calibratable later against indoor sensor history (see the correlation recipe below).
 
 ## Current state of the data
 
@@ -192,8 +201,9 @@ Summer-night subsample (611 hourly bins, living room CENTAX-01, heating off, no 
 
 ## Follow-ups
 
-- Implementation PR on `feature/mnt-253-midseason-updates` — band swap + `apparent_temp` + tests
-  parametrized over (temp, RH, wind) triples near the 8/15 edges.
+- Implementation PR #44 on `opencode/feature/mnt-253-midseason-updates` — built the **revised
+  asymmetric gate** above (not the naive swap): `8 < ta < 15`, plus `15 <= ta < 20 AND AT < 15`,
+  antifreeze stays raw-only
 - Correlation script over the retained `Weather`/`SensorLog` history to validate the band edges.
 - MNT-249 (per-circuit midseason settings) can later take the `AT` thresholds as circuit overrides.
 

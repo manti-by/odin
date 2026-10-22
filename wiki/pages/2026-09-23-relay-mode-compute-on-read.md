@@ -12,7 +12,7 @@ related: [2026-09-11-add-related-relay-field.md, 2026-09-18-relay-state-mode-ref
   2026-09-19-mnt-215-midseason-mode.md, 2026-09-21-esp8266-indicator-icons.md,
   2026-09-23-mnt-218-split-dashboard-api.md, 2026-09-28-mnt-226-relay-state-log.md,
   2026-09-29-relay-log-consumer-fixes.md, 2026-10-11-midseason-pump-cadence-30min.md,
-  2026-10-15-mnt-250-schedule-cycle-rule.md]
+  2026-10-15-mnt-250-schedule-cycle-rule.md, 2026-10-22-mnt-253-midseason-humidity-wind-research.md]
 ---
 # Relay mode computed on read
 
@@ -162,6 +162,11 @@ SERVO-HL  stored mode=IGNORED   | RelaySerializer=MIDSEASON | Dashboard=MIDSEASO
 > **Note 2026-10-16 (Consistency Agent):** the mode set has grown since this page. `RelayMode` now also
 > has `CYCLE`, returned by the schedule branch's 30-minutes-every-2-hours rule
 > ([[2026-10-15-mnt-250-schedule-cycle-rule]]). Any page listing "the modes" is missing it.
+>
+> **Note 2026-10-22 (Consistency Agent):** the line refs above moved again when MNT-253 extracted the
+> weather bands into a shared `RelayTargetStateService.get_weather_mode()` (`services.py:101`). The
+> related-pump-off servo branch is now `services.py:160-162` and the midseason `(OFF, MIDSEASON)`
+> branch is `services.py:164-166` — see [[2026-10-22-mnt-253-midseason-humidity-wind-research]].
 
 ---
 
