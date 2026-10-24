@@ -61,8 +61,8 @@ class RelayLogService:
 
 class RelayTargetStateService:
     ANTIFREEZE_TEMP = Decimal("-8")
-    MIDSEASON_TEMP_MIN = Decimal("8")
-    SUMMER_TEMP_MIN = Decimal("15")
+    MIDSEASON_TEMP_MIN = Decimal("10")
+    SUMMER_TEMP_MIN = Decimal("17")
     MIDSEASON_EXTENDED_TEMP_MAX = Decimal("20")
 
     def __init__(self, relay: Relay):
