@@ -113,6 +113,36 @@ class TestRelaysPeriodicSchedule:
             assert state == RelayState.ON
             assert mode == RelayMode.BASIC
 
+    def test_relays__periodic_schedule_skips_malformed_periods(self):
+        """Test that hand-edited or non-dict periods are skipped instead of raising."""
+        self.relay.context = {
+            "schedule": {
+                "periods": [
+                    {"start_time": None, "end_time": "18:00", "target_state": "OFF"},
+                    {"start_time": "08:00", "end_time": "18:00", "target_state": "ON"},
+                ]
+            }
+        }
+        self.relay.save()
+
+        local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
+
+    @pytest.mark.parametrize("periods", ("08:00-18:00", {"start_time": "08:00"}, (None,)))
+    def test_relays__periodic_schedule_ignores_unusable_period_data(self, periods):
+        """Test that context data that is not a list of period dicts falls back instead of raising."""
+        self.relay.context = {"schedule": {"periods": periods}}
+        self.relay.save()
+
+        local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            state, mode = self.relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.FALLBACK
+
     def test_relays__periodic_schedule_applies_to_all_days(self):
         """Test that periodic schedule applies to all days of the week."""
         self.relay.context = {
@@ -322,7 +352,7 @@ class TestRelaysTargetStateDispatch:
 @pytest.mark.django_db
 class TestRelaysWeatherModes:
     def test_relays__pump_is_off_in_summer(self):
-        """Test that a PUMP is off when outside temperature is 15°C or higher."""
+        """Test that a PUMP is off when outside temperature is 17°C or higher."""
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
         WeatherFactory(period=timezone.now(), data={"temp": {"avg": "20.0"}})
 
@@ -342,7 +372,7 @@ class TestRelaysWeatherModes:
     def test_relays__pump_runs_first_half_hour_of_every_second_hour_in_midseason(self):
         """Test that a PUMP runs for the first 30 minutes of every 2-hour window in midseason."""
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
 
         local_time = datetime(2025, 1, 6, 8, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
@@ -353,7 +383,7 @@ class TestRelaysWeatherModes:
     def test_relays__pump_is_off_outside_every_second_hour_in_midseason(self):
         """Test that a PUMP is off during the idle hour and the second half of every 2-hour window."""
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
 
         local_time = datetime(2025, 1, 6, 8, 45, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
@@ -366,7 +396,7 @@ class TestRelaysWeatherModes:
             assert mode == RelayMode.MIDSEASON
 
     def test_relays__servo_stays_open_in_summer(self):
-        """Test that a SERVO stays open (OFF) when outside temperature is 15°C or higher."""
+        """Test that a SERVO stays open (OFF) when outside temperature is 17°C or higher."""
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
         sensor: Sensor = SensorFactory(relay=relay)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
@@ -398,7 +428,7 @@ class TestRelaysWeatherModes:
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
         SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
 
         local_time = datetime(2025, 1, 6, 8, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
@@ -413,7 +443,7 @@ class TestRelaysWeatherModes:
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
         SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
 
         local_time = datetime(2025, 1, 6, 8, 45, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
@@ -438,7 +468,7 @@ class TestRelaysWeatherModes:
     def test_relays__pump_midseason_cadence_by_hour(self, hour, expected_state):
         """Verify a PUMP runs only in the first 30 minutes of even daytime hours (hour >= 6) in midseason."""
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
 
         local_time = datetime(2025, 1, 6, hour, 5, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
@@ -467,7 +497,7 @@ class TestRelaysWeatherModes:
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
         SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
 
         local_time = datetime(2025, 1, 6, hour, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
@@ -479,7 +509,7 @@ class TestRelaysWeatherModes:
     def test_relays__pump_midseason_active_window_spans_first_half_hour(self, minute):
         """Verify the pump midseason window runs for the first 30 minutes of the active hour."""
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
 
         local_time = datetime(2025, 1, 6, 8, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
@@ -491,7 +521,7 @@ class TestRelaysWeatherModes:
     def test_relays__pump_midseason_is_off_in_second_half_hour(self, minute):
         """Verify the pump midseason window stops after the first 30 minutes of the active hour."""
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
 
         local_time = datetime(2025, 1, 6, 8, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
@@ -507,7 +537,7 @@ class TestRelaysWeatherModes:
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
         sensor.save()
         SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
 
         local_time = datetime(2025, 1, 6, 8, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
@@ -518,9 +548,9 @@ class TestRelaysWeatherModes:
 
 @pytest.mark.django_db
 class TestRelaysApparentTempGate:
-    """MNT-253: above 15 °C the feels-like temperature extends midseason up to 20 °C.
+    """MNT-253: above 17 °C the feels-like temperature extends midseason up to 20 °C.
 
-    Below 15 °C the raw band stays authoritative, so wind can never pull a warm day out of
+    Below 17 °C the raw band stays authoritative, so wind can never pull a warm day out of
     summer or push a cold one into antifreeze.
     """
 
@@ -551,9 +581,9 @@ class TestRelaysApparentTempGate:
         return relay
 
     def test_relays__pump_enters_midseason_on_a_windy_warm_day(self):
-        """16 °C at 85 % humidity and 5 m/s feels like 13.6 °C, so the pump keeps cycling."""
+        """18 °C at 85 % humidity and 5 m/s feels like 16.3 °C, so the pump keeps cycling."""
         relay = self._pump()
-        self._weather(temp="16")
+        self._weather(temp="18")
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
             state, mode = relay.get_target_state()
@@ -561,9 +591,9 @@ class TestRelaysApparentTempGate:
             assert mode == RelayMode.MIDSEASON
 
     def test_relays__pump_stays_in_summer_on_a_calm_warm_day(self):
-        """The same 16 °C with a 1 m/s wind feels like 16.4 °C and stays summer."""
+        """The same 18 °C with a 1 m/s wind feels like 19.1 °C and stays summer."""
         relay = self._pump()
-        self._weather(temp="16", wind_speed="1")
+        self._weather(temp="18", wind_speed="1")
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
             state, mode = relay.get_target_state()
@@ -574,7 +604,7 @@ class TestRelaysApparentTempGate:
     def test_relays__pump_falls_back_to_raw_temp_when_weather_is_incomplete(self, humidity, wind_speed):
         """A missing humidity or wind degenerates to the pre-MNT-253 raw-temp band."""
         relay = self._pump()
-        self._weather(temp="16", humidity=humidity, wind_speed=wind_speed)
+        self._weather(temp="18", humidity=humidity, wind_speed=wind_speed)
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
             state, mode = relay.get_target_state()
@@ -592,9 +622,9 @@ class TestRelaysApparentTempGate:
             assert mode == RelayMode.SUMMER
 
     def test_relays__pump_keeps_the_raw_lower_edge_in_midseason(self):
-        """Wind may not lower the 8 °C edge: 8.0 °C falling to -0.2 °C feels-like is still not midseason."""
+        """Wind may not lower the 10 °C edge: 10.0 °C falling to 2.4 °C feels-like is still not midseason."""
         relay = self._pump()
-        self._weather(temp="8.0", wind_speed="10")
+        self._weather(temp="10.0", wind_speed="10")
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
             state, mode = relay.get_target_state()
@@ -602,7 +632,7 @@ class TestRelaysApparentTempGate:
             assert mode == RelayMode.CYCLE
 
     def test_relays__pump_keeps_midseason_inside_the_raw_band_regardless_of_feels_like(self):
-        """12 °C at 10 m/s feels like 4.7 °C, but the raw band still classifies it as midseason."""
+        """12 °C at 10 m/s feels like 4.9 °C, but the raw band still classifies it as midseason."""
         relay = self._pump()
         self._weather(temp="12", wind_speed="10")
 
@@ -623,7 +653,7 @@ class TestRelaysApparentTempGate:
 
     def test_relays__servo_stays_open_in_extended_midseason(self):
         relay = self._servo()
-        self._weather(temp="16")
+        self._weather(temp="18")
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 45)):
             state, mode = relay.get_target_state()
@@ -632,7 +662,7 @@ class TestRelaysApparentTempGate:
 
     def test_relays__servo_stays_open_in_summer_on_a_calm_warm_day(self):
         relay = self._servo()
-        self._weather(temp="16", wind_speed="1")
+        self._weather(temp="18", wind_speed="1")
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 45)):
             state, mode = relay.get_target_state()
@@ -782,9 +812,9 @@ class TestRelaysScheduleCycle:
     @pytest.mark.parametrize(
         ("temp", "expected_mode"),
         (
-            ("15.0", RelayMode.SUMMER),
-            ("8.1", RelayMode.MIDSEASON),
-            ("8.0", RelayMode.CYCLE),
+            ("18.0", RelayMode.SUMMER),
+            ("10.1", RelayMode.MIDSEASON),
+            ("10.0", RelayMode.CYCLE),
             ("-8.1", RelayMode.ANTIFREEZE),
             ("-8.0", RelayMode.CYCLE),
         ),
@@ -801,7 +831,7 @@ class TestRelaysScheduleCycle:
     def test_relays__midseason_still_wins_over_the_cycle_at_night(self):
         """Midseason keeps its own night guard: 03:05 is OFF/MIDSEASON, not ON/CYCLE."""
         relay = self._pump([{"start_time": "00:00", "end_time": "23:59", "target_state": "ON"}])
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "10.0"}})
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(3, 5)):
             state, mode = relay.get_target_state()
@@ -838,6 +868,207 @@ class TestRelaysScheduleCycle:
             state, mode = relay.get_target_state()
             assert state == RelayState.OFF
             assert mode == RelayMode.IGNORED
+
+
+@pytest.mark.django_db
+class TestRelaysOverrideSchedule:
+    """MNT-255: an override schedule forces the relay state right after force_state."""
+
+    @staticmethod
+    def _at(hour: int, minute: int) -> datetime:
+        return datetime(2025, 1, 6, hour, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+
+    @classmethod
+    def _pump(cls, override: list[dict], schedule: list[dict] | None = None) -> Relay:
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+        relay.context = {"override_schedule": {"periods": override}}
+        if schedule is not None:
+            relay.context["schedule"] = {"periods": schedule}
+        relay.save()
+        return relay
+
+    @classmethod
+    def _servo(cls, override: list[dict], schedule: list[dict] | None = None) -> Relay:
+        relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
+        relay.context = {"override_schedule": {"periods": override}}
+        if schedule is not None:
+            relay.context["schedule"] = {"periods": schedule}
+        relay.save()
+        return relay
+
+    def test_relays__override_turns_pump_on_inside_the_period(self):
+        relay = self._pump([{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}])
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.OVERRIDE
+
+    def test_relays__override_turns_pump_off_inside_the_period(self):
+        relay = self._pump([{"start_time": "08:00", "end_time": "18:00", "target_state": "OFF"}])
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.OVERRIDE
+
+    def test_relays__override_period_end_time_is_exclusive(self):
+        """09:00 is not part of the 08:00-09:00 override, so the pump falls back to its default."""
+        relay = self._pump([{"start_time": "08:00", "end_time": "09:00", "target_state": "OFF"}])
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(9, 0)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.FALLBACK
+
+    def test_relays__override_handles_overnight_periods(self):
+        relay = self._pump([{"start_time": "22:00", "end_time": "06:00", "target_state": "ON"}])
+
+        for hour, day in ((23, 6), (2, 7)):
+            local_time = datetime(2025, 1, day, hour, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+            with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+                state, mode = relay.get_target_state()
+                assert state == RelayState.ON
+                assert mode == RelayMode.OVERRIDE
+
+    def test_relays__force_state_still_wins_over_the_override(self):
+        relay = self._pump([{"start_time": "00:00", "end_time": "23:59", "target_state": "ON"}])
+        relay.force_state = RelayState.OFF
+        relay.save()
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.FORCED
+
+    def test_relays__override_beats_summer_weather(self):
+        relay = self._pump([{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}])
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "18"}, "humidity": "85", "wind": {"speed": "1"}})
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.OVERRIDE
+
+    def test_relays__override_beats_the_cycle_window(self):
+        relay = self._pump([{"start_time": "00:00", "end_time": "23:59", "target_state": "OFF"}])
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.OVERRIDE
+
+    def test_relays__override_beats_a_regular_schedule_period(self):
+        relay = self._pump(
+            [{"start_time": "00:00", "end_time": "23:59", "target_state": "OFF"}],
+            schedule=[{"start_time": "00:00", "end_time": "23:59", "target_state": "ON"}],
+        )
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.OVERRIDE
+
+    def test_relays__schedule_applies_outside_the_override_window(self):
+        relay = self._pump(
+            [{"start_time": "08:00", "end_time": "09:00", "target_state": "OFF"}],
+            schedule=[{"start_time": "00:00", "end_time": "23:59", "target_state": "ON"}],
+        )
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
+
+    def test_relays__servo_override_opens_the_circuit_for_an_on_window(self):
+        """A servo's ON closes the circuit, so an ON heating window must yield the physical OFF."""
+        relay = self._servo([{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}])
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.OVERRIDE
+
+    def test_relays__servo_override_closes_the_circuit_for_an_off_window(self):
+        relay = self._servo([{"start_time": "08:00", "end_time": "18:00", "target_state": "OFF"}])
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.OVERRIDE
+
+    def test_relays__valve_follows_the_override(self):
+        relay: Relay = RelayFactory(type=RelayType.VALVE)  # noqa
+        relay.context = {
+            "override_schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_state": "OFF"}]}
+        }
+        relay.save()
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.OVERRIDE
+
+    @pytest.mark.parametrize(
+        "period",
+        (
+            {"start_time": "00:00", "end_time": "23:59"},
+            {"start_time": "00:00", "end_time": "23:59", "target_state": None},
+            {"start_time": "00:00", "end_time": "23:59", "target_state": "BLAH"},
+        ),
+    )
+    def test_relays__override_period_without_a_valid_target_state_is_skipped(self, period):
+        relay = self._pump(
+            [period],
+            schedule=[{"start_time": "00:00", "end_time": "23:59", "target_state": "ON"}],
+        )
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.BASIC
+
+    def test_relays__override_uses_the_matching_period_of_two(self):
+        relay = self._pump(
+            [
+                {"start_time": "00:00", "end_time": "08:00", "target_state": "OFF"},
+                {"start_time": "08:00", "end_time": "20:00", "target_state": "ON"},
+            ]
+        )
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.OVERRIDE
+
+    def test_relays__override_skips_malformed_periods(self):
+        """A hand-edited period with an unusable time is skipped, the next one still applies."""
+        relay = self._pump(
+            [
+                {"start_time": None, "end_time": "18:00", "target_state": "ON"},
+                {"start_time": "08:00", "end_time": "18:00", "target_state": "OFF"},
+            ]
+        )
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.OVERRIDE
+
+    def test_relays__override_ignores_unusable_context_data(self):
+        """A context that is not a period list must not break the read path."""
+        relay = self._pump([])
+        relay.context = {"override_schedule": "08:00-18:00"}
+        relay.save()
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.FALLBACK
 
 
 @pytest.mark.django_db

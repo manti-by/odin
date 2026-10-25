@@ -1,8 +1,11 @@
+from datetime import UTC, datetime
+from datetime import timezone as dt_timezone
 from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
 
+from django.core.cache import cache
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -40,6 +43,16 @@ class TestRelaysAPI:
         response = self.client.get(self.url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 2
+
+    def test_relays__list_tolerates_malformed_override_context(self):
+        """A hand-edited context must not break the read path that renders the relay list."""
+        relay = RelayFactory()
+        relay.context = {"override_schedule": {"periods": [{"start_time": None, "end_time": "18:00"}]}}
+        relay.save()
+
+        response = self.client.get(self.url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert "mode" in response.data["results"][0]
 
     def test_relays__list_empty(self):
         """Test that list returns an empty result when no relays exist."""
@@ -153,6 +166,9 @@ class TestRelaysRetrieveAPI:
 @pytest.mark.django_db
 class TestRelaysUpdateAPI:
     def setup_method(self):
+        # Start every update test with a fresh throttle window: `relays_update` is 30/min keyed by
+        # client address, so the class's PATCH calls would otherwise accumulate across the suite.
+        cache.clear()
         self.client = APIClient()
         self.relay: Relay = RelayFactory(type=RelayType.PUMP, force_state=None)  # noqa
         self.url = reverse("api:v1:relays:retrieve_update", args=(self.relay.relay_id,))
@@ -160,6 +176,10 @@ class TestRelaysUpdateAPI:
     @staticmethod
     def _schedule(*periods: dict) -> dict:
         return {"context": {"schedule": {"periods": list(periods)}}}
+
+    @staticmethod
+    def _override(*periods: dict) -> dict:
+        return {"context": {"override_schedule": {"periods": list(periods)}}}
 
     @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
     def test_relays__update_schedule(self, mock_publish):
@@ -240,6 +260,15 @@ class TestRelaysUpdateAPI:
         response = self.client.patch(
             self.url,
             data=self._schedule({"start_time": "8:00", "end_time": "18:00", "target_state": "ON"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_relays__update_schedule_rejects_missing_time(self):
+        """Test that a period missing one of its times is rejected instead of raising KeyError."""
+        response = self.client.patch(
+            self.url,
+            data=self._schedule({"end_time": "18:00", "target_state": "ON"}),
             format="json",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -393,6 +422,130 @@ class TestRelaysUpdateAPI:
         )
         assert response.status_code == status.HTTP_200_OK
         mock_publish.assert_called_once()
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_override_schedule(self, mock_publish):
+        """Test that an override schedule update persists periods into the relay context."""
+        response = self.client.patch(
+            self.url,
+            data=self._override({"start_time": "06:00", "end_time": "08:00", "target_state": "ON"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.context["override_schedule"]["periods"] == [
+            {"start_time": "06:00", "end_time": "08:00", "target_state": "ON"}
+        ]
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_override_schedule_recomputes_target_state(self, mock_publish):
+        """Test that a period covering the current time recomputes and publishes the OVERRIDE mode."""
+        local_time = datetime(2025, 1, 6, 7, 0, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            response = self.client.patch(
+                self.url,
+                data=self._override({"start_time": "06:00", "end_time": "08:00", "target_state": "ON"}),
+                format="json",
+            )
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.state == RelayState.ON
+        assert self.relay.mode == RelayMode.OVERRIDE
+
+        acting_user = Auth.objects.get().user
+        mock_publish.assert_called_once_with(
+            relay_id=self.relay.relay_id, state=RelayState.ON, mode=RelayMode.OVERRIDE, user=acting_user
+        )
+
+    def test_relays__update_override_schedule_requires_target_state(self):
+        """Test that override periods without target_state are rejected."""
+        response = self.client.patch(
+            self.url,
+            data=self._override({"start_time": "06:00", "end_time": "08:00"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_relays__update_override_schedule_rejects_invalid_time(self):
+        """Test that malformed times are rejected."""
+        response = self.client.patch(
+            self.url,
+            data=self._override({"start_time": "6:00", "end_time": "08:00", "target_state": "ON"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_relays__update_override_schedule_rejects_missing_time(self):
+        """Test that an override period missing one of its times is rejected instead of raising KeyError."""
+        response = self.client.patch(
+            self.url,
+            data=self._override({"end_time": "08:00", "target_state": "ON"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "periods",
+        (
+            (
+                {"start_time": "06:00", "end_time": "08:00", "target_state": "ON"},
+                {"start_time": "07:00", "end_time": "09:00", "target_state": "OFF"},
+            ),
+            (
+                {"start_time": "22:00", "end_time": "06:00", "target_state": "ON"},
+                {"start_time": "05:00", "end_time": "08:00", "target_state": "OFF"},
+            ),
+        ),
+    )
+    def test_relays__update_override_schedule_rejects_overlapping_periods(self, periods):
+        """Test that overlapping override periods are rejected, including overnight spans."""
+        response = self.client.patch(self.url, data=self._override(*periods), format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_relays__update_override_schedule_rejects_more_than_5_periods(self):
+        """Test that more than five override periods are rejected."""
+        periods = [
+            {"start_time": f"{hour:02d}:00", "end_time": f"{hour:02d}:30", "target_state": "ON"} for hour in range(6)
+        ]
+        response = self.client.patch(self.url, data=self._override(*periods), format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_override_schedule_ignores_target_temp(self, mock_publish):
+        """Test that override periods are state-only: target_temp is not stored."""
+        response = self.client.patch(
+            self.url,
+            data=self._override(
+                {"start_time": "06:00", "end_time": "08:00", "target_state": "ON", "target_temp": 24.5}
+            ),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.context["override_schedule"]["periods"] == [
+            {"start_time": "06:00", "end_time": "08:00", "target_state": "ON"}
+        ]
+
+    @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
+    def test_relays__update_override_schedule_accepts_valve_relay(self, mock_publish):
+        """Test that VALVE relays accept an override schedule, unlike a regular schedule."""
+        self.relay.type = RelayType.VALVE
+        self.relay.save()
+
+        response = self.client.patch(
+            self.url,
+            data=self._override({"start_time": "06:00", "end_time": "08:00", "target_state": "OFF"}),
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        self.relay.refresh_from_db()
+        assert self.relay.context["override_schedule"]["periods"] == [
+            {"start_time": "06:00", "end_time": "08:00", "target_state": "OFF"}
+        ]
 
     def test_relays__update_requires_authentication(self):
         """Test that schedule updates require an authenticated session."""

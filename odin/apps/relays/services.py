@@ -78,17 +78,23 @@ class RelayTargetStateService:
         """
         return self.now.hour % 2 == 0 and self.now.minute < 30
 
-    def get_current_period_from_schedule(self) -> dict | None:
-        schedule = self.relay.context.get("schedule", {})
-        if not (periods := schedule.get("periods", [])):
+    def get_current_period(self, schedule: dict) -> dict | None:
+        """Return the period covering the current local time, or None.
+
+        Periods are half-open `[start_time, end_time)` and may span midnight. Malformed entries are
+        skipped rather than raised: `context` is a free-form JSON column that can be edited by hand.
+        """
+        if not isinstance(schedule, dict) or not isinstance(periods := schedule.get("periods"), list):
             return None
 
         current_time = timezone.localtime().time()
         for period in periods:
+            if not isinstance(period, dict):
+                continue
             try:
                 start_time = timezone.datetime.strptime(period["start_time"], "%H:%M").time()
                 end_time = timezone.datetime.strptime(period["end_time"], "%H:%M").time()
-            except KeyError, ValueError:
+            except KeyError, TypeError, ValueError:
                 continue
 
             if start_time <= end_time and start_time <= current_time < end_time:
@@ -98,11 +104,17 @@ class RelayTargetStateService:
 
         return None
 
+    def get_current_period_from_schedule(self) -> dict | None:
+        return self.get_current_period(self.relay.context.get("schedule", {}))
+
+    def get_current_override_period(self) -> dict | None:
+        return self.get_current_period(self.relay.context.get("override_schedule", {}))
+
     def get_weather_mode(self) -> RelayMode | None:
         """Classify the outside weather into a heating mode, or None when no band applies.
 
         Antifreeze and the lower midseason edge stay on the raw temperature: the fail-safe heat
-        answer must not depend on fetched humidity/wind. Above 15 °C the Steadman apparent
+        answer must not depend on fetched humidity/wind. Above 17 °C the Steadman apparent
         temperature extends midseason up to 20 °C, so a windy warm day keeps cycling radiators.
         """
         if not self.weather or (outside_temp := self.weather.temp) is None:
@@ -190,6 +202,15 @@ class RelayTargetStateService:
     def get_target_state(self) -> tuple[RelayState, RelayMode]:
         if self.relay.force_state is not None:
             return self.relay.force_state, RelayMode.FORCED
+
+        # Override schedule wins over every computed rule, including weather and the schedule cycle
+        if period := self.get_current_override_period():
+            if (override_state := period.get("target_state")) in RelayState.active_values():
+                state = RelayState(override_state)
+                # A servo's ON closes the circuit, so an ON override (heat/run) must open it
+                if self.relay.type == RelayType.SERVO:
+                    state = RelayState.OFF if state == RelayState.ON else RelayState.ON
+                return state, RelayMode.OVERRIDE
 
         match self.relay.type:
             case RelayType.PUMP:
