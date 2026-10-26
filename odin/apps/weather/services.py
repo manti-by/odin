@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
+from django.db.models.fields.json import KeyTextTransform, KeyTransform
 from django.utils import timezone
 
 from odin.apps.weather.models import Weather
@@ -10,6 +11,36 @@ from odin.apps.weather.models import Weather
 VAPOR_PRESSURE_BASE = Decimal("6.105")
 VAPOR_PRESSURE_SCALE = Decimal("17.27")
 VAPOR_PRESSURE_OFFSET = Decimal("237.7")
+
+WEATHER_MAX_AGE = timedelta(hours=2)
+
+
+def get_latest_weather(max_age: timedelta = WEATHER_MAX_AGE) -> Weather | None:
+    """Return the weather row that can drive the heating rules right now, or None.
+
+    `Weather.objects.current()` falls back to the last row regardless of age and, having no
+    ordering, to the highest pk — which can be a forecast slot in the future. A row only counts as
+    usable when it carries a temperature, its `period` sits within `max_age` of now in either
+    direction and the provider wrote it (`synced_at`) within the last `max_age`, so a dead feed
+    cannot pin the last band forever. Eligible rows are filtered before one is picked, so neither a
+    far-ahead forecast nor a row without a temperature can shadow a usable earlier row; the most
+    recent started row wins, then the nearest upcoming one.
+
+    Args:
+        max_age: maximum distance between now and both timestamps.
+
+    Returns:
+        The current Weather row, or None when there is no fresh one.
+    """
+    now = timezone.now()
+    # `#>>` yields NULL for a JSON null, unlike a plain `data__temp__avg__isnull` key transform
+    temperature = KeyTextTransform("avg", KeyTransform("temp", "data"))
+    usable = Weather.objects.alias(temperature=temperature).filter(
+        temperature__isnull=False,
+        period__range=(now - max_age, now + max_age),
+        synced_at__gte=now - max_age,
+    )
+    return usable.filter(period__lte=now).order_by("-period").first() or usable.order_by("period").first()
 
 
 def apparent_temp(temp: Decimal | None, humidity: Decimal | None, wind_speed: Decimal | None) -> Decimal | None:

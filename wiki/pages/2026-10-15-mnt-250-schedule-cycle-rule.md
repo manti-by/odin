@@ -10,7 +10,8 @@ tickets: [MNT-250]
 tags: [relays, midseason, schedule, pump, servo, spec-review, mode]
 related: [2026-10-11-midseason-pump-cadence-30min.md, 2026-09-19-mnt-215-midseason-mode.md,
   2026-09-23-relay-mode-compute-on-read.md, 2026-09-22-mnt-217-relay-schedule-component.md,
-  2026-10-22-mnt-253-midseason-humidity-wind-research.md]
+  2026-10-22-mnt-253-midseason-humidity-wind-research.md, 2026-10-25-mnt-255-override-by-schedule.md,
+  2026-10-26-relay-target-state-antifreeze-review.md]
 ---
 
 # MNT-250 spec review — schedule cycle rule
@@ -87,6 +88,13 @@ Implemented on `opencode/feature/mnt-250-schedule-cycle-rule` (not committed as 
 7. **`"only for active state (for servos this is OFF)"`** — ambiguous wording, dropped from the spec.
 
 ## Final specification
+
+> **Note 2026-10-26 (Consistency Agent):** the band edges below are the MNT-250-day values. They
+> later moved: commit `0356c8f` shifted the band to `10 < t < 17` (extended to `< 20` by the
+> Steadman apparent temperature, edge `< 17`), and the 2026-10-26 antifreeze rewrite made the lower
+> edge inclusive (`t >= 10` is midseason) — see [[2026-10-25-mnt-255-override-by-schedule]] and
+> [[2026-10-26-relay-target-state-antifreeze-review]]. The precedence shape (weather bands before
+> the schedule branch, cycle rule inside it) is unchanged.
 
 Evaluated in the schedule branch, i.e. after every higher-priority rule has declined. Precedence is unchanged:
 

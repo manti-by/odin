@@ -256,8 +256,13 @@ def schedule_update_weather():
   exists (servo whose related pump is off).
 - `perform_update` recomputes and persists `state`+`mode`, publishes via `RedisBus`, and records a
   `RelayLog` row via `RelayLogService.log_change()` (`odin/api/v1/relays/views.py:52`,
-  `odin/apps/relays/services.py:35`); servos link to their pump via the nullable
+  `odin/apps/relays/services.py:49`); servos link to their pump via the nullable
   `related_relay` self-FK.
+- Antifreeze fail-safe: `RelayTargetStateService.get_target_state()` answers `ANTIFREEZE` **first**,
+  but only for missing/unusable weather or `outside_temp < -8` — pump `(ON, ANTIFREEZE)`, servo
+  `(OFF, ANTIFREEZE)`. It outranks `force_state` and the override schedule, so a pump cannot be
+  stopped during a freeze or a weather outage. The `-8 … 10 °C` default band is _not_ part of the
+  fail-safe: it follows the cycle, schedule and sensor rules below.
 - Override schedule: `context["override_schedule"]` mirrors `context["schedule"]` but its periods are
   state-only — `start_time`/`end_time`/`target_state` (`ON`/`OFF`, required), no `target_temp`. A
   matching period is applied immediately after `force_state`, before the weather and schedule rules,
@@ -269,25 +274,38 @@ def schedule_update_weather():
   rejected by the serializers. Hand-edited context data (a context that is not an object, non-dict
   period entries, non-string or non-list values) is skipped by `RelayTargetStateService` instead of
   raising. `RelayMode.OVERRIDE` needs migration
-  `0012_alter_relay_mode_alter_relaylog_new_mode_and_more` (MNT-255).
-- Weather bands come from `RelayTargetStateService.get_weather_mode()` (`odin/apps/relays/services.py:106`),
-  shared by pumps and servos; `ANTIFREEZE` (`outside_temp < -8`) and the lower midseason edge
-  (`outside_temp > 10`) stay on the **raw** temperature, so the fail-safe heat answer never depends
-  on fetched humidity/wind.
-- Midseason (`10 < outside_temp < 17`): pump runs only in the active daytime window (`hour >= 6 and
-  hour % 2 == 0 and minute < 30`); servos stay open (`OFF, MIDSEASON`) for the whole band. Above
+  `0012_alter_relay_mode_alter_relaylog_new_mode_and_more` (MNT-255, MNT-259).
+- Force and override share one helper, `RelayTargetStateService.get_manual_target_state()`
+  (`odin/apps/relays/services.py:183`), which returns `(state, mode)` or `None` and applies the servo
+  inversion. Every type calls it in the same position, so an unsupported force/override never
+  silently disappears from the API. The heat direction (pump `ON`, servo open) is also the fail-safe
+  answer; the stop direction only lands when the fail-safe did not fire and, for a servo, the linked
+  pump is on — `IGNORED` beats a forced or overridden close.
+- Weather bands come from `RelayTargetStateService.get_weather_mode()`
+  (`odin/apps/relays/services.py:149`), which returns the private `WeatherMode` enum
+  (`NONE`/`ANTIFREEZE`/`DEFAULT`/`MIDSEASON`/`SUMMER`) rather than a `RelayMode`: "no usable weather"
+  and the `-8 … 10 °C` default band must stay distinguishable, and only the reported mode is mapped
+  back to `RelayMode`. `ANTIFREEZE` (`outside_temp < -8`) and the midseason edges stay on the
+  **raw** temperature, so the fail-safe heat answer never depends on fetched humidity/wind.
+- A weather row counts only through `get_latest_weather()` (`odin/apps/weather/services.py:17`):
+  it needs a temperature, a `period` within two hours of now in either direction, and a `synced_at`
+  within the last two hours (`WEATHER_MAX_AGE`). `Weather.objects.current()` is ageless and, having
+  no ordering, falls back to the highest pk — which can be a _future_ forecast slot — so relay and
+  boiler logic must not call it directly; the dashboard tile still does. `BoilerModeService.get_target_mode()`
+  shares the helper, so the boiler and the relays agree on what "no weather" means.
+- Midseason (`10 <= outside_temp < 17`): pump runs only in the active daytime window (`hour >= 6 and
+hour % 2 == 0 and minute < 30`); servos stay open (`OFF, MIDSEASON`) for the whole band. Above
   17 °C the band extends to `outside_temp < 20` while the Steadman apparent temperature
   (`odin/apps/weather/services.py:apparent_temp`, `AT = Ta + 0.33e − 0.70ws − 4.00`) is `< 17` —
   a windy warm day keeps cycling the pump, a calm one stays `SUMMER`. Any missing `humidity`/
-  `wind_speed` degrades to the raw-temp band (MNT-253). Mind that `WeatherManager.current()` is
-  ageless — with no fresh hour row it returns the **last** `Weather` row no matter how old it is
-  (`odin/apps/weather/models.py:15-21`), so the gate can act on stale weather.
+  `wind_speed` degrades to the raw-temp band (MNT-253). The lower edge became inclusive on
+  2026-10-26, so `10.0 °C` is midseason, not the default band.
 - Schedule cycle: when none of the higher-priority rules applies (`FORCED`, `OVERRIDE`, servo `UNKNOWN`,
   servo `IGNORED`, `SUMMER`, `ANTIFREEZE`, `MIDSEASON`), the relay is forced open for 30 minutes
   every 2 hours — `hour % 2 == 0 and minute < 30`, **no night guard**, so 00:00–00:30 runs too
-  (`odin/apps/relays/services.py:73`). Pump `(ON, CYCLE)`, servo `(OFF, CYCLE)`. Outside the
+  (`odin/apps/relays/services.py:87`). Pump `(ON, CYCLE)`, servo `(OFF, CYCLE)`. Outside the
   window the schedule applies as usual (`BASIC`, or `FALLBACK` with no matching period). Midseason
-  keeps its own, *different* night guard — do not merge the two rules.
+  keeps its own, _different_ night guard — do not merge the two rules.
 - `RedisBus.publish_relay_control(relay_id, state, mode, user)` requires `mode` and puts it in the
   envelope. Both call sites publish the **freshly computed** pair, not the stored column: the API
   view recomputes it in `perform_update` and passes the acting user
@@ -480,10 +498,10 @@ class TestSensorsAPI:
 - Use Python's `logging` module, not print statements
 - Create logger at module level: `logger = logging.getLogger(__name__)`
 - Use appropriate log levels:
-    - `DEBUG`: Detailed debug information
-    - `INFO`: Confirmation of expected behavior
-    - `WARNING`: Unexpected but handled issues
-    - `ERROR`: Failures that need attention
+  - `DEBUG`: Detailed debug information
+  - `INFO`: Confirmation of expected behavior
+  - `WARNING`: Unexpected but handled issues
+  - `ERROR`: Failures that need attention
 
 ```python
 import logging

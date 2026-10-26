@@ -9,7 +9,7 @@ from rest_framework.test import APIClient
 from odin.apps.relays.admin import RelayAdmin
 from odin.apps.relays.models import Relay, RelayLog, RelayMode, RelayState, RelayType
 from odin.apps.relays.services import RelayLogService
-from odin.tests.factories import DjangoAdminUserFactory, RelayFactory, UserFactory
+from odin.tests.factories import DjangoAdminUserFactory, RelayFactory, UserFactory, create_weather
 
 
 pytestmark = pytest.mark.usefixtures("pin_clock_outside_cycle_window")
@@ -173,6 +173,10 @@ class TestRelayLogRefreshState:
 
 @pytest.mark.django_db
 class TestRelayLogAdmin:
+    def setup_method(self) -> None:
+        # A fresh weather row keeps the relays on their regular rules instead of the fail-safe
+        create_weather()
+
     @patch("odin.apps.relays.admin.RedisBus.publish_relay_control", return_value=True)
     def test__admin_save_model_publishes_without_creating_log(self, mock_publish: MagicMock) -> None:
         """Admin defers the audit row to the consumer; it only publishes control."""
@@ -218,6 +222,7 @@ class TestRelayLogAdmin:
 @pytest.mark.django_db
 class TestRelayLogAPI:
     def setup_method(self) -> None:
+        create_weather()
         self.client = APIClient()
         self.relay: Relay = RelayFactory(type=RelayType.PUMP, state=RelayState.OFF, force_state=None)
         self.url = reverse("api:v1:relays:retrieve_update", args=(self.relay.relay_id,))

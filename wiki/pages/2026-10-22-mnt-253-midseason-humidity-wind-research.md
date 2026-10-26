@@ -8,7 +8,8 @@ services: [weather, relays-services]
 branch: feature/mnt-253-midseason-updates
 tickets: [MNT-253]
 tags: [weather, midseason, apparent-temperature, wind, humidity, research]
-related: [2026-09-19-mnt-215-midseason-mode.md, 2026-10-11-midseason-pump-cadence-30min.md, 2026-10-15-mnt-250-schedule-cycle-rule.md]
+related: [2026-09-19-mnt-215-midseason-mode.md, 2026-10-11-midseason-pump-cadence-30min.md, 2026-10-15-mnt-250-schedule-cycle-rule.md,
+  2026-10-25-mnt-255-override-by-schedule.md, 2026-10-26-relay-target-state-antifreeze-review.md]
 ---
 
 # MNT-253 — Midseason humidity & wind research
@@ -32,6 +33,12 @@ Fallback rule: any missing input → fall back to today's temp band (fail-safe =
 ---
 
 ## Net effect
+
+> **Note 2026-10-26 (Consistency Agent):** the `8 < t < 15` / `8 < ta` edges below are the research-day
+> values. The band later moved to `10 <= t < 17` (extended to `< 20` when the Steadman apparent
+> temperature is `< 17`); the asymmetric shape proposed here — raw-temp bottom edge, feels-like top
+> edge, antifreeze raw-only — is what shipped. See [[2026-10-25-mnt-255-override-by-schedule]] and
+> [[2026-10-26-relay-target-state-antifreeze-review]].
 
 The gate is **asymmetric, not a single-variable swap**: the raw bottom edge `8 < ta` stays, and the
 top edge becomes a feels-like extension — midseason also covers `15 <= ta < 20` when `AT < 15`.

@@ -4,15 +4,23 @@ date: '2026-10-25'
 type: implementation
 status: resolved
 session_id: ses_mnt_255_override_by_schedule_2026_10_25
-services: [relays, test_relays, AGENTS]
+services: [relays, models, services, serializers, test_relays, AGENTS,
+  0012_alter_relay_mode_alter_relaylog_new_mode_and_more, pyproject, uv]
 branch: mnt-255-override-by-schedule
-tickets: [MNT-255]
-tags: [relays, override, schedule, mode, migration, tests]
+tickets: [MNT-255, MNT-259]
+tags: [relays, override, schedule, mode, migration, tests, backend, feature]
 related: [2026-09-22-mnt-217-relay-schedule-component.md, 2026-09-23-relay-mode-compute-on-read.md,
-  2026-10-15-mnt-250-schedule-cycle-rule.md, 2026-10-22-mnt-253-midseason-humidity-wind-research.md]
+  2026-10-15-mnt-250-schedule-cycle-rule.md, 2026-10-22-mnt-253-midseason-humidity-wind-research.md,
+  2026-10-26-relay-target-state-antifreeze-review.md]
 ---
 
 # MNT-255: Override by schedule
+
+> **Merged 2026-10-26 (Dedup Agent):** this page absorbed the companion "MNT-259: Override by
+> schedule" record (deleted; session `ses_e8b7535bfffe7ecj0krwIzk25C`, branch
+> `mnt-259-override-by-schedule`). Both pages were written on the same day from the same plan; this
+> one is the complete record, so it survives and keeps the MNT-255 title, date, session and branch.
+> Tickets now list both issues.
 
 ## TL;DR
 
@@ -20,7 +28,13 @@ Relays could only be overridden to a hardcoded `force_state`. A new `context["ov
 holds time periods with a required `ON`/`OFF` target and, when the current time falls inside one,
 it is applied immediately after `force_state` — before the weather bands, the schedule cycle and
 the regular `schedule`. The rule reports a new `RelayMode.OVERRIDE` (migration 0012) and works for
-pumps, servos and valves. 174 relay tests pass.
+pumps, servos and valves. The two relay test modules pass (184 at first merge, 195 on the current
+tree); the full `odin/` suite is green on PostgreSQL (521 passed).
+
+> **2026-10-26 update:** the rule order changed — `ANTIFREEZE` now answers *first*, but only for
+> missing/unusable weather or `outside_temp < -8`, and the `-8…10 °C` default band follows the
+> schedule rules again. See [Antifreeze fail-safe](#antifreeze-fail-safe) and
+> [[2026-10-26-relay-target-state-antifreeze-review]].
 
 ## Overview
 
@@ -30,13 +44,19 @@ periods with `target_state`/`target_temp`, but it sits at the *bottom* of the pr
 `SUMMER`/`ANTIFREEZE`/`MIDSEASON` weather band or the MNT-250 cycle window always wins, and valves
 are rejected outright. The override is the same period shape promoted to the top of that chain.
 
-Decision order in `RelayTargetStateService.get_target_state()`:
+Decision order in `RelayTargetStateService.get_target_state()`, band by band:
 
-1. `force_state` → `(force_state, FORCED)`
-2. **`override_schedule` → `(target_state, OVERRIDE)`** ← new
-3. weather bands (`ANTIFREEZE`/`SUMMER`/`MIDSEASON`) or servo `UNKNOWN`/`IGNORED`
+0. no usable weather, or `outside_temp < -8` → `(ON, ANTIFREEZE)`, `(OFF, ANTIFREEZE)` for a servo
+1. `force_state` → `(force_state, FORCED)`, inverted for a servo
+2. **`override_schedule` → `(target_state, OVERRIDE)`** ← new, inverted for a servo
+3. `SUMMER` → `OFF`; `MIDSEASON` → pump cadence / servo open; servo `UNKNOWN`/`IGNORED` before the
+   manual helper
 4. schedule cycle window → `CYCLE`
 5. regular `schedule` period → `BASIC`, else `FALLBACK`
+
+Steps 4 and 5 live in the `-8…10 °C` default band (`WeatherMode.DEFAULT`), which step 0 does *not*
+consume: only missing weather and real antifreeze short-circuit. Valves skip the weather entirely —
+`force_state`, then the override, else `(UNKNOWN, FALLBACK)`.
 
 ## Step 1 — New mode and migration
 
@@ -76,7 +96,25 @@ def get_current_override_period(self) -> dict | None:
     return self.get_current_period(self.relay.context.get("override_schedule", {}))
 ```
 
-The rule sits before the `RelayType` dispatch (`services.py:195`), which is what makes valves work:
+The rule used to sit before the `RelayType` dispatch, which is what made valves work. Since
+2026-10-26 it lives in `get_manual_target_state()` and every type branch calls it in the same place,
+so a servo gets the inversion and a valve still honours the override:
+
+```python
+def get_manual_target_state(self, invert: bool = False) -> tuple[RelayState, RelayMode] | None:
+    if (force_state := self.relay.force_state) in RelayState.active_values():
+        state = RelayState(force_state)
+        return self.invert_state(state) if invert else state, RelayMode.FORCED
+
+    if period := self.get_current_override_period():
+        if (override_state := period.get("target_state")) in RelayState.active_values():
+            state = RelayState(override_state)
+            return self.invert_state(state) if invert else state, RelayMode.OVERRIDE
+
+    return None
+```
+
+At HEAD the same block sat in `get_target_state()` before the dispatch:
 
 ```python
 def get_target_state(self) -> tuple[RelayState, RelayMode]:
@@ -166,10 +204,10 @@ was red before the feature work started:
 
 - `TestRelaysWeatherModes` and the midseason-at-night cycle test now use `12.0`.
 - `TestRelaysApparentTempGate` moved from `16` to `18` (`18 °C`, 85 % humidity, 5 m/s → 16.3 °C
-  feels-like → `MIDSEASON`; 1 m/s → 19.1 °C → `SUMMER`); the raw lower edge test uses `10.0`
-  (feels-like 2.4 °C) and still expects `CYCLE`.
+  feels-like → `MIDSEASON`; 1 m/s → 19.1 °C → `SUMMER`); the raw lower edge test uses `9.9`
+  (feels-like 3.0 °C) and still expects `CYCLE`, while `10.0` moved to `MIDSEASON` on 2026-10-26.
 - `test_relays__cycle_does_not_leak_into_other_temperature_bands` params became
-  `18.0/SUMMER`, `10.1/MIDSEASON`, `10.0/CYCLE` (antifreeze edges unchanged).
+  `18.0/SUMMER`, `10.0/MIDSEASON`, `9.9/CYCLE` (antifreeze edges unchanged).
 
 ## Step 5 — Tests
 
@@ -188,17 +226,66 @@ being dropped, and a VALVE relay being accepted. Its `setup_method` clears the c
 otherwise accumulate across the suite. `TestRelaysAPI` also asserts the list endpoint survives a
 malformed override context instead of returning 500.
 
+## Antifreeze fail-safe
+
+`RelayTargetStateService` answers `ANTIFREEZE` first for two cases only — a missing or unusable
+weather row, and `outside_temp < -8` — with pump `(ON, ANTIFREEZE)` and servo `(OFF, ANTIFREEZE)`.
+The check runs before `force_state` and the override, so a manual stop cannot stick while the
+weather is missing or freezing: that is the whole point of the fail-safe.
+
+"The `-8…10 °C` gap has no band" was the original confusion. `get_weather_mode()` now returns the
+private `WeatherMode` enum (`NONE`/`ANTIFREEZE`/`DEFAULT`/`MIDSEASON`/`SUMMER`), so the default band
+is a band like any other and keeps the cycle, the regular `schedule` and servo regulation reachable.
+Both `WeatherMode.NONE` (no usable weather) and `WeatherMode.ANTIFREEZE` (`outside_temp < -8`)
+trigger the fail-safe. A valve skips the weather classification entirely, so an unusable weather
+row cannot break its `force_state`/override answer.
+
+A row is usable only through `get_latest_weather()`: it needs a temperature, a `period` within two
+hours of now in either direction, and a `synced_at` within the last two hours. `Weather.objects.current()`
+alone is not enough — it is ageless and can even return a future forecast slot. Eligible rows are
+filtered before one is picked (the most recent started row, else the nearest upcoming one), so
+neither a far-ahead forecast nor a temperature-less row can shadow a usable earlier row. The
+temperature check reads `data #>> ['temp', 'avg']`, because a plain `data__temp__avg__isnull`
+lookup lets a JSON `null` through.
+
+Consequences worth knowing before touching this code:
+
+- `force_state` and the override reach every type again through one `get_manual_target_state()`
+  helper. Servos invert the logical state; a forced or overridden close still loses to `IGNORED`
+  (related pump off) and to the fail-safe.
+- Boiler mode follows the computed pump state. With no fresh weather every active pump reports `ON`,
+  so `BoilerModeService` sees `MIXED`; a pump that is forced `OFF` inside the default band now
+  aggregates to `OFF` again.
+
+`TestRelaysAntifreezeFailSafe` covers the pump/servo/valve answers without weather, `temp < -8`,
+the fail-safe beating `force_state` and the override, and a servo with a dead sensor reporting
+`UNKNOWN`. `TestRelaysWeatherFreshness` pins the two-hour window (old `period`, dead `synced_at`,
+future forecast slot, and a row just inside it). `TestRelaysManualControl` covers the servo
+inversion, `IGNORED` beating a forced close and valve force handling. Everything else that relies
+on the default band creates a fresh `0.0 °C` row through `create_weather()` in
+`odin/tests/factories.py`.
+
 ## Test Results
 
-- `odin/tests/models/test_relays.py` + `odin/tests/api/test_relays.py` → **184 passed**.
-- Full `odin/` suite → 503 passed, 7 failed — all `test_sensor_logs` cases failing with
-  `DISTINCT ON fields is not supported by this database backend`, i.e. the Postgres-only
-  `SensorLogManager.current()`, unrelated to this change.
+- `odin/tests/models/test_relays.py` + `odin/tests/api/test_relays.py` → **184 passed** at first
+  merge. After the 2026-10-26 rewrite the relay model module alone is 163 passed, with the fail-safe,
+  freshness and manual-control classes added.
+
+  > **Note 2026-10-26 (Consistency Agent):** verified on the current tree — both relay test modules
+  > together give **210 passed**, and the full `odin/` suite gives **539 passed** on PostgreSQL.
+  > The 163/195/521 figures above are mid-session counts from the rewrite day, kept as record.
+- Full `odin/` suite on the rewritten tree (PostgreSQL available) → **539 passed, 0 failed**.
+- Full `odin/` suite in the MNT-255 sandbox (SQLite + locmem cache, no Redis) → 503 passed,
+  7 failed — all `test_sensor_logs` cases failing with `DISTINCT ON fields is not supported by
+  this database backend`, i.e. the Postgres-only `SensorLogManager.current()`, unrelated to this
+  change. That run predates the rewrite; the failure mode is the backend, not the feature.
 - `ruff check`, `ruff format --check`, `ty check`, `manage.py makemigrations --check`, `manage.py
   check` → clean.
+- The 2026-10-26 rewrite itself: the unstaged draft measured **98 failed / 107 passed** across the
+  relay and boiler-mode tests; see [[2026-10-26-relay-target-state-antifreeze-review]].
 
-> The suite was executed against an SQLite + locmem-cache harness because the build sandbox has no
-> PostgreSQL or Redis; CI (`make test`) runs the same tests on Postgres.
+> CI (`make test`) runs the same tests on Postgres, so the PostgreSQL numbers are the ones that
+> count.
 
 ---
 
@@ -219,3 +306,5 @@ malformed override context instead of returning 500.
 - Related: [[2026-10-15-mnt-250-schedule-cycle-rule]] — the `CYCLE` rule the override outranks
 - Related: [[2026-10-22-mnt-253-midseason-humidity-wind-research]] — the 10/17 band re-baselined here
 - External: Linear MNT-255
+- External: [Linear MNT-259](https://linear.app/mnt/issue/MNT-259/override-by-schedule) — the
+  follow-up ticket that re-ran the same plan and verified it on PostgreSQL

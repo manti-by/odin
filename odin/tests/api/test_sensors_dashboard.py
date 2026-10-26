@@ -12,7 +12,7 @@ from rest_framework.test import APIClient
 from odin.apps.core.redis_bus import RedisBus
 from odin.apps.relays.models import RelayMode, RelayState, RelayType
 from odin.apps.sensors.models import Sensor, SensorType
-from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory
+from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory, create_weather
 
 
 @pytest.mark.django_db
@@ -128,6 +128,7 @@ class TestDs18B20DashboardAPI:
 
     def test_ds18b20_dashboard__relay_mode_computed_on_read(self):
         """Relay mode is recomputed on read so the tile never shows a stale mode."""
+        create_weather()
         pump = RelayFactory(relay_id="pump1", type=RelayType.PUMP, state=RelayState.OFF)
         servo = RelayFactory(relay_id="servo1", type=RelayType.SERVO, related_relay=pump, mode=RelayMode.MIDSEASON)
         sensor = SensorFactory(type=SensorType.DS18B20, sensor_id="ds1", relay=servo, is_visible=True)
