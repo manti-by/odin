@@ -32,11 +32,16 @@ class RelayState(models.TextChoices):
     def active_choices(cls) -> list:
         return [(cls.ON.value, cls.ON.label), (cls.OFF.value, cls.OFF.label)]
 
+    @classmethod
+    def active_values(cls) -> tuple[str, str]:
+        return cls.ON.value, cls.OFF.value
+
 
 class RelayMode(models.TextChoices):
     UNKNOWN = "UNKNOWN", _("Unknown")
     FALLBACK = "FALLBACK", _("Fallback")
     FORCED = "FORCED", _("Forced")
+    OVERRIDE = "OVERRIDE", _("Override")
     IGNORED = "IGNORED", _("Ignored")
 
     SUMMER = "SUMMER", _("Summer")

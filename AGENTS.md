@@ -258,19 +258,31 @@ def schedule_update_weather():
   `RelayLog` row via `RelayLogService.log_change()` (`odin/api/v1/relays/views.py:52`,
   `odin/apps/relays/services.py:35`); servos link to their pump via the nullable
   `related_relay` self-FK.
-- Weather bands come from `RelayTargetStateService.get_weather_mode()` (`odin/apps/relays/services.py:101`),
+- Override schedule: `context["override_schedule"]` mirrors `context["schedule"]` but its periods are
+  state-only — `start_time`/`end_time`/`target_state` (`ON`/`OFF`, required), no `target_temp`. A
+  matching period is applied immediately after `force_state`, before the weather and schedule rules,
+  for every relay type including `VALVE`; the reported mode is `RelayMode.OVERRIDE`. `target_state`
+  is logical (`ON` = heat/run) and is inverted for `SERVO`, whose `ON` closes the circuit. `end_time`
+  is exclusive and overnight spans are supported. Periods with a missing or unknown `target_state`
+  are dropped before the active period is selected, so a later overlapping valid period still
+  applies (and only when none matches do the regular rules apply), while a period missing a time is
+  rejected by the serializers. Hand-edited context data (a context that is not an object, non-dict
+  period entries, non-string or non-list values) is skipped by `RelayTargetStateService` instead of
+  raising. `RelayMode.OVERRIDE` needs migration
+  `0012_alter_relay_mode_alter_relaylog_new_mode_and_more` (MNT-255).
+- Weather bands come from `RelayTargetStateService.get_weather_mode()` (`odin/apps/relays/services.py:106`),
   shared by pumps and servos; `ANTIFREEZE` (`outside_temp < -8`) and the lower midseason edge
-  (`outside_temp > 8`) stay on the **raw** temperature, so the fail-safe heat answer never depends
+  (`outside_temp > 10`) stay on the **raw** temperature, so the fail-safe heat answer never depends
   on fetched humidity/wind.
-- Midseason (`8 < outside_temp < 15`): pump runs only in the active daytime window (`hour >= 6 and
+- Midseason (`10 < outside_temp < 17`): pump runs only in the active daytime window (`hour >= 6 and
   hour % 2 == 0 and minute < 30`); servos stay open (`OFF, MIDSEASON`) for the whole band. Above
-  15 °C the band extends to `outside_temp < 20` while the Steadman apparent temperature
-  (`odin/apps/weather/services.py:apparent_temp`, `AT = Ta + 0.33e − 0.70ws − 4.00`) is `< 15` —
+  17 °C the band extends to `outside_temp < 20` while the Steadman apparent temperature
+  (`odin/apps/weather/services.py:apparent_temp`, `AT = Ta + 0.33e − 0.70ws − 4.00`) is `< 17` —
   a windy warm day keeps cycling the pump, a calm one stays `SUMMER`. Any missing `humidity`/
   `wind_speed` degrades to the raw-temp band (MNT-253). Mind that `WeatherManager.current()` is
   ageless — with no fresh hour row it returns the **last** `Weather` row no matter how old it is
   (`odin/apps/weather/models.py:15-21`), so the gate can act on stale weather.
-- Schedule cycle: when none of the higher-priority rules applies (`FORCED`, servo `UNKNOWN`,
+- Schedule cycle: when none of the higher-priority rules applies (`FORCED`, `OVERRIDE`, servo `UNKNOWN`,
   servo `IGNORED`, `SUMMER`, `ANTIFREEZE`, `MIDSEASON`), the relay is forced open for 30 minutes
   every 2 hours — `hour % 2 == 0 and minute < 30`, **no night guard**, so 00:00–00:30 runs too
   (`odin/apps/relays/services.py:73`). Pump `(ON, CYCLE)`, servo `(OFF, CYCLE)`. Outside the

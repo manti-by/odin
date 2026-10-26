@@ -52,24 +52,46 @@ class RelayPeriodSerializer(BaseSerializer):
     target_state = serializers.ChoiceField(choices=("ON", "OFF"), required=False, allow_null=True)
 
 
+def _validate_schedule_periods(periods: list[dict]) -> list[dict]:
+    for period in periods:
+        if period.get("start_time") is None or period.get("end_time") is None:
+            raise serializers.ValidationError("Schedule period requires start_time and end_time")
+        if period["start_time"] == period["end_time"]:
+            raise serializers.ValidationError("Schedule period start and end times must differ")
+
+    ranges = [range_ for period in periods for range_ in _time_ranges(period["start_time"], period["end_time"])]
+    for index, (start_a, end_a) in enumerate(ranges):
+        for start_b, end_b in ranges[index + 1 :]:
+            if start_a < end_b and start_b < end_a:
+                raise serializers.ValidationError("Schedule periods must not overlap")
+    return periods
+
+
 class RelayScheduleSerializer(BaseSerializer):
     periods = serializers.ListField(child=RelayPeriodSerializer(), max_length=MAX_SCHEDULE_PERIODS, required=False)
 
     def validate_periods(self, periods: list[dict]) -> list[dict]:
-        for period in periods:
-            if period["start_time"] == period["end_time"]:
-                raise serializers.ValidationError("Schedule period start and end times must differ")
+        return _validate_schedule_periods(periods)
 
-        ranges = [range_ for period in periods for range_ in _time_ranges(period["start_time"], period["end_time"])]
-        for index, (start_a, end_a) in enumerate(ranges):
-            for start_b, end_b in ranges[index + 1 :]:
-                if start_a < end_b and start_b < end_a:
-                    raise serializers.ValidationError("Schedule periods must not overlap")
-        return periods
+
+class RelayOverridePeriodSerializer(BaseSerializer):
+    start_time = serializers.RegexField(TIME_PATTERN, error_messages={"invalid": TIME_ERROR})
+    end_time = serializers.RegexField(TIME_PATTERN, error_messages={"invalid": TIME_ERROR})
+    target_state = serializers.ChoiceField(choices=("ON", "OFF"))
+
+
+class RelayOverrideScheduleSerializer(BaseSerializer):
+    periods = serializers.ListField(
+        child=RelayOverridePeriodSerializer(), max_length=MAX_SCHEDULE_PERIODS, required=False
+    )
+
+    def validate_periods(self, periods: list[dict]) -> list[dict]:
+        return _validate_schedule_periods(periods)
 
 
 class RelayUpdateContextSerializer(BaseSerializer):
     schedule = RelayScheduleSerializer(required=False)
+    override_schedule = RelayOverrideScheduleSerializer(required=False)
 
 
 class RelayUpdateSerializer(BaseSerializer):
@@ -77,8 +99,8 @@ class RelayUpdateSerializer(BaseSerializer):
     force_state = serializers.ChoiceField(choices=("ON", "OFF"), required=False, allow_null=True)
 
     def validate(self, attrs: dict) -> dict:
-        schedule = attrs.get("context", {}).get("schedule")
-        if schedule is not None and (relay := self.instance):
+        context = attrs.get("context", {})
+        if (schedule := context.get("schedule")) is not None and (relay := self.instance):
             periods = schedule.get("periods") or []
             if relay.type == RelayType.VALVE and periods:
                 raise serializers.ValidationError({"context": "Schedule is not supported for VALVE relays"})
@@ -87,6 +109,11 @@ class RelayUpdateSerializer(BaseSerializer):
                     raise serializers.ValidationError({"context": "SERVO schedule periods require target_temp"})
                 if relay.type == RelayType.PUMP and period.get("target_state") is None:
                     raise serializers.ValidationError({"context": "PUMP schedule periods require target_state"})
+
+        if (override := context.get("override_schedule")) is not None:
+            for period in override.get("periods") or []:
+                if period.get("target_state") is None:
+                    raise serializers.ValidationError({"context": "Override schedule periods require target_state"})
         return attrs
 
     @property
