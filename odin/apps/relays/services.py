@@ -104,11 +104,33 @@ class RelayTargetStateService:
 
         return None
 
+    def get_context(self) -> dict:
+        """Return the relay context as a dict.
+
+        `context` is a free-form JSON column, so a hand-edited value may be a list, a string or
+        null; those are treated as empty instead of raising on `.get()`.
+        """
+        return self.relay.context if isinstance(self.relay.context, dict) else {}
+
     def get_current_period_from_schedule(self) -> dict | None:
-        return self.get_current_period(self.relay.context.get("schedule", {}))
+        return self.get_current_period(self.get_context().get("schedule", {}))
 
     def get_current_override_period(self) -> dict | None:
-        return self.get_current_period(self.relay.context.get("override_schedule", {}))
+        """Return the override period covering now, or None.
+
+        Periods without an `ON`/`OFF` `target_state` are dropped before the lookup, so a later
+        overlapping valid period still applies instead of the override being silently ignored.
+        """
+        schedule = self.get_context().get("override_schedule", {})
+        if isinstance(schedule, dict) and isinstance(periods := schedule.get("periods"), list):
+            schedule = {
+                "periods": [
+                    period
+                    for period in periods
+                    if isinstance(period, dict) and period.get("target_state") in RelayState.active_values()
+                ]
+            }
+        return self.get_current_period(schedule)
 
     def get_weather_mode(self) -> RelayMode | None:
         """Classify the outside weather into a heating mode, or None when no band applies.

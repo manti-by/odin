@@ -264,10 +264,12 @@ def schedule_update_weather():
   for every relay type including `VALVE`; the reported mode is `RelayMode.OVERRIDE`. `target_state`
   is logical (`ON` = heat/run) and is inverted for `SERVO`, whose `ON` closes the circuit. `end_time`
   is exclusive and overnight spans are supported. Periods with a missing or unknown `target_state`
-  are skipped, so the regular rules apply, while a period missing a time is rejected by the
-  serializers. Hand-edited context data (non-dict entries, non-string or non-list values) is skipped
-  by `RelayTargetStateService.get_current_period()` instead of raising. `RelayMode.OVERRIDE` needs
-  migration `0012_alter_relay_mode_alter_relaylog_new_mode_and_more` (MNT-255).
+  are dropped before the active period is selected, so a later overlapping valid period still
+  applies (and only when none matches do the regular rules apply), while a period missing a time is
+  rejected by the serializers. Hand-edited context data (a context that is not an object, non-dict
+  period entries, non-string or non-list values) is skipped by `RelayTargetStateService` instead of
+  raising. `RelayMode.OVERRIDE` needs migration
+  `0012_alter_relay_mode_alter_relaylog_new_mode_and_more` (MNT-255).
 - Weather bands come from `RelayTargetStateService.get_weather_mode()` (`odin/apps/relays/services.py:106`),
   shared by pumps and servos; `ANTIFREEZE` (`outside_temp < -8`) and the lower midseason edge
   (`outside_temp > 10`) stay on the **raw** temperature, so the fail-safe heat answer never depends

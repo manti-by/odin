@@ -37,9 +37,10 @@ The implementation plan consisted of 8 steps:
 # odin/apps/relays/models.py
 from django.db import models
 
+
 class RelayMode(models.TextChoices):
-    #...
-    OVERRIDE = 'OVERRIDE'
+    # ...
+    OVERRIDE = "OVERRIDE"
 ```
 
 ## Step 3 — Update RelayTargetStateService
@@ -47,11 +48,11 @@ class RelayMode(models.TextChoices):
 ```python
 # odin/apps/relays/services.py
 def get_target_state(self):
-    #...
+    # ...
     if self.relay.context.get("override_schedule"):
         # Apply override schedule
         pass
-    #...
+    # ...
 ```
 
 ## Step 4 — Update RelayScheduleSerializer
@@ -60,13 +61,17 @@ def get_target_state(self):
 # odin/api/v1/relays/serializers.py
 from rest_framework import serializers
 
+
 class RelayOverridePeriodSerializer(serializers.Serializer):
     start_time = serializers.RegexField(TIME_PATTERN, error_messages={"invalid": TIME_ERROR})
     end_time = serializers.RegexField(TIME_PATTERN, error_messages={"invalid": TIME_ERROR})
     target_state = serializers.ChoiceField(choices=("ON", "OFF"))
 
+
 class RelayOverrideScheduleSerializer(serializers.Serializer):
-    periods = serializers.ListField(child=RelayOverridePeriodSerializer(), max_length=MAX_SCHEDULE_PERIODS, required=False)
+    periods = serializers.ListField(
+        child=RelayOverridePeriodSerializer(), max_length=MAX_SCHEDULE_PERIODS, required=False
+    )
 ```
 
 ## Step 5 — Add new test class TestRelaysOverrideSchedule
@@ -74,6 +79,7 @@ class RelayOverrideScheduleSerializer(serializers.Serializer):
 ```python
 # odin/tests/models/test_relays.py
 from django.test import TestCase
+
 
 class TestRelaysOverrideSchedule(TestCase):
     def test_override_schedule(self):
@@ -86,6 +92,7 @@ class TestRelaysOverrideSchedule(TestCase):
 ```python
 # odin/tests/api/test_relays.py
 from django.test import TestCase
+
 
 class TestRelaysUpdateAPI(TestCase):
     def _override(self, *periods):
@@ -105,7 +112,14 @@ class TestRelaysUpdateAPI(TestCase):
 **File:** `wiki/pages/2026-10-25-mnt-255-override-by-schedule.md`: Added a new wiki page to document the changes.
 
 ## Test Results
-All tests have passed.
+- `odin/tests/models/test_relays.py` + `odin/tests/api/test_relays.py` → **186 passed** (the relay
+  suite as a whole, including `test_relay_log` and `test_relay_admin`, is 211 passed).
+- Full `odin/` suite (local, PostgreSQL available) → **513 passed, 0 failed**.
+- The companion implementation record
+  (`wiki/pages/2026-10-25-mnt-255-override-by-schedule.md`) reports 7 failures because it was run in
+  a sandbox with SQLite and no Redis: every `test_sensor_logs` case fails on
+  `DISTINCT ON fields is not supported by this database backend`. That is the Postgres-only
+  `SensorLogManager.current()` and is unrelated to this change; on PostgreSQL the same tests pass.
 
 ## Follow-ups
 - None

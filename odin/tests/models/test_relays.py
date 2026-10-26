@@ -1070,6 +1070,32 @@ class TestRelaysOverrideSchedule:
             assert state == RelayState.ON
             assert mode == RelayMode.FALLBACK
 
+    @pytest.mark.parametrize("context", ([], "08:00-18:00"))
+    def test_relays__context_that_is_not_an_object_does_not_break_the_read(self, context):
+        """A top-level context that is not a dict is treated as empty."""
+        relay = self._pump([])
+        relay.context = context
+        relay.save()
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.FALLBACK
+
+    def test_relays__override_skips_an_invalid_state_before_the_next_period(self):
+        """An overlapping period without a usable target_state is skipped, the next one applies."""
+        relay = self._pump(
+            [
+                {"start_time": "08:00", "end_time": "18:00"},
+                {"start_time": "08:00", "end_time": "18:00", "target_state": "OFF"},
+            ]
+        )
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.OFF
+            assert mode == RelayMode.OVERRIDE
+
 
 @pytest.mark.django_db
 class TestRelaysForceState:
