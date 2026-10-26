@@ -9,8 +9,8 @@ by the plugin.
 
 _Newest first._
 
-- [MNT-259: Override by schedule](pages/2026-10-25-mnt-259-override-by-schedule.md) — Implementation of MNT-259: Override by schedule (2026-10-25)
-- [MNT-255: Override by schedule](pages/2026-10-25-mnt-255-override-by-schedule.md) — Added a time-based `context["override_schedule"]` applied right after `force_state` for pumps, servos and valves, reporting the new `RelayMode.OVERRIDE` (migration 0012); also re-baselined the midseason tests to the already-merged 10/17 band (184 relay tests passed) (2026-10-25)
+- [RelayTargetStateService review — antifreeze fail-safe and rule order](pages/2026-10-26-relay-target-state-antifreeze-review.md) — Reviewed the uncommitted antifreeze fail-safe rewrite: `None` from `get_weather_mode()` swallowed the whole `-8…10 °C` band and force/override were dropped for servos and valves (98 of 205 relay/boiler tests failing); recorded the agreed rule order (fail-safe for missing or >2 h-old weather only, antifreeze beats a forced stop, servos always open in midseason, `>= 10 °C` is midseason) and the change list for the service (2026-10-26)
+- [MNT-255: Override by schedule](pages/2026-10-25-mnt-255-override-by-schedule.md) — Added a time-based `context["override_schedule"]` applied right after `force_state` for pumps, servos and valves, reporting the new `RelayMode.OVERRIDE` (migration 0012); also re-baselined the midseason tests to the already-merged 10/17 band, and added an antifreeze fail-safe for a missing weather band that outranks `force_state` and leaves the cycle/schedule branches dormant — 210 relay tests pass, 539 full-suite tests on PostgreSQL (MNT-255 and MNT-259, merged 2026-10-26) (2026-10-25)
 
 - [MNT-253 — Midseason humidity & wind research](pages/2026-10-22-mnt-253-midseason-humidity-wind-research.md) — Researched how outside temp/humidity/wind act on the house; the band should gate on the Steadman apparent temperature `AT = Ta + 0.33e − 0.70ws − 4.00`, asymmetrically (raw bottom edge, feels-like top edge); validated on 16 months of production data — wind adds only ~3%/m·s⁻¹ to the indoor fall rate, the band would gain 618 short windy spells/lose 41 h, and macOS TCC was found blocking psql from the LAN (2026-10-22)
 
@@ -62,7 +62,8 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [Midseason pump cadence — 30 minutes every 2 hours](pages/2026-10-11-midseason-pump-cadence-30min.md)
 - [MNT-250 spec review — schedule cycle rule](pages/2026-10-15-mnt-250-schedule-cycle-rule.md)
 - [MNT-253 — Midseason humidity & wind research](pages/2026-10-22-mnt-253-midseason-humidity-wind-research.md)
-- [MNT-259: Override by schedule](pages/2026-10-25-mnt-259-override-by-schedule.md) — 2026-10-25
+- [MNT-255: Override by schedule](pages/2026-10-25-mnt-255-override-by-schedule.md) — 2026-10-25 (also covers MNT-259)
+- [RelayTargetStateService review — antifreeze fail-safe and rule order](pages/2026-10-26-relay-target-state-antifreeze-review.md) — 2026-10-26
 
 ### Boiler / eBus control
 

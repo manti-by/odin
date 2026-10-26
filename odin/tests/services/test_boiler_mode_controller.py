@@ -1,14 +1,10 @@
-import pytest
+from datetime import timedelta
 
-from django.utils import timezone
+import pytest
 
 from odin.apps.boiler.services.mode import BoilerMode, BoilerModeService
 from odin.apps.relays.models import RelayState, RelayType
-from odin.tests.factories import RelayFactory, WeatherFactory
-
-
-def create_weather(temp: str) -> None:
-    WeatherFactory(period=timezone.now(), data={"temp": {"avg": temp}})
+from odin.tests.factories import RelayFactory, create_weather
 
 
 def create_pumps(*states: RelayState) -> None:
@@ -27,9 +23,16 @@ class TestGetPumpsState:
         assert BoilerModeService().get_pumps_state() == RelayState.UNKNOWN
 
     def test__all_pumps_off__off(self):
+        create_weather("0.0")
         create_pumps(RelayState.OFF, RelayState.OFF)
 
         assert BoilerModeService().get_pumps_state() == RelayState.OFF
+
+    def test__all_pumps_off_without_weather__on(self):
+        """A weather outage heats unconditionally, so a forced stop cannot aggregate to OFF."""
+        create_pumps(RelayState.OFF, RelayState.OFF)
+
+        assert BoilerModeService().get_pumps_state() == RelayState.ON
 
     def test__any_pump_on__on(self):
         create_pumps(RelayState.OFF, RelayState.ON)
@@ -71,6 +74,20 @@ class TestGetTargetMode:
 
     def test__no_weather__mixed(self):
         create_pumps(RelayState.ON)
+
+        assert BoilerModeService().get_target_mode() == BoilerMode.MIXED
+
+    def test__weather_that_stopped_syncing__mixed(self):
+        """A dead provider counts as no weather here too, matching what the relays see."""
+        create_pumps(RelayState.ON)
+        create_weather("0.0", synced_delta=timedelta(hours=3))
+
+        assert BoilerModeService().get_target_mode() == BoilerMode.MIXED
+
+    def test__weather_from_a_forecast_slot_far_ahead__mixed(self):
+        """A row whose period is hours away may not drive the boiler either."""
+        create_pumps(RelayState.ON)
+        create_weather("0.0", period_delta=timedelta(hours=-3))
 
         assert BoilerModeService().get_target_mode() == BoilerMode.MIXED
 

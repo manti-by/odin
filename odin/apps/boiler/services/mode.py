@@ -5,7 +5,7 @@ from django.db import models
 from odin.apps.boiler.services.status import BoilerStatusService
 from odin.apps.relays.models import Relay, RelayState, RelayType
 from odin.apps.relays.services import RelayTargetStateService
-from odin.apps.weather.models import Weather
+from odin.apps.weather.services import get_latest_weather
 
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ class BoilerModeService:
             logger.info("Boiling override active, leaving the boiler mode untouched")
             return None
 
-        weather = Weather.objects.current()
+        weather = get_latest_weather()
         if not weather or (outside_temp := weather.temp) is None:
             return BoilerMode.MIXED
 

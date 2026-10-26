@@ -8,7 +8,7 @@ from rest_framework import status
 
 from odin.apps.relays.admin import RelayAdmin
 from odin.apps.relays.models import Relay, RelayMode, RelayType
-from odin.tests.factories import DjangoAdminUserFactory, RelayFactory
+from odin.tests.factories import DjangoAdminUserFactory, RelayFactory, create_weather
 
 
 @pytest.mark.django_db
@@ -35,6 +35,7 @@ class TestRelayAdmin:
 @pytest.mark.views
 class TestRelayAdminSaveModel:
     def setup_method(self) -> None:
+        create_weather()
         self.user = DjangoAdminUserFactory()
         self.relay = RelayFactory()
 
@@ -118,5 +119,4 @@ class TestRelayAdminSaveModel:
         mock_publish_relay_control.assert_called_once()
         call_kwargs = mock_publish_relay_control.call_args.kwargs
         assert call_kwargs["relay_id"] == self.relay.relay_id
-        # Just check that state is sent (could be ON or UNKNOWN depending on current time)
-        assert call_kwargs["state"] in ("ON", "UNKNOWN")
+        assert call_kwargs["state"] == "ON"

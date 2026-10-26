@@ -11,6 +11,34 @@ VAPOR_PRESSURE_BASE = Decimal("6.105")
 VAPOR_PRESSURE_SCALE = Decimal("17.27")
 VAPOR_PRESSURE_OFFSET = Decimal("237.7")
 
+WEATHER_MAX_AGE = timedelta(hours=2)
+
+
+def get_latest_weather(max_age: timedelta = WEATHER_MAX_AGE) -> Weather | None:
+    """Return the weather row that can drive the heating rules right now, or None.
+
+    `Weather.objects.current()` falls back to the last row regardless of age and, having no
+    ordering, to the highest pk — which can be a forecast slot in the future. A row only counts as
+    usable when its `period` sits within `max_age` of now in either direction *and* the provider
+    wrote it (`synced_at`) within the last `max_age`, so a dead feed cannot pin the last band
+    forever.
+
+    Args:
+        max_age: maximum distance between now and both timestamps.
+
+    Returns:
+        The current Weather row, or None when there is no fresh one.
+    """
+    weather = Weather.objects.current()
+    if not weather:
+        return None
+
+    now = timezone.now()
+    if abs(now - weather.period) > max_age or now - weather.synced_at > max_age:
+        return None
+
+    return weather
+
 
 def apparent_temp(temp: Decimal | None, humidity: Decimal | None, wind_speed: Decimal | None) -> Decimal | None:
     """Steadman apparent temperature, combining dry-bulb temp, relative humidity and wind.

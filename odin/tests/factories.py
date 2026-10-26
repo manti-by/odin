@@ -1,9 +1,12 @@
+from datetime import timedelta
+
 import factory.fuzzy
 from factory import DictFactory
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyDecimal
 
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from odin.apps.core.models import Auth, Device
 from odin.apps.currency.models import Currency, ExchangeRate
@@ -113,6 +116,24 @@ class WeatherFactory(DjangoModelFactory):
 
     class Meta:
         model = Weather
+
+
+def create_weather(
+    temp: str = "0.0",
+    *,
+    period_delta: timedelta = timedelta(0),
+    synced_delta: timedelta = timedelta(0),
+) -> Weather:
+    """Create one weather row, shifted in time when a freshness case needs it.
+
+    The default temperature sits inside the `-8 … 10 °C` band where the relay cycle and the
+    schedules apply; `period_delta` and `synced_delta` age the two timestamps independently.
+    """
+    weather = WeatherFactory(period=timezone.now() - period_delta, data={"temp": {"avg": temp}})
+    if synced_delta:
+        Weather.objects.filter(pk=weather.pk).update(synced_at=timezone.now() - synced_delta)
+        weather.refresh_from_db()
+    return weather
 
 
 class DeviceFactory(DjangoModelFactory):

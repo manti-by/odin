@@ -1,18 +1,32 @@
 import copy
 from decimal import Decimal
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
 from django.utils import timezone
 
 from odin.apps.relays.models import RelayLog, RelayMode, RelayState, RelayType
-from odin.apps.weather.models import Weather
-from odin.apps.weather.services import apparent_temp
+from odin.apps.weather.services import apparent_temp, get_latest_weather
 
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
 
     from odin.apps.relays.models import Relay
+
+
+class WeatherMode(Enum):
+    """Outside weather classification driving the relay rules.
+
+    Kept apart from `RelayMode` so "no usable weather" stays distinct from the `-8 … 10 °C` default
+    band: they only share the `ANTIFREEZE` label, and only where a mode is reported.
+    """
+
+    NONE = auto()
+    ANTIFREEZE = auto()
+    DEFAULT = auto()
+    MIDSEASON = auto()
+    SUMMER = auto()
 
 
 class RelayLogService:
@@ -67,7 +81,7 @@ class RelayTargetStateService:
 
     def __init__(self, relay: Relay):
         self.relay = relay
-        self.weather = Weather.objects.current()
+        self.weather = get_latest_weather()
         self.now = timezone.localtime()
 
     def is_cycle_window(self) -> bool:
@@ -132,46 +146,79 @@ class RelayTargetStateService:
             }
         return self.get_current_period(schedule)
 
-    def get_weather_mode(self) -> RelayMode | None:
-        """Classify the outside weather into a heating mode, or None when no band applies.
+    def get_weather_mode(self) -> WeatherMode:
+        """Classify the current weather into the mode that drives the relay rules.
 
-        Antifreeze and the lower midseason edge stay on the raw temperature: the fail-safe heat
-        answer must not depend on fetched humidity/wind. Above 17 °C the Steadman apparent
-        temperature extends midseason up to 20 °C, so a windy warm day keeps cycling radiators.
+        Missing weather and the whole `-8 … 10 °C` gap are different things: only the former is
+        `WeatherBand.NONE`, which is what the antifreeze fail-safe keys off. Antifreeze and the
+        lower midseason edge stay on the raw temperature, so the fail-safe heat answer never depends
+        on fetched humidity/wind. Above `SUMMER_TEMP_MIN` the Steadman apparent temperature extends
+        midseason up to `MIDSEASON_EXTENDED_TEMP_MAX`, so a windy warm day keeps cycling radiators.
         """
         if not self.weather or (outside_temp := self.weather.temp) is None:
-            return None
+            return WeatherMode.NONE
 
         if outside_temp < self.ANTIFREEZE_TEMP:
-            return RelayMode.ANTIFREEZE
+            return WeatherMode.ANTIFREEZE
 
-        if outside_temp >= self.SUMMER_TEMP_MIN:
-            feels_like = apparent_temp(outside_temp, self.weather.humidity, self.weather.wind_speed)
-            extended_midseason = (
-                outside_temp < self.MIDSEASON_EXTENDED_TEMP_MAX
-                and feels_like is not None
-                and feels_like < self.SUMMER_TEMP_MIN
-            )
-            return RelayMode.MIDSEASON if extended_midseason else RelayMode.SUMMER
+        if outside_temp < self.MIDSEASON_TEMP_MIN:
+            return WeatherMode.DEFAULT
 
-        if outside_temp > self.MIDSEASON_TEMP_MIN:
-            return RelayMode.MIDSEASON
+        if outside_temp < self.SUMMER_TEMP_MIN:
+            return WeatherMode.MIDSEASON
+
+        feels_like = apparent_temp(outside_temp, self.weather.humidity, self.weather.wind_speed)
+        extended_midseason = (
+            outside_temp < self.MIDSEASON_EXTENDED_TEMP_MAX
+            and feels_like is not None
+            and feels_like < self.SUMMER_TEMP_MIN
+        )
+        return WeatherMode.MIDSEASON if extended_midseason else WeatherMode.SUMMER
+
+    @staticmethod
+    def invert_state(state: RelayState) -> RelayState:
+        """Flip the logical state for a servo circuit, whose `ON` closes the circuit."""
+        return RelayState.OFF if state == RelayState.ON else RelayState.ON
+
+    def get_manual_target_state(self, invert: bool = False) -> tuple[RelayState, RelayMode] | None:
+        """Return the operator-requested state: `force_state`, else the active override period.
+
+        Pumps and servos call this after the antifreeze fail-safe, so a manual stop never wins over
+        the freeze protection. `invert` flips the state for servos: a logical `ON` (heat) opens the
+        circuit, a logical `OFF` (stop) closes it.
+
+        Returns:
+            The forced or overridden state and its mode, or None when neither applies.
+        """
+        if (force_state := self.relay.force_state) in RelayState.active_values():
+            state = RelayState(force_state)
+            return self.invert_state(state) if invert else state, RelayMode.FORCED
+
+        if period := self.get_current_override_period():
+            if (override_state := period.get("target_state")) in RelayState.active_values():
+                state = RelayState(override_state)
+                return self.invert_state(state) if invert else state, RelayMode.OVERRIDE
 
         return None
 
-    def get_pump_target_state(self) -> tuple[RelayState, RelayMode]:
-        match self.get_weather_mode():
-            case RelayMode.ANTIFREEZE:
-                # Anti freeze mode, always on
-                return RelayState.ON, RelayMode.ANTIFREEZE
-            case RelayMode.SUMMER:
-                # Summer mode, always off
-                return RelayState.OFF, RelayMode.SUMMER
-            case RelayMode.MIDSEASON:
-                # Midseason mode, should work for 30 minutes every 2nd hour, but not at night
-                if self.now.hour >= 6 and self.now.hour % 2 == 0 and self.now.minute < 30:
-                    return RelayState.ON, RelayMode.MIDSEASON
-                return RelayState.OFF, RelayMode.MIDSEASON
+    def get_pump_target_state(self, weather_mode: WeatherMode) -> tuple[RelayState, RelayMode]:
+        # Missing weather and real antifreeze both call for heat, and outrank any manual input
+        if weather_mode in (WeatherMode.NONE, WeatherMode.ANTIFREEZE):
+            return RelayState.ON, RelayMode.ANTIFREEZE
+
+        # Forced state and override schedule outrank the weather rules below
+        if manual := self.get_manual_target_state():
+            return manual
+
+        # Do not activate pumps at Summer
+        if weather_mode == WeatherMode.SUMMER:
+            return RelayState.OFF, RelayMode.SUMMER
+
+        # Midseason mode, should work for 30 minutes every 2nd hour, but not at night
+        if weather_mode == WeatherMode.MIDSEASON:
+            if self.now.hour >= 6 and self.is_cycle_window():
+                return RelayState.ON, RelayMode.MIDSEASON
+            return RelayState.OFF, RelayMode.MIDSEASON
 
         # Schedule branch, forced open circuit for 30 minutes every 2 hours
         if self.is_cycle_window():
@@ -184,20 +231,31 @@ class RelayTargetStateService:
 
         return RelayState.ON, RelayMode.FALLBACK
 
-    def get_servo_target_state(self) -> tuple[RelayState, RelayMode]:
-        # Open circuit if no sensor data
+    def get_servo_target_state(self, weather_mode: WeatherMode) -> tuple[RelayState, RelayMode]:
+        # Open circuit if the linked sensor is missing, stale or has no reading
         sensor = self.relay.sensor
         if not sensor or not sensor.is_alive or sensor.temp is None:
             return RelayState.OFF, RelayMode.UNKNOWN
 
-        # If related pump is OFF also do not close a servo
+        # Missing weather and real antifreeze both call for heat, and outrank any manual input
+        if weather_mode in (WeatherMode.NONE, WeatherMode.ANTIFREEZE):
+            return RelayState.OFF, RelayMode.ANTIFREEZE
+
+        # A servo must not close while its pump is off, not even for a forced or overridden close
         if related_relay := self.relay.related_relay:
             if related_relay.is_pump and not related_relay.is_on:
                 return RelayState.OFF, RelayMode.IGNORED
 
-        # Summer, antifreeze and midseason all keep the servo open (OFF)
-        if (mode := self.get_weather_mode()) is not None:
-            return RelayState.OFF, mode
+        # Forced state and override schedule outrank the weather rules below
+        if manual := self.get_manual_target_state(invert=True):
+            return manual
+
+        # Do not close servos at Summer or at Midseason
+        if weather_mode == WeatherMode.SUMMER:
+            return RelayState.OFF, RelayMode.SUMMER
+
+        if weather_mode == WeatherMode.MIDSEASON:
+            return RelayState.OFF, RelayMode.MIDSEASON
 
         # Schedule branch, forced open circuit for 30 minutes every 2 hours
         if self.is_cycle_window():
@@ -221,23 +279,19 @@ class RelayTargetStateService:
 
         return RelayState.OFF, RelayMode.FALLBACK
 
+    def get_valve_target_state(self) -> tuple[RelayState, RelayMode]:
+        """Valves are driven locally: weather is irrelevant, only explicit input applies."""
+        if manual := self.get_manual_target_state():
+            return manual
+
+        return RelayState.UNKNOWN, RelayMode.FALLBACK
+
     def get_target_state(self) -> tuple[RelayState, RelayMode]:
-        if self.relay.force_state is not None:
-            return self.relay.force_state, RelayMode.FORCED
-
-        # Override schedule wins over every computed rule, including weather and the schedule cycle
-        if period := self.get_current_override_period():
-            if (override_state := period.get("target_state")) in RelayState.active_values():
-                state = RelayState(override_state)
-                # A servo's ON closes the circuit, so an ON override (heat/run) must open it
-                if self.relay.type == RelayType.SERVO:
-                    state = RelayState.OFF if state == RelayState.ON else RelayState.ON
-                return state, RelayMode.OVERRIDE
-
+        weather_mode = self.get_weather_mode()
         match self.relay.type:
             case RelayType.PUMP:
-                return self.get_pump_target_state()
+                return self.get_pump_target_state(weather_mode=weather_mode)
             case RelayType.SERVO:
-                return self.get_servo_target_state()
+                return self.get_servo_target_state(weather_mode=weather_mode)
             case _:
-                return RelayState.UNKNOWN, RelayMode.FALLBACK
+                return self.get_valve_target_state()

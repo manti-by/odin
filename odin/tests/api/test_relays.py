@@ -14,7 +14,7 @@ from rest_framework.test import APIClient
 from odin.apps.core.models import Auth
 from odin.apps.relays.models import Relay, RelayMode, RelayState, RelayType
 from odin.apps.sensors.models import Sensor
-from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory
+from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory, create_weather
 
 
 @pytest.mark.django_db
@@ -143,6 +143,7 @@ class TestRelaysRetrieveAPI:
 
     def test_relays__retrieve_computes_mode_on_read(self):
         """Mode is recomputed on read so a stale stored mode is never returned."""
+        create_weather()
         pump: Relay = RelayFactory(type=RelayType.PUMP, state=RelayState.OFF)
         relay: Relay = RelayFactory(type=RelayType.SERVO, related_relay=pump, mode=RelayMode.MIDSEASON)
         sensor: Sensor = SensorFactory(relay=relay)
@@ -155,6 +156,21 @@ class TestRelaysRetrieveAPI:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["mode"] == RelayMode.IGNORED
+
+    def test_relays__retrieve_reports_the_fail_safe_without_weather(self):
+        """A weather outage heats on every type: the servo reports ANTIFREEZE, never UNKNOWN."""
+        relay: Relay = RelayFactory(type=RelayType.SERVO)
+        sensor: Sensor = SensorFactory(relay=relay)
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor=sensor, temp=Decimal("23.0"), created_at=timezone.now())
+
+        url = reverse("api:v1:relays:retrieve_update", args=(relay.relay_id,))
+        response = self.client.get(url, format="json")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["target_state"] == RelayState.OFF
+        assert response.data["mode"] == RelayMode.ANTIFREEZE
 
     def test_relays__retrieve_non_existent(self):
         """Test that retrieve returns 404 for non-existent relay."""
@@ -441,6 +457,7 @@ class TestRelaysUpdateAPI:
     @patch("odin.api.v1.relays.views.RedisBus.publish_relay_control", return_value=True)
     def test_relays__update_override_schedule_recomputes_target_state(self, mock_publish):
         """Test that a period covering the current time recomputes and publishes the OVERRIDE mode."""
+        create_weather()
         local_time = datetime(2025, 1, 6, 7, 0, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
         with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
             response = self.client.patch(

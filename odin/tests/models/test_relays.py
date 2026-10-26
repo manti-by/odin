@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from odin.apps.relays.models import Relay, RelayMode, RelayState, RelayType
 from odin.apps.sensors.models import Sensor
-from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory, WeatherFactory
+from odin.tests.factories import RelayFactory, SensorFactory, SensorLogFactory, WeatherFactory, create_weather
 
 
 pytestmark = pytest.mark.usefixtures("pin_clock_outside_cycle_window")
@@ -18,6 +18,7 @@ pytestmark = pytest.mark.usefixtures("pin_clock_outside_cycle_window")
 @pytest.mark.django_db
 class TestRelaysPeriodicSchedule:
     def setup_method(self):
+        create_weather()
         self.relay: Relay = RelayFactory(type=RelayType.PUMP)
         self.sensor: Sensor = SensorFactory(relay=self.relay)
 
@@ -176,6 +177,7 @@ class TestRelaysPeriodicSchedule:
 @pytest.mark.django_db
 class TestServoPeriodOverride:
     def setup_method(self):
+        create_weather()
         self.relay: Relay = RelayFactory(type=RelayType.SERVO)
         self.sensor: Sensor = SensorFactory(relay=self.relay)
 
@@ -240,6 +242,7 @@ class TestRelaysSensorProperty:
 @pytest.mark.django_db
 class TestRelaysServoTargetState:
     def setup_method(self):
+        create_weather()
         self.relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
         self.sensor: Sensor = SensorFactory(relay=self.relay)  # noqa
 
@@ -315,7 +318,7 @@ class TestRelaysServoTargetState:
 @pytest.mark.django_db
 class TestRelaysTargetStateDispatch:
     def setup_method(self):
-        pass
+        create_weather()
 
     def test_relays__target_state_returns_pump_state_for_pump_type(self):
         """Test that target_state uses pump_target_state for a PUMP type."""
@@ -341,9 +344,16 @@ class TestRelaysTargetStateDispatch:
         assert state == RelayState.OFF
         assert mode == RelayMode.BASIC
 
-    def test_relays__target_state_returns_unknown_for_unknown_type(self):
-        """Test that target_state returns UNKNOWN for unknown relay types."""
+    def test_relays__target_state_returns_unknown_for_valve_type(self):
+        """Test that a VALVE without explicit input has no actionable state."""
         relay: Relay = RelayFactory(type=RelayType.VALVE)  # noqa
+        state, mode = relay.get_target_state()
+        assert state == RelayState.UNKNOWN
+        assert mode == RelayMode.FALLBACK
+
+    def test_relays__target_state_returns_unknown_for_unknown_type(self):
+        """Test that an unrecognised relay type degrades to the valve answer instead of raising."""
+        relay: Relay = RelayFactory(type="MOTOR")  # noqa
         state, mode = relay.get_target_state()
         assert state == RelayState.UNKNOWN
         assert mode == RelayMode.FALLBACK
@@ -622,14 +632,24 @@ class TestRelaysApparentTempGate:
             assert mode == RelayMode.SUMMER
 
     def test_relays__pump_keeps_the_raw_lower_edge_in_midseason(self):
-        """Wind may not lower the 10 °C edge: 10.0 °C falling to 2.4 °C feels-like is still not midseason."""
+        """9.9 °C at 10 m/s feels like 3 °C, but the raw temperature still keeps it out of midseason."""
+        relay = self._pump()
+        self._weather(temp="9.9", wind_speed="10")
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
+            state, mode = relay.get_target_state()
+            assert state == RelayState.ON
+            assert mode == RelayMode.CYCLE
+
+    def test_relays__pump_enters_midseason_at_the_lower_edge(self):
+        """10.0 °C is midseason: the edge is inclusive and wind may not lower it."""
         relay = self._pump()
         self._weather(temp="10.0", wind_speed="10")
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
             state, mode = relay.get_target_state()
             assert state == RelayState.ON
-            assert mode == RelayMode.CYCLE
+            assert mode == RelayMode.MIDSEASON
 
     def test_relays__pump_keeps_midseason_inside_the_raw_band_regardless_of_feels_like(self):
         """12 °C at 10 m/s feels like 4.9 °C, but the raw band still classifies it as midseason."""
@@ -671,6 +691,165 @@ class TestRelaysApparentTempGate:
 
 
 @pytest.mark.django_db
+class TestRelaysAntifreezeFailSafe:
+    """Missing weather and `temp < -8 °C` call for heat on every type, ahead of any manual input."""
+
+    @staticmethod
+    def _servo(**kwargs) -> tuple[Relay, Sensor]:
+        relay: Relay = RelayFactory(type=RelayType.SERVO, **kwargs)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor=sensor, temp=Decimal("27.0"), created_at=timezone.now())
+        return relay, sensor
+
+    @pytest.mark.parametrize("force_state", (None, RelayState.ON, RelayState.OFF))
+    def test_relays__pump_runs_without_weather(self, force_state):
+        """A weather outage heats unconditionally; a manual stop cannot win over it."""
+        relay: Relay = RelayFactory(type=RelayType.PUMP, force_state=force_state)  # noqa
+
+        state, mode = relay.get_target_state()
+        assert state == RelayState.ON
+        assert mode == RelayMode.ANTIFREEZE
+
+    def test_relays__pump_runs_below_the_antifreeze_edge(self):
+        create_weather("-8.1")
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+
+        state, mode = relay.get_target_state()
+        assert state == RelayState.ON
+        assert mode == RelayMode.ANTIFREEZE
+
+    def test_relays__pump_fail_safe_outranks_the_override_schedule(self):
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+        relay.context = {
+            "override_schedule": {"periods": [{"start_time": "00:00", "end_time": "23:59", "target_state": "OFF"}]}
+        }
+        relay.save()
+
+        state, mode = relay.get_target_state()
+        assert state == RelayState.ON
+        assert mode == RelayMode.ANTIFREEZE
+
+    @pytest.mark.parametrize("force_state", (None, RelayState.ON, RelayState.OFF))
+    def test_relays__servo_stays_open_without_weather(self, force_state):
+        """The fail-safe mirrors the pump: heat opens the servo, and a forced close is ignored."""
+        relay, _ = self._servo(force_state=force_state)
+
+        state, mode = relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.ANTIFREEZE
+
+    def test_relays__servo_stays_open_below_the_antifreeze_edge(self):
+        create_weather("-8.1")
+        relay, _ = self._servo()
+
+        state, mode = relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.ANTIFREEZE
+
+    def test_relays__servo_with_a_dead_sensor_reports_unknown_without_weather(self):
+        """A dead sensor outranks the fail-safe label, so the tile shows the fault, not heat."""
+        relay, sensor = self._servo()
+        Sensor.objects.filter(pk=sensor.pk).update(updated_at=timezone.now() - timedelta(minutes=30))
+
+        state, mode = relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.UNKNOWN
+
+    def test_relays__valve_is_unaffected_by_missing_weather(self):
+        """Valves are driven locally, so a weather outage leaves them on the fallback."""
+        relay: Relay = RelayFactory(type=RelayType.VALVE)  # noqa
+
+        state, mode = relay.get_target_state()
+        assert state == RelayState.UNKNOWN
+        assert mode == RelayMode.FALLBACK
+
+
+@pytest.mark.django_db
+class TestRelaysWeatherFreshness:
+    """A weather row only counts for two hours, so a dead feed falls back to the fail-safe."""
+
+    def test_relays__fresh_weather_uses_its_band(self):
+        create_weather("20.0")
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+
+        assert relay.get_target_state() == (RelayState.OFF, RelayMode.SUMMER)
+
+    def test_relays__pump_ignores_weather_older_than_the_max_age(self):
+        create_weather("20.0", period_delta=timedelta(hours=3))
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+
+        assert relay.get_target_state() == (RelayState.ON, RelayMode.ANTIFREEZE)
+
+    def test_relays__pump_ignores_weather_the_feed_stopped_updating(self):
+        """A current period with a stale `synced_at` means the provider itself went away."""
+        create_weather("20.0", synced_delta=timedelta(hours=3))
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+
+        assert relay.get_target_state() == (RelayState.ON, RelayMode.ANTIFREEZE)
+
+    def test_relays__pump_ignores_a_forecast_slot_far_ahead(self):
+        """`Weather.objects.current()` can fall back to a future forecast slot; it must not count."""
+        create_weather("20.0", period_delta=timedelta(hours=-3))
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+
+        assert relay.get_target_state() == (RelayState.ON, RelayMode.ANTIFREEZE)
+
+    def test_relays__pump_accepts_weather_just_inside_the_window(self):
+        create_weather("20.0", period_delta=timedelta(minutes=90), synced_delta=timedelta(minutes=90))
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+
+        assert relay.get_target_state() == (RelayState.OFF, RelayMode.SUMMER)
+
+
+@pytest.mark.django_db
+class TestRelaysManualControl:
+    """`force_state` and the override schedule reach every type, with the servo inversion."""
+
+    @staticmethod
+    def _servo(force_state: str | None = None, related_relay: Relay | None = None) -> Relay:
+        create_weather()
+        relay: Relay = RelayFactory(type=RelayType.SERVO, force_state=force_state, related_relay=related_relay)  # noqa
+        sensor: Sensor = SensorFactory(relay=relay)  # noqa
+        sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
+        sensor.save()
+        SensorLogFactory(sensor=sensor, temp=Decimal("27.0"), created_at=timezone.now())
+        return relay
+
+    def test_relays__servo_forced_heat_opens_the_circuit(self):
+        relay = self._servo(force_state=RelayState.ON)
+
+        state, mode = relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.FORCED
+
+    def test_relays__servo_forced_stop_closes_the_circuit(self):
+        relay = self._servo(force_state=RelayState.OFF)
+
+        state, mode = relay.get_target_state()
+        assert state == RelayState.ON
+        assert mode == RelayMode.FORCED
+
+    def test_relays__servo_ignored_beats_a_forced_stop(self):
+        """A servo must not close while its pump is off, not even when forced."""
+        pump: Relay = RelayFactory(type=RelayType.PUMP, state=RelayState.OFF)  # noqa
+        relay = self._servo(force_state=RelayState.OFF, related_relay=pump)
+
+        state, mode = relay.get_target_state()
+        assert state == RelayState.OFF
+        assert mode == RelayMode.IGNORED
+
+    @pytest.mark.parametrize("force_state", (RelayState.ON, RelayState.OFF))
+    def test_relays__valve_follows_force_state(self, force_state):
+        relay: Relay = RelayFactory(type=RelayType.VALVE, force_state=force_state)  # noqa
+
+        state, mode = relay.get_target_state()
+        assert state == force_state
+        assert mode == RelayMode.FORCED
+
+
+@pytest.mark.django_db
 class TestRelaysScheduleCycle:
     """MNT-250: the schedule branch forces the relay open for 30 minutes every 2 hours."""
 
@@ -679,7 +858,8 @@ class TestRelaysScheduleCycle:
         return datetime(2025, 1, 6, hour, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
 
     @staticmethod
-    def _pump(periods: list[dict] | None = None) -> Relay:
+    def _pump(periods: list[dict] | None = None, temp: str = "0.0") -> Relay:
+        create_weather(temp)
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
         if periods is not None:
             relay.context = {"schedule": {"periods": periods}}
@@ -687,7 +867,8 @@ class TestRelaysScheduleCycle:
         return relay
 
     @staticmethod
-    def _servo(periods: list[dict] | None = None) -> Relay:
+    def _servo(periods: list[dict] | None = None, temp: str = "0.0") -> Relay:
+        create_weather(temp)
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
         sensor: Sensor = SensorFactory(relay=relay)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
@@ -800,29 +981,19 @@ class TestRelaysScheduleCycle:
             assert state == RelayState.OFF
             assert mode == RelayMode.BASIC
 
-    def test_relays__cycle_applies_without_weather_data(self):
-        """The rule is time based, so missing weather must not disable it."""
-        relay = self._pump([{"start_time": "00:00", "end_time": "23:59", "target_state": "OFF"}])
-
-        with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
-            state, mode = relay.get_target_state()
-            assert state == RelayState.ON
-            assert mode == RelayMode.CYCLE
-
     @pytest.mark.parametrize(
         ("temp", "expected_mode"),
         (
             ("18.0", RelayMode.SUMMER),
-            ("10.1", RelayMode.MIDSEASON),
-            ("10.0", RelayMode.CYCLE),
+            ("10.0", RelayMode.MIDSEASON),
+            ("9.9", RelayMode.CYCLE),
             ("-8.1", RelayMode.ANTIFREEZE),
             ("-8.0", RelayMode.CYCLE),
         ),
     )
     def test_relays__cycle_does_not_leak_into_other_temperature_bands(self, temp, expected_mode):
         """Band edges keep their existing boundaries: the cycle only fills the gap below midseason."""
-        relay = self._pump([{"start_time": "00:00", "end_time": "23:59", "target_state": "OFF"}])
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": temp}})
+        relay = self._pump([{"start_time": "00:00", "end_time": "23:59", "target_state": "OFF"}], temp=temp)
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(8, 5)):
             _, mode = relay.get_target_state()
@@ -830,8 +1001,7 @@ class TestRelaysScheduleCycle:
 
     def test_relays__midseason_still_wins_over_the_cycle_at_night(self):
         """Midseason keeps its own night guard: 03:05 is OFF/MIDSEASON, not ON/CYCLE."""
-        relay = self._pump([{"start_time": "00:00", "end_time": "23:59", "target_state": "ON"}])
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "12.0"}})
+        relay = self._pump([{"start_time": "00:00", "end_time": "23:59", "target_state": "ON"}], temp="12.0")
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(3, 5)):
             state, mode = relay.get_target_state()
@@ -879,7 +1049,11 @@ class TestRelaysOverrideSchedule:
         return datetime(2025, 1, 6, hour, minute, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
 
     @classmethod
-    def _pump(cls, override: list[dict], schedule: list[dict] | None = None) -> Relay:
+    def _pump(cls, override: list[dict], schedule: list[dict] | None = None, weather: dict | None = None) -> Relay:
+        if weather is None:
+            create_weather()
+        else:
+            WeatherFactory(period=timezone.now(), data=weather)
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
         relay.context = {"override_schedule": {"periods": override}}
         if schedule is not None:
@@ -888,7 +1062,11 @@ class TestRelaysOverrideSchedule:
         return relay
 
     @classmethod
-    def _servo(cls, override: list[dict], schedule: list[dict] | None = None) -> Relay:
+    def _servo(cls, override: list[dict], schedule: list[dict] | None = None, weather: dict | None = None) -> Relay:
+        if weather is None:
+            create_weather()
+        else:
+            WeatherFactory(period=timezone.now(), data=weather)
         relay: Relay = RelayFactory(type=RelayType.SERVO)  # noqa
         sensor: Sensor = SensorFactory(relay=relay)  # noqa
         sensor.context = {"target_temp": "25.0", "hysteresis": "1.0"}
@@ -946,8 +1124,10 @@ class TestRelaysOverrideSchedule:
             assert mode == RelayMode.FORCED
 
     def test_relays__override_beats_summer_weather(self):
-        relay = self._pump([{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}])
-        WeatherFactory(period=timezone.now(), data={"temp": {"avg": "18"}, "humidity": "85", "wind": {"speed": "1"}})
+        relay = self._pump(
+            [{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}],
+            weather={"temp": {"avg": "18"}, "humidity": "85", "wind": {"speed": "1"}},
+        )
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
             state, mode = relay.get_target_state()
@@ -1100,6 +1280,7 @@ class TestRelaysOverrideSchedule:
 @pytest.mark.django_db
 class TestRelaysForceState:
     def setup_method(self):
+        create_weather()
         self.relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
 
     def test_relays__target_state_returns_force_state_when_set_to_on(self):
