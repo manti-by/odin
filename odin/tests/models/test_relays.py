@@ -731,6 +731,13 @@ class TestRelaysAntifreezeFailSafe:
         assert state == RelayState.ON
         assert mode == RelayMode.ANTIFREEZE
 
+    def test_relays__valve_ignores_an_unusable_weather_row(self):
+        """Valves never read weather, so a malformed temperature cannot break their rules."""
+        create_weather("not-a-number")
+        relay: Relay = RelayFactory(type=RelayType.VALVE, force_state=RelayState.ON)  # noqa
+
+        assert relay.get_target_state() == (RelayState.ON, RelayMode.FORCED)
+
     @pytest.mark.parametrize("force_state", (None, RelayState.ON, RelayState.OFF))
     def test_relays__servo_stays_open_without_weather(self, force_state):
         """The fail-safe mirrors the pump: heat opens the servo, and a forced close is ignored."""
@@ -798,6 +805,14 @@ class TestRelaysWeatherFreshness:
 
     def test_relays__pump_accepts_weather_just_inside_the_window(self):
         create_weather("20.0", period_delta=timedelta(minutes=90), synced_delta=timedelta(minutes=90))
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+
+        assert relay.get_target_state() == (RelayState.OFF, RelayMode.SUMMER)
+
+    def test_relays__usable_row_wins_over_a_later_forecast_slot(self):
+        """A forecast inserted later must not shadow an earlier row that is still inside the window."""
+        create_weather("20.0", period_delta=timedelta(minutes=90))
+        create_weather("0.0", period_delta=timedelta(hours=-3))
         relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
 
         assert relay.get_target_state() == (RelayState.OFF, RelayMode.SUMMER)

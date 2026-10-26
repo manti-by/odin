@@ -236,11 +236,15 @@ weather is missing or freezing: that is the whole point of the fail-safe.
 "The `-8…10 °C` gap has no band" was the original confusion. `get_weather_mode()` now returns the
 private `WeatherMode` enum (`NONE`/`ANTIFREEZE`/`DEFAULT`/`MIDSEASON`/`SUMMER`), so the default band
 is a band like any other and keeps the cycle, the regular `schedule` and servo regulation reachable.
-Only `WeatherMode.NONE` triggers the fail-safe.
+Both `WeatherMode.NONE` (no usable weather) and `WeatherMode.ANTIFREEZE` (`outside_temp < -8`)
+trigger the fail-safe. A valve skips the weather classification entirely, so an unusable weather
+row cannot break its `force_state`/override answer.
 
 A row is usable only through `get_latest_weather()`: it needs a temperature, a `period` within two
 hours of now in either direction, and a `synced_at` within the last two hours. `Weather.objects.current()`
-alone is not enough — it is ageless and can even return a future forecast slot.
+alone is not enough — it is ageless and can even return a future forecast slot. Eligible rows are
+filtered before one is picked (the most recent started row, else the nearest upcoming one), so a
+far-ahead forecast cannot shadow a usable earlier row.
 
 Consequences worth knowing before touching this code:
 

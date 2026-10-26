@@ -21,7 +21,8 @@ def get_latest_weather(max_age: timedelta = WEATHER_MAX_AGE) -> Weather | None:
     ordering, to the highest pk — which can be a forecast slot in the future. A row only counts as
     usable when its `period` sits within `max_age` of now in either direction *and* the provider
     wrote it (`synced_at`) within the last `max_age`, so a dead feed cannot pin the last band
-    forever.
+    forever. Eligible rows are filtered before one is picked, so a far-ahead forecast cannot shadow
+    a usable earlier row; the most recent started row wins, then the nearest upcoming one.
 
     Args:
         max_age: maximum distance between now and both timestamps.
@@ -29,15 +30,9 @@ def get_latest_weather(max_age: timedelta = WEATHER_MAX_AGE) -> Weather | None:
     Returns:
         The current Weather row, or None when there is no fresh one.
     """
-    weather = Weather.objects.current()
-    if not weather:
-        return None
-
     now = timezone.now()
-    if abs(now - weather.period) > max_age or now - weather.synced_at > max_age:
-        return None
-
-    return weather
+    usable = Weather.objects.filter(period__range=(now - max_age, now + max_age), synced_at__gte=now - max_age)
+    return usable.filter(period__lte=now).order_by("-period").first() or usable.order_by("period").first()
 
 
 def apparent_temp(temp: Decimal | None, humidity: Decimal | None, wind_speed: Decimal | None) -> Decimal | None:

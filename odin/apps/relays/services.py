@@ -287,6 +287,10 @@ class RelayTargetStateService:
         return RelayState.UNKNOWN, RelayMode.FALLBACK
 
     def get_target_state(self) -> tuple[RelayState, RelayMode]:
+        # Valves never read weather, so an unusable weather row must not break their rules
+        if self.relay.type == RelayType.VALVE:
+            return self.get_valve_target_state()
+
         weather_mode = self.get_weather_mode()
         match self.relay.type:
             case RelayType.PUMP:
