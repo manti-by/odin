@@ -817,6 +817,14 @@ class TestRelaysWeatherFreshness:
 
         assert relay.get_target_state() == (RelayState.OFF, RelayMode.SUMMER)
 
+    def test_relays__row_without_a_temperature_does_not_shadow_a_usable_row(self):
+        """A fresher row without a temperature is not usable, so an older row with one must win."""
+        WeatherFactory(period=timezone.now(), data={"temp": {"avg": None}})
+        create_weather("20.0", period_delta=timedelta(minutes=90))
+        relay: Relay = RelayFactory(type=RelayType.PUMP)  # noqa
+
+        assert relay.get_target_state() == (RelayState.OFF, RelayMode.SUMMER)
+
 
 @pytest.mark.django_db
 class TestRelaysManualControl:

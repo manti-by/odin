@@ -243,8 +243,10 @@ row cannot break its `force_state`/override answer.
 A row is usable only through `get_latest_weather()`: it needs a temperature, a `period` within two
 hours of now in either direction, and a `synced_at` within the last two hours. `Weather.objects.current()`
 alone is not enough — it is ageless and can even return a future forecast slot. Eligible rows are
-filtered before one is picked (the most recent started row, else the nearest upcoming one), so a
-far-ahead forecast cannot shadow a usable earlier row.
+filtered before one is picked (the most recent started row, else the nearest upcoming one), so
+neither a far-ahead forecast nor a temperature-less row can shadow a usable earlier row. The
+temperature check reads `data #>> ['temp', 'avg']`, because a plain `data__temp__avg__isnull`
+lookup lets a JSON `null` through.
 
 Consequences worth knowing before touching this code:
 

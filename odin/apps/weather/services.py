@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
+from django.db.models.fields.json import KeyTextTransform, KeyTransform
 from django.utils import timezone
 
 from odin.apps.weather.models import Weather
@@ -19,10 +20,11 @@ def get_latest_weather(max_age: timedelta = WEATHER_MAX_AGE) -> Weather | None:
 
     `Weather.objects.current()` falls back to the last row regardless of age and, having no
     ordering, to the highest pk — which can be a forecast slot in the future. A row only counts as
-    usable when its `period` sits within `max_age` of now in either direction *and* the provider
-    wrote it (`synced_at`) within the last `max_age`, so a dead feed cannot pin the last band
-    forever. Eligible rows are filtered before one is picked, so a far-ahead forecast cannot shadow
-    a usable earlier row; the most recent started row wins, then the nearest upcoming one.
+    usable when it carries a temperature, its `period` sits within `max_age` of now in either
+    direction and the provider wrote it (`synced_at`) within the last `max_age`, so a dead feed
+    cannot pin the last band forever. Eligible rows are filtered before one is picked, so neither a
+    far-ahead forecast nor a row without a temperature can shadow a usable earlier row; the most
+    recent started row wins, then the nearest upcoming one.
 
     Args:
         max_age: maximum distance between now and both timestamps.
@@ -31,7 +33,13 @@ def get_latest_weather(max_age: timedelta = WEATHER_MAX_AGE) -> Weather | None:
         The current Weather row, or None when there is no fresh one.
     """
     now = timezone.now()
-    usable = Weather.objects.filter(period__range=(now - max_age, now + max_age), synced_at__gte=now - max_age)
+    # `#>>` yields NULL for a JSON null, unlike a plain `data__temp__avg__isnull` key transform
+    temperature = KeyTextTransform("avg", KeyTransform("temp", "data"))
+    usable = Weather.objects.alias(temperature=temperature).filter(
+        temperature__isnull=False,
+        period__range=(now - max_age, now + max_age),
+        synced_at__gte=now - max_age,
+    )
     return usable.filter(period__lte=now).order_by("-period").first() or usable.order_by("period").first()
 
 
