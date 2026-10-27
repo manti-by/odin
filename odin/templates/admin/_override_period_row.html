@@ -1,0 +1,28 @@
+{% load i18n %}
+
+<div class="period-item" data-index="{{ index }}">
+  <div class="period-fields">
+    <div class="field-group">
+      <label class="required">{% translate 'Start Time' %}</label>
+      <input type="time" name="override_schedule-periods-{{ index }}-start_time" value="{{ period.start_time }}" required/>
+    </div>
+    <div class="field-group">
+      <label class="required">{% translate 'End Time' %}</label>
+      <input type="time" name="override_schedule-periods-{{ index }}-end_time" value="{{ period.end_time }}" required/>
+    </div>
+    <div class="field-group">
+      <label class="required">{% translate 'Target State' %}</label>
+      <select name="override_schedule-periods-{{ index }}-target_state" required>
+        <option value="ON" {% if period.target_state == 'ON' %}selected{% endif %}>
+          {% translate 'ON' %}
+        </option>
+        <option value="OFF" {% if period.target_state == 'OFF' %}selected{% endif %}>
+          {% translate 'OFF' %}
+        </option>
+      </select>
+    </div>
+    <div class="field-group actions">
+      <button type="button" class="remove-period btn btn-danger">{% translate 'Remove' %}</button>
+    </div>
+  </div>
+</div>

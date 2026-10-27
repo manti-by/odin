@@ -1,5 +1,7 @@
 import logging
+import re
 from collections import defaultdict
+from collections.abc import Mapping
 from typing import Any
 
 from django.contrib import admin
@@ -20,6 +22,31 @@ from .models import Relay, RelayLog, RelayState, RelayType
 
 logger = logging.getLogger(__name__)
 
+SCHEDULE_PERIOD_PREFIX = "schedule-periods-"
+OVERRIDE_SCHEDULE_PERIOD_PREFIX = "override_schedule-periods-"
+
+TIME_PATTERN = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+def _collect_periods(form_data: Mapping[str, Any], prefix: str) -> dict[int, dict[str, Any]]:
+    """Group the `<prefix><index>-<field>` inputs of a schedule component by period index.
+
+    The schedule components are rendered as plain inputs outside the model form, so their values
+    never reach the form and have to be read back from the raw POST data.
+    """
+    periods: dict[int, dict[str, Any]] = defaultdict(dict)
+    for field_name, value in form_data.items():
+        if not field_name.startswith(prefix):
+            continue
+
+        index, _, field_type = field_name[len(prefix) :].partition("-")
+        if not index.isdigit() or not field_type:
+            continue
+
+        periods[int(index)][field_type] = value
+
+    return periods
+
 
 @admin.register(Relay)
 class RelayAdmin(admin.ModelAdmin):
@@ -34,6 +61,7 @@ class RelayAdmin(admin.ModelAdmin):
         "mode",
         "force_state",
         "schedule",
+        "override_schedule",
         "updated_at",
         "created_at",
     )
@@ -48,7 +76,7 @@ class RelayAdmin(admin.ModelAdmin):
         "updated_at",
     )
     list_filter = ("type",)
-    readonly_fields = ("sensor", "schedule", "updated_at", "created_at")
+    readonly_fields = ("sensor", "schedule", "override_schedule", "updated_at", "created_at")
 
     class Media:
         css = {"all": ("css/admin/schedule.css",)}
@@ -75,6 +103,15 @@ class RelayAdmin(admin.ModelAdmin):
         html = render_to_string("admin/schedule.html", {"schedule": schedule, "relay_type": relay_type})
         return mark_safe(html)  # noqa: S308
 
+    @admin.display(description=_("override schedule"))
+    def override_schedule(self, obj: Relay | None) -> str:
+        if obj is None:
+            override_schedule_data = None
+        else:
+            override_schedule_data = obj.context.get("override_schedule") if isinstance(obj.context, dict) else None
+        html = render_to_string("admin/override_schedule.html", {"override_schedule": override_schedule_data})
+        return mark_safe(html)  # noqa: S308
+
     @admin.display(description=_("forced"))
     def forced_state(self, obj: Relay | None) -> RelayState | None:
         if obj is None:
@@ -94,11 +131,8 @@ class RelayAdmin(admin.ModelAdmin):
         return super().change_view(request, object_id, form_url, extra_context)
 
     def save_model(self, request: HttpRequest, obj: Relay, form: ModelForm, change: bool):
-        period_data: dict[int, dict[str, Any]] = defaultdict(dict)
-        for field_name, value in form.data.items():
-            if field_name.startswith("schedule-periods-") and len(parts := field_name.split("-")) >= 4:
-                period_index, field_type = int(parts[2]), parts[3]
-                period_data[period_index][field_type] = value
+        period_data = _collect_periods(form.data, SCHEDULE_PERIOD_PREFIX)
+        override_period_data = _collect_periods(form.data, OVERRIDE_SCHEDULE_PERIOD_PREFIX)
 
         periods = []
         for period_index in sorted(period_data.keys()):
@@ -117,8 +151,39 @@ class RelayAdmin(admin.ModelAdmin):
 
                 periods.append(period_dict)
 
-        if periods:
-            obj.context.update({"schedule": {"periods": periods}})
+        override_periods = []
+        for period_index in sorted(override_period_data.keys()):
+            period = override_period_data[period_index]
+            if not all(key in period for key in ("start_time", "end_time", "target_state")):
+                continue
+
+            if not (TIME_PATTERN.match(period["start_time"]) and TIME_PATTERN.match(period["end_time"])):
+                logger.warning(f"Relay {obj.relay_id} override period {period_index} has an invalid time")
+                continue
+
+            if period["target_state"] not in RelayState.active_values():
+                logger.warning(f"Relay {obj.relay_id} override period {period_index} has an invalid target state")
+                continue
+
+            override_periods.append(
+                {
+                    "start_time": period["start_time"],
+                    "end_time": period["end_time"],
+                    "target_state": period["target_state"],
+                }
+            )
+
+        if isinstance(obj.context, dict):
+            if periods:
+                obj.context["schedule"] = {"periods": periods}
+
+            if override_periods:
+                obj.context["override_schedule"] = {"periods": override_periods}
+            elif "override_schedule" in obj.context:
+                # Every override period was removed in the admin
+                obj.context["override_schedule"] = {"periods": []}
+        else:
+            logger.warning(f"Relay {obj.relay_id} has a non-dict context, schedule fields were skipped")
 
         with transaction.atomic():
             super().save_model(request, obj, form, change)

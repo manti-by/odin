@@ -1,0 +1,15 @@
+{% load i18n %}
+
+<div class="periodic-schedule" id="override-schedule">
+  <div class="periods-container" id="override-periods-container">
+    {% for period in override_schedule.periods %}
+      {% include "admin/_override_period_row.html" with index=forloop.counter0 period=period %}
+    {% endfor %}
+  </div>
+  <template id="override-period-row-template">
+    {% include "admin/_override_period_row.html" with index="__INDEX__" %}
+  </template>
+  <div class="schedule-actions">
+    <button type="button" id="override-add-period" class="btn btn-primary">{% translate 'Add Period' %}</button>
+  </div>
+</div>
