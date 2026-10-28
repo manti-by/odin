@@ -1,10 +1,10 @@
 import logging
-import re
 from collections import defaultdict
 from collections.abc import Mapping
 from typing import Any
 
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.forms import ModelForm
 from django.http import HttpRequest
@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from odin.apps.core.redis_bus import RedisBus
 
 from .models import Relay, RelayLog, RelayState, RelayType
+from .services import TIME_ERROR, TIME_PATTERN, validate_schedule_periods
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ logger = logging.getLogger(__name__)
 SCHEDULE_PERIOD_PREFIX = "schedule-periods-"
 OVERRIDE_SCHEDULE_PERIOD_PREFIX = "override_schedule-periods-"
 
-TIME_PATTERN = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+OVERRIDE_PERIOD_FIELDS = ("start_time", "end_time", "target_state")
 
 
 def _collect_periods(form_data: Mapping[str, Any], prefix: str) -> dict[int, dict[str, Any]]:
@@ -48,8 +49,46 @@ def _collect_periods(form_data: Mapping[str, Any], prefix: str) -> dict[int, dic
     return periods
 
 
+def _parse_override_periods(form_data: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Read the override schedule rows back from the raw POST data.
+
+    Rows missing one of their fields are treated as removed. Malformed values raise `ValidationError`
+    so the admin reports them instead of silently dropping the row.
+    """
+    periods = []
+    for index, period in sorted(_collect_periods(form_data, OVERRIDE_SCHEDULE_PERIOD_PREFIX).items()):
+        if not all(field in period for field in OVERRIDE_PERIOD_FIELDS):
+            continue
+
+        start_time, end_time, target_state = (period[field] for field in OVERRIDE_PERIOD_FIELDS)
+        if not (TIME_PATTERN.match(start_time) and TIME_PATTERN.match(end_time)):
+            raise ValidationError(f"Override period {index + 1}: {TIME_ERROR}")
+        if target_state not in RelayState.active_values():
+            raise ValidationError(f"Override period {index + 1}: unknown target state")
+
+        periods.append({"start_time": start_time, "end_time": end_time, "target_state": target_state})
+
+    return periods
+
+
+class RelayAdminForm(ModelForm):
+    """Validate the schedule components rendered outside the model form."""
+
+    def clean(self) -> dict[str, Any]:
+        cleaned_data = super().clean()
+
+        try:
+            periods = _parse_override_periods(self.data)
+            validate_schedule_periods(periods)
+        except ValidationError as exc:
+            raise ValidationError(f"{_('Override schedule')}: {exc.messages[0]}") from exc
+
+        return cleaned_data
+
+
 @admin.register(Relay)
 class RelayAdmin(admin.ModelAdmin):
+    form = RelayAdminForm
     fields = (
         "relay_id",
         "name",
@@ -132,7 +171,7 @@ class RelayAdmin(admin.ModelAdmin):
 
     def save_model(self, request: HttpRequest, obj: Relay, form: ModelForm, change: bool):
         period_data = _collect_periods(form.data, SCHEDULE_PERIOD_PREFIX)
-        override_period_data = _collect_periods(form.data, OVERRIDE_SCHEDULE_PERIOD_PREFIX)
+        override_periods = _parse_override_periods(form.data)
 
         periods = []
         for period_index in sorted(period_data.keys()):
@@ -150,28 +189,6 @@ class RelayAdmin(admin.ModelAdmin):
                     period_dict["target_state"] = period["target_state"]
 
                 periods.append(period_dict)
-
-        override_periods = []
-        for period_index in sorted(override_period_data.keys()):
-            period = override_period_data[period_index]
-            if not all(key in period for key in ("start_time", "end_time", "target_state")):
-                continue
-
-            if not (TIME_PATTERN.match(period["start_time"]) and TIME_PATTERN.match(period["end_time"])):
-                logger.warning(f"Relay {obj.relay_id} override period {period_index} has an invalid time")
-                continue
-
-            if period["target_state"] not in RelayState.active_values():
-                logger.warning(f"Relay {obj.relay_id} override period {period_index} has an invalid target state")
-                continue
-
-            override_periods.append(
-                {
-                    "start_time": period["start_time"],
-                    "end_time": period["end_time"],
-                    "target_state": period["target_state"],
-                }
-            )
 
         if isinstance(obj.context, dict):
             if periods:

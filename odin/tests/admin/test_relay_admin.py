@@ -250,3 +250,90 @@ class TestRelayAdminOverrideSchedule:
         mock_publish_relay_control.assert_called_once_with(
             relay_id=self.relay.relay_id, state="OFF", mode=RelayMode.OVERRIDE, user=None
         )
+
+
+@pytest.mark.django_db
+@pytest.mark.views
+class TestRelayAdminOverrideScheduleValidation:
+    """The admin must reject schedule-level conflicts instead of storing them."""
+
+    def setup_method(self) -> None:
+        create_weather()
+        self.user = DjangoAdminUserFactory(is_staff=True)
+        self.relay = RelayFactory(type=RelayType.PUMP)
+        self.url = reverse(admin_urlname(Relay._meta, "change"), args=[self.relay.id])
+
+    def _payload(self, *periods: tuple[str, str, str]) -> dict[str, str]:
+        payload = {
+            "relay_id": self.relay.relay_id,
+            "name": self.relay.name,
+            "type": self.relay.type,
+            "is_active": "on",
+            "related_relay": "",
+            "state": "",
+            "mode": "",
+            "force_state": "",
+        }
+        for index, (start_time, end_time, target_state) in enumerate(periods):
+            payload[f"override_schedule-periods-{index}-start_time"] = start_time
+            payload[f"override_schedule-periods-{index}-end_time"] = end_time
+            payload[f"override_schedule-periods-{index}-target_state"] = target_state
+        return payload
+
+    def test_change_rejects_overlapping_override_periods(self, client: MagicMock) -> None:
+        """Overlapping override periods are rejected with a form error and nothing is saved."""
+        client.force_login(self.user)
+
+        with patch("odin.apps.relays.admin.RedisBus.publish_relay_control", return_value=True) as mock_publish:
+            response = client.post(
+                self.url,
+                self._payload(("08:00", "12:00", "ON"), ("09:00", "10:00", "OFF")),
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "must not overlap" in response.content.decode()
+        mock_publish.assert_not_called()
+
+        self.relay.refresh_from_db()
+        assert "override_schedule" not in self.relay.context
+
+    def test_change_rejects_zero_duration_override_period(self, client: MagicMock) -> None:
+        """A period with equal start and end times is rejected with a form error."""
+        client.force_login(self.user)
+        response = client.post(self.url, self._payload(("08:00", "08:00", "ON")))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "must differ" in response.content.decode()
+
+        self.relay.refresh_from_db()
+        assert "override_schedule" not in self.relay.context
+
+    def test_change_rejects_more_than_max_override_periods(self, client: MagicMock) -> None:
+        """More than MAX_SCHEDULE_PERIODS override periods are rejected with a form error."""
+        client.force_login(self.user)
+        periods = tuple((f"{hour:02d}:00", f"{hour:02d}:30", "ON") for hour in range(6))
+        response = client.post(self.url, self._payload(*periods))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "At most 5 periods are allowed" in response.content.decode()
+
+        self.relay.refresh_from_db()
+        assert "override_schedule" not in self.relay.context
+
+    def test_change_saves_valid_override_periods(self, client: MagicMock) -> None:
+        """A valid override schedule is still saved from the admin."""
+        client.force_login(self.user)
+
+        with patch("odin.apps.relays.admin.RedisBus.publish_relay_control", return_value=True) as mock_publish:
+            response = client.post(self.url, self._payload(("08:00", "12:00", "ON"), ("12:00", "18:00", "OFF")))
+
+        assert response.status_code == status.HTTP_302_FOUND
+        mock_publish.assert_called_once()
+
+        self.relay.refresh_from_db()
+        assert self.relay.context["override_schedule"] == {
+            "periods": [
+                {"start_time": "08:00", "end_time": "12:00", "target_state": "ON"},
+                {"start_time": "12:00", "end_time": "18:00", "target_state": "OFF"},
+            ]
+        }

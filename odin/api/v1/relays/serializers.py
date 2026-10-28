@@ -1,32 +1,9 @@
-import re
-
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from odin.api.utils.serializers import BaseSerializer
 from odin.apps.relays.models import Relay, RelayType
-
-
-MAX_SCHEDULE_PERIODS = 5
-
-TIME_PATTERN = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
-TIME_ERROR = "Time must be in HH:MM format"
-
-
-def _time_to_minutes(value: str) -> int:
-    hours, minutes = value.split(":")
-    return int(hours) * 60 + int(minutes)
-
-
-def _time_ranges(start: str, end: str) -> list[tuple[int, int]]:
-    """Split a period into one or two half-open minute ranges, handling overnight spans."""
-    start_minutes = _time_to_minutes(start)
-    end_minutes = _time_to_minutes(end)
-
-    if start_minutes < end_minutes:
-        return [(start_minutes, end_minutes)]
-    if start_minutes > end_minutes:
-        return [(start_minutes, 24 * 60), (0, end_minutes)]
-    return []
+from odin.apps.relays.services import MAX_SCHEDULE_PERIODS, TIME_ERROR, TIME_PATTERN, validate_schedule_periods
 
 
 class RelaySerializer(BaseSerializer):
@@ -53,18 +30,10 @@ class RelayPeriodSerializer(BaseSerializer):
 
 
 def _validate_schedule_periods(periods: list[dict]) -> list[dict]:
-    for period in periods:
-        if period.get("start_time") is None or period.get("end_time") is None:
-            raise serializers.ValidationError("Schedule period requires start_time and end_time")
-        if period["start_time"] == period["end_time"]:
-            raise serializers.ValidationError("Schedule period start and end times must differ")
-
-    ranges = [range_ for period in periods for range_ in _time_ranges(period["start_time"], period["end_time"])]
-    for index, (start_a, end_a) in enumerate(ranges):
-        for start_b, end_b in ranges[index + 1 :]:
-            if start_a < end_b and start_b < end_a:
-                raise serializers.ValidationError("Schedule periods must not overlap")
-    return periods
+    try:
+        return validate_schedule_periods(periods)
+    except DjangoValidationError as exc:
+        raise serializers.ValidationError(exc.messages[0]) from exc
 
 
 class RelayScheduleSerializer(BaseSerializer):
