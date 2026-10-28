@@ -43,6 +43,8 @@
 }
 
 .field-group label {
+  display: flex;
+  flex-direction: column;
   margin-bottom: .25rem;
 }
 

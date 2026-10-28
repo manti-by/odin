@@ -107,3 +107,52 @@ document.addEventListener("DOMContentLoaded", function () {
     periodIndex = periods.length;
   }
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  const container = document.getElementById("override-periods-container");
+  const addButton = document.getElementById("override-add-period");
+  const rowTemplate = document.getElementById("override-period-row-template");
+
+  if (!container || !addButton || !rowTemplate) {
+    return;
+  }
+
+  let periodIndex = 0;
+
+  addButton.addEventListener("click", function () {
+    container.insertAdjacentHTML("beforeend", createPeriodHtml(periodIndex));
+    periodIndex++;
+  });
+
+  container.addEventListener("click", function (e) {
+    if (e.target.classList.contains("remove-period")) {
+      e.target.closest(".period-item").remove();
+      updateIndices();
+    }
+  });
+
+  function createPeriodHtml(index) {
+    return rowTemplate.innerHTML.replaceAll("__INDEX__", String(index));
+  }
+
+  function updateIndices() {
+    const periods = container.querySelectorAll(".period-item");
+    periods.forEach((period, index) => {
+      period.setAttribute("data-index", index);
+
+      const inputs = period.querySelectorAll("input, select");
+
+      inputs.forEach((input) => {
+        if (input.name) {
+          input.name = input.name.replace(
+            /override_schedule-periods-\d+-/,
+            `override_schedule-periods-${index}-`,
+          );
+        }
+      });
+    });
+    periodIndex = periods.length;
+  }
+
+  updateIndices();
+});

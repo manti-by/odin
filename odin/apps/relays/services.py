@@ -1,8 +1,10 @@
 import copy
+import re
 from decimal import Decimal
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from odin.apps.relays.models import RelayLog, RelayMode, RelayState, RelayType
@@ -13,6 +15,58 @@ if TYPE_CHECKING:
     from django.contrib.auth.models import User
 
     from odin.apps.relays.models import Relay
+
+
+MAX_SCHEDULE_PERIODS = 5
+
+TIME_PATTERN = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+TIME_ERROR = "Time must be in HH:MM format"
+
+
+def _time_to_minutes(value: str) -> int:
+    hours, minutes = value.split(":")
+    return int(hours) * 60 + int(minutes)
+
+
+def _time_ranges(start: str, end: str) -> list[tuple[int, int]]:
+    """Split a period into one or two half-open minute ranges, handling overnight spans."""
+    start_minutes = _time_to_minutes(start)
+    end_minutes = _time_to_minutes(end)
+
+    if start_minutes < end_minutes:
+        return [(start_minutes, end_minutes)]
+    if start_minutes > end_minutes:
+        return [(start_minutes, 24 * 60), (0, end_minutes)]
+    return []
+
+
+def validate_schedule_periods(periods: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Reject schedules the relay logic cannot resolve, shared by the API and the admin.
+
+    Equal start and end times, overlapping periods and more than `MAX_SCHEDULE_PERIODS` periods are
+    rejected: the relay applies the first matching period, so the remaining ones would be stored but
+    silently ignored.
+    """
+    if len(periods) > MAX_SCHEDULE_PERIODS:
+        raise ValidationError(f"At most {MAX_SCHEDULE_PERIODS} periods are allowed")
+
+    for period in periods:
+        start_time = period.get("start_time")
+        end_time = period.get("end_time")
+        if start_time is None or end_time is None:
+            raise ValidationError("Schedule period requires start_time and end_time")
+        if not (TIME_PATTERN.match(str(start_time)) and TIME_PATTERN.match(str(end_time))):
+            raise ValidationError(TIME_ERROR)
+        if start_time == end_time:
+            raise ValidationError("Schedule period start and end times must differ")
+
+    ranges = [range_ for period in periods for range_ in _time_ranges(period["start_time"], period["end_time"])]
+    for index, (start_a, end_a) in enumerate(ranges):
+        for start_b, end_b in ranges[index + 1 :]:
+            if start_a < end_b and start_b < end_a:
+                raise ValidationError("Schedule periods must not overlap")
+
+    return periods
 
 
 class WeatherMode(Enum):

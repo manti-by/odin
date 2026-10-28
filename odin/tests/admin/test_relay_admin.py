@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+from datetime import timezone as dt_timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -120,3 +122,218 @@ class TestRelayAdminSaveModel:
         call_kwargs = mock_publish_relay_control.call_args.kwargs
         assert call_kwargs["relay_id"] == self.relay.relay_id
         assert call_kwargs["state"] == "ON"
+
+
+@pytest.mark.django_db
+@pytest.mark.views
+class TestRelayAdminOverrideSchedule:
+    def setup_method(self) -> None:
+        create_weather()
+        self.user = DjangoAdminUserFactory(is_staff=True)
+        self.relay = RelayFactory(type=RelayType.PUMP)
+
+    @staticmethod
+    def _form(data: dict[str, str]) -> MagicMock:
+        form = MagicMock()
+        form.data = data
+        return form
+
+    def test_relay_change_renders_override_schedule_component(self, client: MagicMock) -> None:
+        """Test that the change page renders the override schedule component with the stored periods."""
+        self.relay.context = {
+            "override_schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_state": "OFF"}]}
+        }
+        self.relay.save()
+
+        client.force_login(self.user)
+        response = client.get(reverse(admin_urlname(Relay._meta, "change"), args=[self.relay.id]))
+
+        content = response.content.decode()
+        assert 'id="override-periods-container"' in content
+        assert 'id="override-add-period"' in content
+        assert 'name="override_schedule-periods-0-start_time" value="08:00"' in content
+        assert 'name="override_schedule-periods-0-end_time" value="18:00"' in content
+        assert 'name="override_schedule-periods-0-target_state"' in content
+
+    def test_relay_change_renders_no_override_periods_by_default(self, client: MagicMock) -> None:
+        """Test that a relay without an override schedule renders an empty override component."""
+        client.force_login(self.user)
+        response = client.get(reverse(admin_urlname(Relay._meta, "change"), args=[self.relay.id]))
+
+        content = response.content.decode()
+        assert 'id="override-periods-container"' in content
+        assert 'name="override_schedule-periods-0-start_time"' not in content
+
+    @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
+    def test_save_model_stores_override_periods(self, mock_publish_relay_control: MagicMock) -> None:
+        """Test that override periods from the admin component land in the relay context."""
+        admin_instance = RelayAdmin(Relay, None)
+        form = self._form(
+            {
+                "override_schedule-periods-0-start_time": "08:00",
+                "override_schedule-periods-0-end_time": "18:00",
+                "override_schedule-periods-0-target_state": "OFF",
+            }
+        )
+
+        admin_instance.save_model(None, self.relay, form, change=True)
+
+        assert self.relay.context["override_schedule"] == {
+            "periods": [{"start_time": "08:00", "end_time": "18:00", "target_state": "OFF"}]
+        }
+
+    @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
+    def test_save_model_clears_override_periods_when_all_removed(self, mock_publish_relay_control: MagicMock) -> None:
+        """Test that removing every override row empties the stored override schedule."""
+        self.relay.context = {
+            "override_schedule": {"periods": [{"start_time": "08:00", "end_time": "18:00", "target_state": "OFF"}]}
+        }
+        self.relay.save()
+
+        admin_instance = RelayAdmin(Relay, None)
+
+        admin_instance.save_model(None, self.relay, form=self._form({}), change=True)
+
+        assert self.relay.context["override_schedule"] == {"periods": []}
+
+    @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
+    def test_save_model_keeps_context_clean_without_override_periods(
+        self, mock_publish_relay_control: MagicMock
+    ) -> None:
+        """Test that a relay without an override schedule does not get an empty override key."""
+        admin_instance = RelayAdmin(Relay, None)
+
+        admin_instance.save_model(None, self.relay, form=self._form({}), change=True)
+
+        assert "override_schedule" not in self.relay.context
+
+    @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
+    def test_save_model_keeps_schedule_and_override_periods_apart(self, mock_publish_relay_control: MagicMock) -> None:
+        """Test that both components are parsed independently on one save."""
+        admin_instance = RelayAdmin(Relay, None)
+        form = self._form(
+            {
+                "schedule-periods-0-start_time": "05:00",
+                "schedule-periods-0-end_time": "07:00",
+                "schedule-periods-0-target_state": "ON",
+                "override_schedule-periods-0-start_time": "08:00",
+                "override_schedule-periods-0-end_time": "18:00",
+                "override_schedule-periods-0-target_state": "OFF",
+            }
+        )
+
+        admin_instance.save_model(None, self.relay, form, change=True)
+
+        assert self.relay.context["schedule"] == {
+            "periods": [{"start_time": "05:00", "end_time": "07:00", "target_state": "ON"}]
+        }
+        assert self.relay.context["override_schedule"] == {
+            "periods": [{"start_time": "08:00", "end_time": "18:00", "target_state": "OFF"}]
+        }
+
+    @patch("odin.apps.relays.admin.RedisBus.publish_relay_control")
+    def test_save_model_publishes_override_target_state(self, mock_publish_relay_control: MagicMock) -> None:
+        """Test that an active override period is published as the recomputed (state, mode) pair."""
+        admin_instance = RelayAdmin(Relay, None)
+        form = self._form(
+            {
+                "override_schedule-periods-0-start_time": "08:00",
+                "override_schedule-periods-0-end_time": "18:00",
+                "override_schedule-periods-0-target_state": "OFF",
+            }
+        )
+        local_time = datetime(2025, 1, 6, 10, 30, 0, tzinfo=dt_timezone(UTC.utcoffset(datetime.now(UTC))))
+
+        with patch("odin.apps.relays.services.timezone.localtime", return_value=local_time):
+            admin_instance.save_model(None, self.relay, form, change=True)
+
+        mock_publish_relay_control.assert_called_once_with(
+            relay_id=self.relay.relay_id, state="OFF", mode=RelayMode.OVERRIDE, user=None
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.views
+class TestRelayAdminOverrideScheduleValidation:
+    """The admin must reject schedule-level conflicts instead of storing them."""
+
+    def setup_method(self) -> None:
+        create_weather()
+        self.user = DjangoAdminUserFactory(is_staff=True)
+        self.relay = RelayFactory(type=RelayType.PUMP)
+        self.url = reverse(admin_urlname(Relay._meta, "change"), args=[self.relay.id])
+
+    def _payload(self, *periods: tuple[str, str, str]) -> dict[str, str]:
+        payload = {
+            "relay_id": self.relay.relay_id,
+            "name": self.relay.name,
+            "type": self.relay.type,
+            "is_active": "on",
+            "related_relay": "",
+            "state": "",
+            "mode": "",
+            "force_state": "",
+        }
+        for index, (start_time, end_time, target_state) in enumerate(periods):
+            payload[f"override_schedule-periods-{index}-start_time"] = start_time
+            payload[f"override_schedule-periods-{index}-end_time"] = end_time
+            payload[f"override_schedule-periods-{index}-target_state"] = target_state
+        return payload
+
+    def test_change_rejects_overlapping_override_periods(self, client: MagicMock) -> None:
+        """Overlapping override periods are rejected with a form error and nothing is saved."""
+        client.force_login(self.user)
+
+        with patch("odin.apps.relays.admin.RedisBus.publish_relay_control", return_value=True) as mock_publish:
+            response = client.post(
+                self.url,
+                self._payload(("08:00", "12:00", "ON"), ("09:00", "10:00", "OFF")),
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "must not overlap" in response.content.decode()
+        mock_publish.assert_not_called()
+
+        self.relay.refresh_from_db()
+        assert "override_schedule" not in self.relay.context
+
+    def test_change_rejects_zero_duration_override_period(self, client: MagicMock) -> None:
+        """A period with equal start and end times is rejected with a form error."""
+        client.force_login(self.user)
+        response = client.post(self.url, self._payload(("08:00", "08:00", "ON")))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "must differ" in response.content.decode()
+
+        self.relay.refresh_from_db()
+        assert "override_schedule" not in self.relay.context
+
+    def test_change_rejects_more_than_max_override_periods(self, client: MagicMock) -> None:
+        """More than MAX_SCHEDULE_PERIODS override periods are rejected with a form error."""
+        client.force_login(self.user)
+        periods = tuple((f"{hour:02d}:00", f"{hour:02d}:30", "ON") for hour in range(6))
+        response = client.post(self.url, self._payload(*periods))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "At most 5 periods are allowed" in response.content.decode()
+
+        self.relay.refresh_from_db()
+        assert "override_schedule" not in self.relay.context
+
+    def test_change_saves_valid_override_periods(self, client: MagicMock) -> None:
+        """A valid override schedule is still saved from the admin."""
+        client.force_login(self.user)
+
+        with patch("odin.apps.relays.admin.RedisBus.publish_relay_control", return_value=True) as mock_publish:
+            response = client.post(self.url, self._payload(("08:00", "12:00", "ON"), ("12:00", "18:00", "OFF")))
+
+        assert response.status_code == status.HTTP_302_FOUND
+        mock_publish.assert_called_once()
+
+        self.relay.refresh_from_db()
+        assert self.relay.context["override_schedule"] == {
+            "periods": [
+                {"start_time": "08:00", "end_time": "12:00", "target_state": "ON"},
+                {"start_time": "12:00", "end_time": "18:00", "target_state": "OFF"},
+            ]
+        }
