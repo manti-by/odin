@@ -13,6 +13,7 @@ from odin.apps.currency.models import Currency, ExchangeRate
 from odin.apps.electricity.models import VoltageLog
 from odin.apps.relays.models import Relay
 from odin.apps.sensors.models import Sensor, SensorLog, SensorType
+from odin.apps.video.models import Video
 from odin.apps.weather.models import Weather
 
 
@@ -168,3 +169,15 @@ class AuthFactory(DjangoModelFactory):
 
     class Meta:
         model = Auth
+
+
+class VideoFactory(DjangoModelFactory):
+    path = factory.Sequence(lambda n: f"/mnt/data/Movies/Movie {n} (2020).mkv")
+    filename = factory.LazyAttribute(lambda video: video.path.rsplit("/", 1)[-1])
+    title = factory.Faker("catch_phrase")
+    year = factory.Faker("pyint", min_value=1950, max_value=2026)
+    description = factory.Faker("sentence")
+    genres = ["Drama"]
+
+    class Meta:
+        model = Video
