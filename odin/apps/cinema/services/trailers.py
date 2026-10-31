@@ -40,15 +40,22 @@ def fetch_trailer_file(query: str, target: Path) -> None:
 
     yt-dlp writes into a scratch dir next to the target and the file is moved into place only
     after a successful exit, so a killed download never leaves a half-written trailer behind.
+    Only an MP4 candidate is accepted: the row stores an `.mp4` trailer and the stream endpoint
+    reports it as `video/mp4`, so a webm/mkv fallback would be a lie.
     """
     command = [
         settings.CINEMA_YTDLP_BIN,
+        # Ignore operator config (e.g. `--write-info-json`) so a sidecar never lands in the
+        # scratch dir next to the trailer.
+        "--ignore-config",
         "--no-playlist",
         "--no-warnings",
         "--quiet",
         "--no-progress",
         "--format",
-        "best[ext=mp4]/best",
+        "best[ext=mp4]/bestvideo[ext=mp4]+bestaudio[ext=m4a]",
+        "--merge-output-format",
+        "mp4",
         "--max-filesize",
         settings.CINEMA_TRAILER_MAX_FILESIZE,
     ]
@@ -66,13 +73,16 @@ def fetch_trailer_file(query: str, target: Path) -> None:
         if result.returncode != 0:
             raise TrailerDownloadError(result.stderr.strip() or f"yt-dlp exited with {result.returncode}")
 
-        files = [path for path in Path(scratch).glob("*") if path.is_file()]
-        if not files:
-            raise TrailerDownloadError(f"yt-dlp produced no file for {query}")
-        files[0].replace(target)
+        files = [path for path in Path(scratch).iterdir() if path.is_file()]
+        mp4_files = [path for path in files if path.suffix.lower() == ".mp4"]
+        if len(mp4_files) != 1:
+            suffixes = sorted({path.suffix for path in files})
+            raise TrailerDownloadError(f"yt-dlp produced no single MP4 for {query}: {suffixes}")
+        mp4_files[0].replace(target)
 
 
 def mark_downloaded(video: Video, target: Path) -> FetchStatus:
+    """Link an existing trailer file to the row and mark the download finished."""
     video.trailer = target.name
     video.trailer_status = FetchStatus.FETCHED
     video.trailer_attempts += 1
@@ -82,6 +92,7 @@ def mark_downloaded(video: Video, target: Path) -> FetchStatus:
 
 
 def record_failure(video: Video, message: str) -> FetchStatus:
+    """Record one retryable trailer failure and give up after `CINEMA_FETCH_MAX_ATTEMPTS`."""
     video.trailer_attempts += 1
     if video.trailer_attempts >= settings.CINEMA_FETCH_MAX_ATTEMPTS:
         video.trailer_status = FetchStatus.NOT_FOUND
@@ -118,6 +129,7 @@ def download_trailer(video: Video) -> FetchStatus:
 
 
 def process_pending_trailers(limit: int | None = None) -> int:
+    """Download the next batch of pending trailers, isolating per-video failures."""
     limit = settings.CINEMA_SCAN_BATCH_SIZE if limit is None else limit
     pending = Video.objects.pending_trailers().filter(trailer_attempts__lt=settings.CINEMA_FETCH_MAX_ATTEMPTS)
     processed = 0

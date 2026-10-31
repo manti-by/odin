@@ -99,14 +99,16 @@ location /cinema-media/ {
 
 location /cinema-trailers/ {
     internal;
-    alias /home/manti/www/odin/media/cinema/trailers/;
+    alias /;
 }
 ```
 
-`alias /` maps the internal URI 1:1 onto the absolute path stored in the row, so any
-`CINEMA_MEDIA_DIRS` entry works without its own location block; trailers get a dedicated alias and
-only the file name appears in the URI. nginx serves both with Range support, which is what Media3
-needs to seek on the TV.
+Both locations map the internal URI 1:1 onto the absolute path Django puts in `X-Accel-Redirect`,
+so any `CINEMA_MEDIA_DIRS` / `CINEMA_TRAILERS_DIR` deployment path works without its own location
+block and the nginx config never repeats the settings. Django re-checks that the resolved video
+path stays under `CINEMA_MEDIA_DIRS` and the trailer under `CINEMA_TRAILERS_DIR`, so a symlink
+swapped into the share cannot expose a file outside the library. nginx serves both with Range
+support, which is what Media3 needs to seek on the TV.
 
 ## Configuration
 
@@ -129,7 +131,10 @@ New tests: `odin/tests/api/test_cinema.py`, `odin/tests/services/test_cinema_{sc
 
 - No frontend tile for cinema yet; the Google TV app (MNT-273) is the only consumer.
 - `X-Accel-Redirect` only works behind nginx; `runserver` returns an empty 200 locally.
-- Trailer language is a query heuristic (`трейлер`); a Russian audio track is not verified.
+- Trailer language is a query heuristic (`трейлер`) and only MP4 results are accepted; a Russian
+  audio track is not verified.
+- An empty media root is treated as an unmounted share: missing-file reconciliation is skipped, so
+  a library whose last file was deleted keeps its rows until a file reappears.
 
 ## References
 

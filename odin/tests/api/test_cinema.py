@@ -99,7 +99,8 @@ class TestCinemaStreamAPI:
     def setup_method(self):
         self.client = APIClient()
 
-    def test_stream__returns_accel_redirect(self, tmp_path):
+    def test_stream__returns_accel_redirect(self, tmp_path, settings):
+        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
         path.write_bytes(b"video")
         video = VideoFactory(path=str(path), filename=path.name)
@@ -116,7 +117,33 @@ class TestCinemaStreamAPI:
         response = self.client.get(reverse("api:v1:cinema:stream", args=[video.pk]))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_stream__unavailable_video(self, tmp_path):
+    def test_stream__file_outside_media_dirs(self, tmp_path, settings):
+        media_dir = tmp_path / "media"
+        media_dir.mkdir()
+        outside = tmp_path / "private" / "secret.mkv"
+        outside.parent.mkdir()
+        outside.write_bytes(b"secret")
+        settings.CINEMA_MEDIA_DIRS = (str(media_dir),)
+        video = VideoFactory(path=str(outside), filename=outside.name)
+
+        response = self.client.get(reverse("api:v1:cinema:stream", args=[video.pk]))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_stream__symlink_escape_is_rejected(self, tmp_path, settings):
+        media_dir = tmp_path / "media"
+        media_dir.mkdir()
+        outside = tmp_path / "secret.mkv"
+        outside.write_bytes(b"secret")
+        link = media_dir / "Heat (1995).mkv"
+        link.symlink_to(outside)
+        settings.CINEMA_MEDIA_DIRS = (str(media_dir),)
+        video = VideoFactory(path=str(link.resolve()), filename=link.name)
+
+        response = self.client.get(reverse("api:v1:cinema:stream", args=[video.pk]))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_stream__unavailable_video(self, tmp_path, settings):
+        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
         path.write_bytes(b"video")
         video = VideoFactory(path=str(path), is_available=False)
@@ -124,7 +151,8 @@ class TestCinemaStreamAPI:
         response = self.client.get(reverse("api:v1:cinema:stream", args=[video.pk]))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_stream__no_authentication_required(self, tmp_path):
+    def test_stream__no_authentication_required(self, tmp_path, settings):
+        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
         path.write_bytes(b"video")
         video = VideoFactory(path=str(path))
@@ -134,13 +162,23 @@ class TestCinemaStreamAPI:
 
     def test_trailer__returns_accel_redirect(self, tmp_path, settings):
         settings.CINEMA_TRAILERS_DIR = str(tmp_path)
-        (tmp_path / "1-heat-1995.mp4").write_bytes(b"trailer")
-        video = VideoFactory(trailer="1-heat-1995.mp4")
+        trailer = tmp_path / "1-heat-1995.mp4"
+        trailer.write_bytes(b"trailer")
+        video = VideoFactory(trailer=trailer.name)
 
         response = self.client.get(reverse("api:v1:cinema:trailer", args=[video.pk]))
         assert response.status_code == status.HTTP_200_OK
-        assert response["X-Accel-Redirect"] == "/cinema-trailers/1-heat-1995.mp4"
+        assert response["X-Accel-Redirect"] == f"/cinema-trailers/{quote(str(trailer))}"
         assert response["Content-Type"] == "video/mp4"
+
+    def test_trailer__outside_trailers_dir(self, tmp_path, settings):
+        settings.CINEMA_TRAILERS_DIR = str(tmp_path / "trailers")
+        outside = tmp_path / "secret.mp4"
+        outside.write_bytes(b"secret")
+        video = VideoFactory(trailer="../secret.mp4")
+
+        response = self.client.get(reverse("api:v1:cinema:trailer", args=[video.pk]))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_trailer__no_trailer_linked(self):
         video = VideoFactory(trailer="")

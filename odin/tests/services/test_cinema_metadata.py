@@ -111,6 +111,29 @@ class TestFetchMetadata:
         assert video.metadata_attempts == 3
         assert not Video.objects.pending_metadata().filter(pk=video.pk).exists()
 
+    def test_fetch__non_object_body_is_retryable(self, omdb_settings, monkeypatch):
+        monkeypatch.setattr(metadata.requests, "get", Mock(return_value=omdb_response(["not", "an", "object"])))
+        video = VideoFactory()
+
+        result = metadata.fetch_metadata(video)
+
+        video.refresh_from_db()
+        assert result == FetchStatus.ERROR
+        assert video.metadata_attempts == 1
+
+    def test_fetch__rejected_api_key_is_batch_fatal(self, omdb_settings, monkeypatch):
+        error = metadata.requests.HTTPError("401 Client Error")
+        error.response = Mock(status_code=401)
+        monkeypatch.setattr(metadata.requests, "get", Mock(side_effect=error))
+        video = VideoFactory()
+
+        with pytest.raises(metadata.MetadataAuthError):
+            metadata.fetch_metadata(video)
+
+        video.refresh_from_db()
+        assert video.metadata_status == FetchStatus.PENDING
+        assert video.metadata_attempts == 0
+
     def test_fetch__skips_without_api_key(self, settings, local_cache, monkeypatch):
         settings.OMDB_API_KEY = ""
         get = Mock()
@@ -160,6 +183,33 @@ class TestProcessPendingMetadata:
 
         assert metadata.process_pending_metadata() == 0
         get.assert_not_called()
+
+    def test_process__stops_when_the_daily_quota_runs_out(self, omdb_settings, monkeypatch):
+        monkeypatch.setattr(metadata.requests, "get", Mock(return_value=omdb_response()))
+        omdb_settings.CINEMA_OMDB_DAILY_LIMIT = 1
+        VideoFactory(title="A First Movie")
+        second = VideoFactory(title="B Second Movie")
+
+        processed = metadata.process_pending_metadata()
+
+        second.refresh_from_db()
+        assert processed == 1
+        assert second.metadata_status == FetchStatus.PENDING
+        assert second.metadata_attempts == 0
+
+    def test_process__aborts_on_a_rejected_api_key(self, omdb_settings, monkeypatch):
+        error = metadata.requests.HTTPError("403 Client Error")
+        error.response = Mock(status_code=403)
+        monkeypatch.setattr(metadata.requests, "get", Mock(side_effect=error))
+        first = VideoFactory(title="A First Movie")
+        second = VideoFactory(title="B Second Movie")
+
+        processed = metadata.process_pending_metadata()
+
+        first.refresh_from_db()
+        second.refresh_from_db()
+        assert processed == 0
+        assert (first.metadata_attempts, second.metadata_attempts) == (0, 0)
 
     def test_process__one_failure_does_not_stop_the_batch(self, omdb_settings, monkeypatch):
         monkeypatch.setattr(metadata.requests, "get", Mock(return_value=omdb_response()))

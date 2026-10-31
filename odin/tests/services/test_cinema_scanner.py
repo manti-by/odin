@@ -73,19 +73,36 @@ class TestScanLibrary:
     def test_scan__marks_removed_files_unavailable(self, tmp_path, settings):
         settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
+        kept = tmp_path / "Brat (1997).mkv"
         path.write_bytes(b"video")
+        kept.write_bytes(b"video")
         scan_library()
         path.unlink()
 
         stats = scan_library()
 
         assert stats["missing"] == 1
-        assert Video.objects.get().is_available is False
+        assert Video.objects.get(title="Heat").is_available is False
+        assert Video.objects.get(title="Brat").is_available is True
+
+    def test_scan__empty_root_keeps_rows_available(self, tmp_path, settings):
+        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
+        path = tmp_path / "Heat (1995).mkv"
+        path.write_bytes(b"video")
+        scan_library()
+        path.unlink()
+
+        stats = scan_library()
+
+        assert stats["missing"] == 0
+        assert Video.objects.get().is_available is True
 
     def test_scan__restores_a_returning_file(self, tmp_path, settings):
         settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
+        _other = tmp_path / "Brat (1997).mkv"
         path.write_bytes(b"video")
+        _other.write_bytes(b"video")
         scan_library()
         path.unlink()
         scan_library()
@@ -93,7 +110,7 @@ class TestScanLibrary:
 
         scan_library()
 
-        assert Video.objects.get().is_available is True
+        assert Video.objects.get(title="Heat").is_available is True
 
     def test_scan__missing_root_keeps_rows(self, tmp_path, settings):
         settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
@@ -116,12 +133,37 @@ class TestScanLibrary:
         assert video.title == "home-video"
         assert video.year is None
 
-    def test_sync_video__creates_row(self, tmp_path):
+    def test_scan__symlink_outside_media_dirs_is_skipped(self, tmp_path, settings):
+        media_dir = tmp_path / "media"
+        media_dir.mkdir()
+        outside = tmp_path / "secret.mkv"
+        outside.write_bytes(b"secret")
+        (media_dir / "Secret (2020).mkv").symlink_to(outside)
+        settings.CINEMA_MEDIA_DIRS = (str(media_dir),)
+
+        stats = scan_library()
+
+        assert stats["found"] == 0
+        assert not Video.objects.exists()
+
+    def test_sync_video__creates_row(self, tmp_path, settings):
+        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
         path.write_bytes(b"video")
 
-        video, created, changed = sync_video(path)
+        result = sync_video(path)
 
+        assert result is not None
+        video, created, changed = result
         assert (created, changed) == (True, True)
         assert video.pk is not None
         assert video.title == "Heat"
+
+    def test_sync_video__rejects_a_path_outside_media_dirs(self, tmp_path, settings):
+        media_dir = tmp_path / "media"
+        media_dir.mkdir()
+        settings.CINEMA_MEDIA_DIRS = (str(media_dir),)
+        path = tmp_path / "Heat (1995).mkv"
+        path.write_bytes(b"video")
+
+        assert sync_video(path) is None

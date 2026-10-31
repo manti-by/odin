@@ -82,7 +82,12 @@ def apply_metadata(video: Video, payload: dict) -> None:
     )
 
 
+class MetadataAuthError(Exception):
+    """Raised when OMDb rejects the API key; the whole batch has to stop."""
+
+
 def record_failure(video: Video, message: str) -> FetchStatus:
+    """Record one retryable metadata failure and give up after `CINEMA_FETCH_MAX_ATTEMPTS`."""
     video.metadata_attempts += 1
     if video.metadata_attempts >= settings.CINEMA_FETCH_MAX_ATTEMPTS:
         video.metadata_status = FetchStatus.NOT_FOUND
@@ -97,7 +102,8 @@ def fetch_metadata(video: Video) -> FetchStatus:
     """Look one video up by parsed title + year and cache the result on the row.
 
     Never retries a `FETCHED` row; a miss is final, while transient errors stay retryable until
-    `CINEMA_FETCH_MAX_ATTEMPTS`.
+    `CINEMA_FETCH_MAX_ATTEMPTS`. A rejected API key is raised as `MetadataAuthError` because every
+    further request in the batch would fail the same way and burn the remaining attempts.
     """
     if not is_configured():
         logger.warning("OMDB_API_KEY is not configured, skipping cinema metadata")
@@ -121,8 +127,15 @@ def fetch_metadata(video: Video) -> FetchStatus:
         response = requests.get(settings.OMDB_API_URL, params=params, timeout=settings.OMDB_TIMEOUT)
         response.raise_for_status()
         payload = response.json()
+    except requests.HTTPError as exc:
+        if exc.response is not None and exc.response.status_code in (401, 403):
+            raise MetadataAuthError(f"OMDb rejected the API key: {exc}") from exc
+        return record_failure(video, f"OMDb request failed: {exc}")
     except (requests.RequestException, ValueError) as exc:
         return record_failure(video, f"OMDb request failed: {exc}")
+
+    if not isinstance(payload, dict):
+        return record_failure(video, "OMDb returned a non-object JSON body")
 
     if str(payload.get("Response", "")).lower() != "true":
         video.metadata_status = FetchStatus.NOT_FOUND
@@ -137,6 +150,7 @@ def fetch_metadata(video: Video) -> FetchStatus:
 
 
 def process_pending_metadata(limit: int | None = None) -> int:
+    """Fetch the next batch of pending rows, stopping early on quota or a rejected API key."""
     limit = settings.CINEMA_SCAN_BATCH_SIZE if limit is None else limit
     if not is_configured():
         return 0
@@ -144,8 +158,14 @@ def process_pending_metadata(limit: int | None = None) -> int:
     pending = Video.objects.pending_metadata().filter(metadata_attempts__lt=settings.CINEMA_FETCH_MAX_ATTEMPTS)
     processed = 0
     for video in pending[:limit]:
+        if not has_quota():
+            logger.warning(f"OMDb daily limit of {settings.CINEMA_OMDB_DAILY_LIMIT} requests reached")
+            break
         try:
             fetch_metadata(video)
+        except MetadataAuthError as exc:
+            logger.error(f"Cinema metadata batch aborted: {exc}")
+            break
         except Exception:
             logger.exception(f"Cinema metadata fetch failed for {video.path}")
             continue

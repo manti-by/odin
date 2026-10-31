@@ -87,8 +87,8 @@ class Video(models.Model):
         verbose_name = _("video")
         verbose_name_plural = _("videos")
 
-    def __str__(self):
-        return f"{self.title} ({self.year})" if self.year else self.title
+    def __str__(self) -> str:
+        return self.release_label
 
     @property
     def has_trailer(self) -> bool:

@@ -29,7 +29,17 @@ def parse_filename(filename: str) -> tuple[str, int | None]:
 
 
 def get_media_dirs() -> tuple[Path, ...]:
-    return tuple(Path(directory).expanduser() for directory in settings.CINEMA_MEDIA_DIRS if directory)
+    return tuple(Path(directory).expanduser().resolve() for directory in settings.CINEMA_MEDIA_DIRS if directory)
+
+
+def is_within_media_dirs(path: Path) -> bool:
+    """Guard against a symlink in a configured share pointing outside every media root.
+
+    The stream endpoint is anonymous and nginx maps the internal URI straight onto the filesystem,
+    so a row is only allowed when its resolved path stays under `CINEMA_MEDIA_DIRS`.
+    """
+    resolved = path.resolve()
+    return any(resolved.is_relative_to(root) for root in get_media_dirs())
 
 
 def iter_video_files(root: Path) -> Iterator[Path]:
@@ -41,14 +51,19 @@ def iter_video_files(root: Path) -> Iterator[Path]:
         yield path
 
 
-def sync_video(path: Path) -> tuple[Video, bool, bool]:
-    """Persist one file, returning `(video, created, changed)`.
+def sync_video(path: Path) -> tuple[Video, bool, bool] | None:
+    """Persist one file, returning `(video, created, changed)` or `None` when it is rejected.
 
     The mtime doubles as the incremental cache: an unchanged available row is skipped without a
     write, so a scan over a large library only touches new and modified files.
     """
+    resolved_path = path.resolve()
+    if not is_within_media_dirs(resolved_path):
+        logger.warning(f"Cinema scan skipped {path}: the resolved path is outside CINEMA_MEDIA_DIRS")
+        return None
+
     stat = path.stat()
-    resolved = str(path.resolve())
+    resolved = str(resolved_path)
     video = Video.objects.filter(path=resolved).first()
 
     if video and video.mtime == stat.st_mtime and video.is_available:
@@ -75,6 +90,7 @@ def sync_video(path: Path) -> tuple[Video, bool, bool]:
 
 
 def mark_missing(root: Path, seen: set[str]) -> int:
+    """Flag every available row under `root` that the scan did not see this run."""
     prefix = f"{root.resolve()}{os.sep}"
     missing = Video.objects.filter(path__startswith=prefix, is_available=True).exclude(path__in=seen)
     count = 0
@@ -90,8 +106,8 @@ def scan_library() -> dict[str, int]:
     """Walk every configured media dir and reconcile the `Video` table with the disk.
 
     Each root and each file is isolated: an unreadable directory or a broken symlink logs and the
-    scan keeps going. Rows are only marked unavailable for a root that was actually readable, so
-    an unmounted share never wipes the library.
+    scan keeps going. A root that yields no files at all is treated as an unmounted share and its
+    rows are left alone, so an empty mount point never hides the whole library.
     """
     stats = {"found": 0, "created": 0, "updated": 0, "missing": 0}
     for root in get_media_dirs():
@@ -102,13 +118,16 @@ def scan_library() -> dict[str, int]:
         seen: set[str] = set()
         for path in iter_video_files(root):
             try:
-                video, created, changed = sync_video(path)
+                result = sync_video(path)
             except OSError as exc:
                 logger.error(f"Cinema scan failed for {path}: {exc}")
                 continue
             except Exception:
                 logger.exception(f"Cinema scan failed for {path}")
                 continue
+            if result is None:
+                continue
+            video, created, changed = result
             seen.add(video.path)
             stats["found"] += 1
             if created:
@@ -116,6 +135,9 @@ def scan_library() -> dict[str, int]:
             elif changed:
                 stats["updated"] += 1
 
+        if not seen:
+            logger.warning(f"Cinema media dir is empty, skipping missing-file reconciliation: {root}")
+            continue
         stats["missing"] += mark_missing(root, seen)
 
     logger.info(

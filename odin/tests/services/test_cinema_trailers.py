@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -8,6 +9,7 @@ from odin.apps.cinema.services.trailers import (
     TrailerDownloadError,
     build_query,
     download_trailer,
+    fetch_trailer_file,
     process_pending_trailers,
     trailer_filename,
 )
@@ -46,6 +48,63 @@ def test_trailer_filename__is_derived_from_the_row():
 
 def test_trailer_filename__keeps_a_cyrillic_title():
     assert trailer_filename(Video(pk=7, title="Брат", year=1997)) == "7-брат-1997.mp4"
+
+
+class TestFetchTrailerFile:
+    def test_fetch_file__moves_the_downloaded_mp4_into_place(self, tmp_path, monkeypatch):
+        target = tmp_path / "1-heat-1995.mp4"
+        commands = []
+
+        def fake_run(command, **kwargs):
+            commands.append(command)
+            scratch = Path(command[command.index("--paths") + 1])
+            (scratch / "dQw4w9WgXcQ.mp4").write_bytes(b"mp4")
+            return Mock(returncode=0, stderr="")
+
+        monkeypatch.setattr(trailers.subprocess, "run", fake_run)
+
+        fetch_trailer_file("Heat 1995 трейлер", target)
+
+        assert target.read_bytes() == b"mp4"
+        assert "--ignore-config" in commands[0]
+        assert "best[ext=mp4]/bestvideo[ext=mp4]+bestaudio[ext=m4a]" in commands[0]
+
+    def test_fetch_file__rejects_a_non_mp4_download(self, tmp_path, monkeypatch):
+        target = tmp_path / "1-heat-1995.mp4"
+
+        def fake_run(command, **kwargs):
+            scratch = Path(command[command.index("--paths") + 1])
+            (scratch / "dQw4w9WgXcQ.webm").write_bytes(b"webm")
+            return Mock(returncode=0, stderr="")
+
+        monkeypatch.setattr(trailers.subprocess, "run", fake_run)
+
+        with pytest.raises(TrailerDownloadError):
+            fetch_trailer_file("Heat 1995 трейлер", target)
+
+        assert not target.exists()
+
+    def test_fetch_file__does_not_pick_a_sidecar(self, tmp_path, monkeypatch):
+        target = tmp_path / "1-heat-1995.mp4"
+
+        def fake_run(command, **kwargs):
+            scratch = Path(command[command.index("--paths") + 1])
+            (scratch / "dQw4w9WgXcQ.info.json").write_text("{}")
+            (scratch / "dQw4w9WgXcQ.mp4").write_bytes(b"mp4")
+            return Mock(returncode=0, stderr="")
+
+        monkeypatch.setattr(trailers.subprocess, "run", fake_run)
+
+        fetch_trailer_file("Heat 1995 трейлер", target)
+
+        assert target.read_bytes() == b"mp4"
+
+    def test_fetch_file__fails_when_ytdlp_writes_nothing(self, tmp_path, monkeypatch):
+        target = tmp_path / "1-heat-1995.mp4"
+        monkeypatch.setattr(trailers.subprocess, "run", Mock(return_value=Mock(returncode=0, stderr="")))
+
+        with pytest.raises(TrailerDownloadError):
+            fetch_trailer_file("Heat 1995 трейлер", target)
 
 
 @pytest.mark.django_db
