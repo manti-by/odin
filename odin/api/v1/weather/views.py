@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from odin.api.v1.weather.serializers import WeatherSerializer
-from odin.apps.weather.models import Weather
+from odin.apps.weather.services import get_latest_weather
 
 
 class WeatherCurrentView(APIView):
@@ -12,7 +12,6 @@ class WeatherCurrentView(APIView):
     permission_classes = (AllowAny,)
 
     def get(self, request: Request, *args: list, **kwargs: dict) -> Response:
-        weather = Weather.objects.current()
-        if weather is None:
+        if (weather := get_latest_weather()) is None:
             return Response(None)
         return Response(WeatherSerializer(weather).data)

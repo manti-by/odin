@@ -16,8 +16,10 @@ interface Esp8266SensorsTileProps {
 
 function formatValue(value: string | null): string {
   if (value === null || value === undefined) return "-";
+
   const num = Number.parseFloat(value);
   if (Number.isNaN(num)) return "-";
+
   return num.toFixed(1);
 }
 
