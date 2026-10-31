@@ -8,6 +8,7 @@ from factory.fuzzy import FuzzyDecimal
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from odin.apps.cinema.models import Video
 from odin.apps.core.models import Auth, Device
 from odin.apps.currency.models import Currency, ExchangeRate
 from odin.apps.electricity.models import VoltageLog
@@ -168,3 +169,15 @@ class AuthFactory(DjangoModelFactory):
 
     class Meta:
         model = Auth
+
+
+class VideoFactory(DjangoModelFactory):
+    path = factory.Sequence(lambda n: f"/mnt/data/Movies/Movie {n} (2020).mkv")
+    filename = factory.LazyAttribute(lambda video: video.path.rsplit("/", 1)[-1])
+    title = factory.Faker("catch_phrase")
+    year = factory.Faker("pyint", min_value=1950, max_value=2026)
+    description = factory.Faker("sentence")
+    genres = ["Drama"]
+
+    class Meta:
+        model = Video
