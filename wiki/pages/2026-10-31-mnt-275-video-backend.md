@@ -94,19 +94,19 @@ points at an internal nginx location. Django checks the row and the file, then h
 Two internal nginx locations were added to both the HTTP and HTTPS server blocks:
 
 ```nginx
-location /video-media/ {
+location /video/source/ {
     internal;
     alias /;
 }
 
-location /video-trailers/ {
+location /video/trailers/ {
     internal;
     alias /var/lib/odin/trailers/;
 }
 ```
 
-`/video-media/` maps the internal URI 1:1 onto the absolute path Django puts in `X-Accel-Redirect`,
-so any `VIDEO_MEDIA_DIRS` entry works without its own location block. `/video-trailers/` aliases the
+`/video/source/` maps the internal URI 1:1 onto the absolute path Django puts in `X-Accel-Redirect`,
+so any `VIDEO_MEDIA_DIRS` entry works without its own location block. `/video/trailers/` aliases the
 single known trailer directory (`VIDEO_TRAILERS_DIR`, default `/var/lib/odin/trailers`), so the URI
 carries only the file name. Django re-checks that the resolved video path stays under
 `VIDEO_MEDIA_DIRS` and the trailer under `VIDEO_TRAILERS_DIR`, so a symlink swapped into the share

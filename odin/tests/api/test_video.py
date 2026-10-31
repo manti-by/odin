@@ -107,7 +107,7 @@ class TestVideoStreamAPI:
 
         response = self.client.get(reverse("api:v1:video:stream", args=[video.pk]))
         assert response.status_code == status.HTTP_200_OK
-        assert response["X-Accel-Redirect"] == f"/video-media/{quote(str(path))}"
+        assert response["X-Accel-Redirect"] == f"/video/source/{quote(str(path))}"
         assert response["Content-Type"] == "video/x-matroska"
         assert response["Accept-Ranges"] == "bytes"
 
@@ -168,7 +168,7 @@ class TestVideoStreamAPI:
 
         response = self.client.get(reverse("api:v1:video:trailer", args=[video.pk]))
         assert response.status_code == status.HTTP_200_OK
-        assert response["X-Accel-Redirect"] == f"/video-trailers/{trailer.name}"
+        assert response["X-Accel-Redirect"] == f"/video/trailers/{trailer.name}"
         assert response["Content-Type"] == "video/mp4"
 
     def test_trailer__outside_trailers_dir(self, tmp_path, settings):

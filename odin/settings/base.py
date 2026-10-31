@@ -224,8 +224,8 @@ MEDIA_URL = "media/"
 VIDEO_MEDIA_DIRS = tuple(filter(None, (part.strip() for part in os.getenv("VIDEO_MEDIA_DIRS", "").split(","))))
 VIDEO_TRAILERS_DIR = os.getenv("VIDEO_TRAILERS_DIR", "/var/lib/odin/trailers")
 # Internal nginx locations; the Django app never serves the bytes itself.
-VIDEO_NGINX_MEDIA_URL = "/video-media/"
-VIDEO_NGINX_TRAILERS_URL = "/video-trailers/"
+VIDEO_NGINX_MEDIA_URL = "/video/source/"
+VIDEO_NGINX_TRAILERS_URL = "/video/trailers/"
 VIDEO_SCAN_INTERVAL = int(os.getenv("VIDEO_SCAN_INTERVAL", "1"))
 VIDEO_SCAN_BATCH_SIZE = int(os.getenv("VIDEO_SCAN_BATCH_SIZE", "5"))
 VIDEO_FETCH_MAX_ATTEMPTS = int(os.getenv("VIDEO_FETCH_MAX_ATTEMPTS", "3"))

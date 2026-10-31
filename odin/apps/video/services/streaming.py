@@ -58,7 +58,7 @@ def get_video_stream(video: Video) -> HttpResponse:
 def get_trailer_stream(video: Video) -> HttpResponse:
     """Authorize the downloaded trailer and hand its file name to nginx.
 
-    The `/video-trailers/` location is aliased to `VIDEO_TRAILERS_DIR`, so only the file name goes
+    The `/video/trailers/` location is aliased to `VIDEO_TRAILERS_DIR`, so only the file name goes
     into the internal URI; the row may only point at a file inside that directory.
     """
     path = get_trailer_path(video)
