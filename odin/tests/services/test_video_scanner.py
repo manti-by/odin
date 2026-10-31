@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-from odin.apps.cinema.models import FetchStatus, Video
-from odin.apps.cinema.services.scanner import parse_filename, scan_library, sync_video
+from odin.apps.video.models import FetchStatus, Video
+from odin.apps.video.services.scanner import parse_filename, scan_library, sync_video
 
 
 @pytest.mark.parametrize(
@@ -23,7 +23,7 @@ def test_parse_filename(filename, expected):
 @pytest.mark.django_db
 class TestScanLibrary:
     def test_scan__creates_video_rows(self, tmp_path, settings):
-        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
+        settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
         (tmp_path / "Heat (1995).mkv").write_bytes(b"video")
         (tmp_path / "notes.txt").write_bytes(b"skip")
         (tmp_path / ".hidden").mkdir()
@@ -40,7 +40,7 @@ class TestScanLibrary:
         assert video.is_available is True
 
     def test_scan__unchanged_file_is_not_rewritten(self, tmp_path, settings):
-        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
+        settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
         path.write_bytes(b"video")
         scan_library()
@@ -54,7 +54,7 @@ class TestScanLibrary:
         assert video.title == "HEAT (edited)"
 
     def test_scan__modified_file_keeps_fetched_metadata_title(self, tmp_path, settings):
-        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
+        settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
         path.write_bytes(b"video")
         scan_library()
@@ -71,7 +71,7 @@ class TestScanLibrary:
         assert video.size == len(b"re-encoded video")
 
     def test_scan__marks_removed_files_unavailable(self, tmp_path, settings):
-        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
+        settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
         kept = tmp_path / "Brat (1997).mkv"
         path.write_bytes(b"video")
@@ -86,7 +86,7 @@ class TestScanLibrary:
         assert Video.objects.get(title="Brat").is_available is True
 
     def test_scan__empty_root_keeps_rows_available(self, tmp_path, settings):
-        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
+        settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
         path.write_bytes(b"video")
         scan_library()
@@ -98,7 +98,7 @@ class TestScanLibrary:
         assert Video.objects.get().is_available is True
 
     def test_scan__restores_a_returning_file(self, tmp_path, settings):
-        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
+        settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
         _other = tmp_path / "Brat (1997).mkv"
         path.write_bytes(b"video")
@@ -113,18 +113,18 @@ class TestScanLibrary:
         assert Video.objects.get(title="Heat").is_available is True
 
     def test_scan__missing_root_keeps_rows(self, tmp_path, settings):
-        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
+        settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
         (tmp_path / "Heat (1995).mkv").write_bytes(b"video")
         scan_library()
 
-        settings.CINEMA_MEDIA_DIRS = (str(tmp_path / "unmounted"),)
+        settings.VIDEO_MEDIA_DIRS = (str(tmp_path / "unmounted"),)
         stats = scan_library()
 
         assert stats["missing"] == 0
         assert Video.objects.get().is_available is True
 
     def test_scan__unparsable_name_is_kept(self, tmp_path, settings):
-        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
+        settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
         (tmp_path / "home-video.mkv").write_bytes(b"video")
 
         scan_library()
@@ -139,7 +139,7 @@ class TestScanLibrary:
         outside = tmp_path / "secret.mkv"
         outside.write_bytes(b"secret")
         (media_dir / "Secret (2020).mkv").symlink_to(outside)
-        settings.CINEMA_MEDIA_DIRS = (str(media_dir),)
+        settings.VIDEO_MEDIA_DIRS = (str(media_dir),)
 
         stats = scan_library()
 
@@ -147,7 +147,7 @@ class TestScanLibrary:
         assert not Video.objects.exists()
 
     def test_sync_video__creates_row(self, tmp_path, settings):
-        settings.CINEMA_MEDIA_DIRS = (str(tmp_path),)
+        settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
         path = tmp_path / "Heat (1995).mkv"
         path.write_bytes(b"video")
 
@@ -162,7 +162,7 @@ class TestScanLibrary:
     def test_sync_video__rejects_a_path_outside_media_dirs(self, tmp_path, settings):
         media_dir = tmp_path / "media"
         media_dir.mkdir()
-        settings.CINEMA_MEDIA_DIRS = (str(media_dir),)
+        settings.VIDEO_MEDIA_DIRS = (str(media_dir),)
         path = tmp_path / "Heat (1995).mkv"
         path.write_bytes(b"video")
 

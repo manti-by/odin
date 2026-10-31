@@ -3,9 +3,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from odin.apps.cinema.models import FetchStatus, Video
-from odin.apps.cinema.services import trailers
-from odin.apps.cinema.services.trailers import (
+from odin.apps.video.models import FetchStatus, Video
+from odin.apps.video.services import trailers
+from odin.apps.video.services.trailers import (
     TrailerDownloadError,
     build_query,
     download_trailer,
@@ -18,9 +18,9 @@ from odin.tests.factories import VideoFactory
 
 @pytest.fixture
 def trailer_settings(tmp_path, settings, monkeypatch):
-    settings.CINEMA_TRAILERS_DIR = str(tmp_path)
-    settings.CINEMA_FETCH_MAX_ATTEMPTS = 3
-    settings.CINEMA_SCAN_BATCH_SIZE = 5
+    settings.VIDEO_TRAILERS_DIR = str(tmp_path)
+    settings.VIDEO_FETCH_MAX_ATTEMPTS = 3
+    settings.VIDEO_SCAN_BATCH_SIZE = 5
     settings.YOUTUBE_PROXY = ""
     monkeypatch.setattr(trailers.shutil, "which", lambda binary: f"/usr/bin/{binary}")
     return settings
@@ -125,12 +125,12 @@ class TestDownloadTrailer:
         assert result == FetchStatus.FETCHED
         assert video.trailer == f"{video.pk}-heat-1995.mp4"
         assert video.trailer_attempts == 1
-        assert (Path(trailer_settings.CINEMA_TRAILERS_DIR) / video.trailer).is_file()
+        assert (Path(trailer_settings.VIDEO_TRAILERS_DIR) / video.trailer).is_file()
         assert queries == ["Heat 1995 трейлер"]
 
     def test_download__never_redownloads_an_existing_file(self, trailer_settings, monkeypatch):
         video = VideoFactory(title="Heat", year=1995)
-        target = Path(trailer_settings.CINEMA_TRAILERS_DIR) / trailer_filename(video)
+        target = Path(trailer_settings.VIDEO_TRAILERS_DIR) / trailer_filename(video)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(b"mp4")
 
@@ -168,7 +168,7 @@ class TestDownloadTrailer:
         assert not Video.objects.pending_trailers().filter(pk=video.pk).exists()
 
     def test_download__missing_ytdlp_does_not_burn_attempts(self, settings, tmp_path, monkeypatch):
-        settings.CINEMA_TRAILERS_DIR = str(tmp_path)
+        settings.VIDEO_TRAILERS_DIR = str(tmp_path)
         monkeypatch.setattr(trailers.shutil, "which", lambda binary: None)
         video = VideoFactory()
 

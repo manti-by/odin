@@ -6,23 +6,23 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
-from odin.api.v1.cinema.serializers import VideoSerializer
-from odin.apps.cinema.models import Video
-from odin.apps.cinema.services import get_trailer_stream, get_video_stream
+from odin.api.v1.video.serializers import VideoSerializer
+from odin.apps.video.models import Video
+from odin.apps.video.services import get_trailer_stream, get_video_stream
 
 
-class CinemaBaseView(GenericViewSet):
+class VideoBaseView(GenericViewSet):
     authentication_classes = ()
     permission_classes = (AllowAny,)
     queryset = Video.objects.available()
     serializer_class = VideoSerializer
 
 
-class VideosView(mixins.ListModelMixin, CinemaBaseView):
+class VideosView(mixins.ListModelMixin, VideoBaseView):
     pass
 
 
-class VideoRetrieveView(mixins.RetrieveModelMixin, CinemaBaseView):
+class VideoRetrieveView(mixins.RetrieveModelMixin, VideoBaseView):
     pass
 
 

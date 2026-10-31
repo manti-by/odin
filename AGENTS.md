@@ -14,10 +14,11 @@ It uses Django 6 with Django REST Framework, PostgreSQL, Redis, and modern Pytho
   `mode.py`, `controller.py`, `schedule.py`), `boiler_set` / `boiler_status` management commands,
   and a read API in `./odin/api/v1/boiler/` (`GET /api/v1/boiler/status/`); talks to the local
   `ebusd` daemon
-- Home cinema in `./odin/apps/cinema/` — `Video` rows reconciled with `CINEMA_MEDIA_DIRS` by the
-  `cinema_scan` command (APScheduler job, incremental by path + mtime, OMDb metadata cache capped
-  at the free tier, Russian yt-dlp trailers); the read API in `./odin/api/v1/cinema/` serves
-  metadata and answers `stream/` / `trailer/` with `X-Accel-Redirect` for nginx
+- Video library (home cinema) in `./odin/apps/video/` — `Video` rows reconciled with
+  `VIDEO_MEDIA_DIRS` by the `video_scan` command (APScheduler job, incremental by path + mtime,
+  OMDb metadata cache capped at the free tier, Russian yt-dlp trailers in `/var/lib/odin/trailers`);
+  the read API in `./odin/api/v1/video/` serves metadata and answers `stream/` / `trailer/` with
+  `X-Accel-Redirect` for nginx
 - Tests in `./odin/tests/`
 - Standalone MCP server in `./mcp_server/` — stdio server exposing read tools over the database,
   source docstrings, the wiki and the log directory. Project-specific values (roots, server name,
@@ -235,7 +236,7 @@ def queue_sync_sensor_data(sensor_id: str):
 - Define jobs in `odin/apps/core/scheduler.py` within the app
 - Use `scheduler.scheduled_job` for scheduling
 - Live jobs: `update_weather` (30 min), `update_voltage` (5 min), `update_exchange_rates` (4 h),
-  `fetch_traffic` (15 min), `cinema_scan` (`CINEMA_SCAN_INTERVAL`, 1 min). `update_boiler_mode` is
+  `fetch_traffic` (15 min), `video_scan` (`VIDEO_SCAN_INTERVAL`, 1 min). `update_boiler_mode` is
   commented out (disabled 2026-09-22, MNT-216 pending) — the boiler controller does not run
   periodically.
 

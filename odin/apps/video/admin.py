@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-from odin.apps.cinema.models import Video
+from odin.apps.video.models import Video
 
 
 @admin.register(Video)

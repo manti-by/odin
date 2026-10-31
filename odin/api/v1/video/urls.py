@@ -1,9 +1,9 @@
 from django.urls import path
 
-from odin.api.v1.cinema.views import VideoRetrieveView, VideoStreamView, VideosView, VideoTrailerView
+from odin.api.v1.video.views import VideoRetrieveView, VideoStreamView, VideosView, VideoTrailerView
 
 
-app_name = "cinema"
+app_name = "video"
 
 
 urlpatterns = [

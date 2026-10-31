@@ -7,12 +7,12 @@ from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 
-from odin.apps.cinema.models import FetchStatus, Video
+from odin.apps.video.models import FetchStatus, Video
 
 
 logger = logging.getLogger(__name__)
 
-QUOTA_CACHE_KEY = "cinema:omdb:requests"
+QUOTA_CACHE_KEY = "video:omdb:requests"
 QUOTA_TTL = 60 * 60 * 48
 
 
@@ -30,7 +30,7 @@ def requests_today() -> int:
 
 def has_quota() -> bool:
     """Keep the scanner under the OMDb free tier (1,000 requests/day)."""
-    return requests_today() < settings.CINEMA_OMDB_DAILY_LIMIT
+    return requests_today() < settings.VIDEO_OMDB_DAILY_LIMIT
 
 
 def consume_quota() -> None:
@@ -87,9 +87,9 @@ class MetadataAuthError(Exception):
 
 
 def record_failure(video: Video, message: str) -> FetchStatus:
-    """Record one retryable metadata failure and give up after `CINEMA_FETCH_MAX_ATTEMPTS`."""
+    """Record one retryable metadata failure and give up after `VIDEO_FETCH_MAX_ATTEMPTS`."""
     video.metadata_attempts += 1
-    if video.metadata_attempts >= settings.CINEMA_FETCH_MAX_ATTEMPTS:
+    if video.metadata_attempts >= settings.VIDEO_FETCH_MAX_ATTEMPTS:
         video.metadata_status = FetchStatus.NOT_FOUND
     else:
         video.metadata_status = FetchStatus.ERROR
@@ -102,14 +102,14 @@ def fetch_metadata(video: Video) -> FetchStatus:
     """Look one video up by parsed title + year and cache the result on the row.
 
     Never retries a `FETCHED` row; a miss is final, while transient errors stay retryable until
-    `CINEMA_FETCH_MAX_ATTEMPTS`. A rejected API key is raised as `MetadataAuthError` because every
+    `VIDEO_FETCH_MAX_ATTEMPTS`. A rejected API key is raised as `MetadataAuthError` because every
     further request in the batch would fail the same way and burn the remaining attempts.
     """
     if not is_configured():
-        logger.warning("OMDB_API_KEY is not configured, skipping cinema metadata")
+        logger.warning("OMDB_API_KEY is not configured, skipping video metadata")
         return video.metadata_status
     if not has_quota():
-        logger.warning(f"OMDb daily limit of {settings.CINEMA_OMDB_DAILY_LIMIT} requests reached")
+        logger.warning(f"OMDb daily limit of {settings.VIDEO_OMDB_DAILY_LIMIT} requests reached")
         return video.metadata_status
 
     params: dict[str, str | int] = {
@@ -151,23 +151,23 @@ def fetch_metadata(video: Video) -> FetchStatus:
 
 def process_pending_metadata(limit: int | None = None) -> int:
     """Fetch the next batch of pending rows, stopping early on quota or a rejected API key."""
-    limit = settings.CINEMA_SCAN_BATCH_SIZE if limit is None else limit
+    limit = settings.VIDEO_SCAN_BATCH_SIZE if limit is None else limit
     if not is_configured():
         return 0
 
-    pending = Video.objects.pending_metadata().filter(metadata_attempts__lt=settings.CINEMA_FETCH_MAX_ATTEMPTS)
+    pending = Video.objects.pending_metadata().filter(metadata_attempts__lt=settings.VIDEO_FETCH_MAX_ATTEMPTS)
     processed = 0
     for video in pending[:limit]:
         if not has_quota():
-            logger.warning(f"OMDb daily limit of {settings.CINEMA_OMDB_DAILY_LIMIT} requests reached")
+            logger.warning(f"OMDb daily limit of {settings.VIDEO_OMDB_DAILY_LIMIT} requests reached")
             break
         try:
             fetch_metadata(video)
         except MetadataAuthError as exc:
-            logger.error(f"Cinema metadata batch aborted: {exc}")
+            logger.error(f"Video metadata batch aborted: {exc}")
             break
         except Exception:
-            logger.exception(f"Cinema metadata fetch failed for {video.path}")
+            logger.exception(f"Video metadata fetch failed for {video.path}")
             continue
         processed += 1
     return processed

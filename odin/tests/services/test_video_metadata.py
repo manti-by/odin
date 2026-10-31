@@ -5,8 +5,8 @@ import pytest
 
 from django.core.cache.backends.locmem import LocMemCache
 
-from odin.apps.cinema.models import FetchStatus, Video
-from odin.apps.cinema.services import metadata
+from odin.apps.video.models import FetchStatus, Video
+from odin.apps.video.services import metadata
 from odin.tests.factories import VideoFactory
 
 
@@ -30,7 +30,7 @@ def omdb_response(payload: dict | None = None) -> Mock:
 @pytest.fixture
 def local_cache(monkeypatch):
     # LocMemCache instances share one class-level dict, so clear it to isolate the quota counter.
-    cache = LocMemCache("cinema-metadata", {})
+    cache = LocMemCache("video-metadata", {})
     cache.clear()
     monkeypatch.setattr(metadata, "cache", cache)
     return cache
@@ -39,8 +39,8 @@ def local_cache(monkeypatch):
 @pytest.fixture
 def omdb_settings(settings, local_cache):
     settings.OMDB_API_KEY = "test-key"
-    settings.CINEMA_OMDB_DAILY_LIMIT = 900
-    settings.CINEMA_FETCH_MAX_ATTEMPTS = 3
+    settings.VIDEO_OMDB_DAILY_LIMIT = 900
+    settings.VIDEO_FETCH_MAX_ATTEMPTS = 3
     return settings
 
 
@@ -146,7 +146,7 @@ class TestFetchMetadata:
     def test_fetch__respects_daily_quota(self, omdb_settings, monkeypatch):
         get = Mock(return_value=omdb_response())
         monkeypatch.setattr(metadata.requests, "get", get)
-        omdb_settings.CINEMA_OMDB_DAILY_LIMIT = 1
+        omdb_settings.VIDEO_OMDB_DAILY_LIMIT = 1
 
         metadata.fetch_metadata(VideoFactory())
         metadata.fetch_metadata(VideoFactory())
@@ -186,7 +186,7 @@ class TestProcessPendingMetadata:
 
     def test_process__stops_when_the_daily_quota_runs_out(self, omdb_settings, monkeypatch):
         monkeypatch.setattr(metadata.requests, "get", Mock(return_value=omdb_response()))
-        omdb_settings.CINEMA_OMDB_DAILY_LIMIT = 1
+        omdb_settings.VIDEO_OMDB_DAILY_LIMIT = 1
         VideoFactory(title="A First Movie")
         second = VideoFactory(title="B Second Movie")
 

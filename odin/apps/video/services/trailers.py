@@ -7,7 +7,7 @@ from pathlib import Path
 from django.conf import settings
 from django.utils.text import slugify
 
-from odin.apps.cinema.models import FetchStatus, Video
+from odin.apps.video.models import FetchStatus, Video
 
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ def trailer_filename(video: Video) -> str:
 
 
 def trailers_dir() -> Path:
-    return Path(settings.CINEMA_TRAILERS_DIR)
+    return Path(settings.VIDEO_TRAILERS_DIR)
 
 
 def get_trailer_path(video: Video) -> Path | None:
@@ -44,7 +44,7 @@ def fetch_trailer_file(query: str, target: Path) -> None:
     reports it as `video/mp4`, so a webm/mkv fallback would be a lie.
     """
     command = [
-        settings.CINEMA_YTDLP_BIN,
+        settings.VIDEO_YTDLP_BIN,
         # Ignore operator config (e.g. `--write-info-json`) so a sidecar never lands in the
         # scratch dir next to the trailer.
         "--ignore-config",
@@ -57,7 +57,7 @@ def fetch_trailer_file(query: str, target: Path) -> None:
         "--merge-output-format",
         "mp4",
         "--max-filesize",
-        settings.CINEMA_TRAILER_MAX_FILESIZE,
+        settings.VIDEO_TRAILER_MAX_FILESIZE,
     ]
     if settings.YOUTUBE_PROXY:
         command.extend(("--proxy", settings.YOUTUBE_PROXY))
@@ -67,7 +67,7 @@ def fetch_trailer_file(query: str, target: Path) -> None:
             (*command, "--paths", scratch, "--output", "%(id)s.%(ext)s", f"ytsearch1:{query}"),
             capture_output=True,
             text=True,
-            timeout=settings.CINEMA_TRAILER_TIMEOUT,
+            timeout=settings.VIDEO_TRAILER_TIMEOUT,
             check=False,
         )
         if result.returncode != 0:
@@ -92,9 +92,9 @@ def mark_downloaded(video: Video, target: Path) -> FetchStatus:
 
 
 def record_failure(video: Video, message: str) -> FetchStatus:
-    """Record one retryable trailer failure and give up after `CINEMA_FETCH_MAX_ATTEMPTS`."""
+    """Record one retryable trailer failure and give up after `VIDEO_FETCH_MAX_ATTEMPTS`."""
     video.trailer_attempts += 1
-    if video.trailer_attempts >= settings.CINEMA_FETCH_MAX_ATTEMPTS:
+    if video.trailer_attempts >= settings.VIDEO_FETCH_MAX_ATTEMPTS:
         video.trailer_status = FetchStatus.NOT_FOUND
     else:
         video.trailer_status = FetchStatus.ERROR
@@ -109,8 +109,8 @@ def download_trailer(video: Video) -> FetchStatus:
     An existing non-empty file is reused instead of re-downloaded, so a rescan or a retry after a
     crash never hits YouTube again.
     """
-    if not shutil.which(settings.CINEMA_YTDLP_BIN):
-        logger.error(f"yt-dlp binary is not available: {settings.CINEMA_YTDLP_BIN}")
+    if not shutil.which(settings.VIDEO_YTDLP_BIN):
+        logger.error(f"yt-dlp binary is not available: {settings.VIDEO_YTDLP_BIN}")
         return video.trailer_status
 
     target = trailers_dir() / trailer_filename(video)
@@ -130,14 +130,14 @@ def download_trailer(video: Video) -> FetchStatus:
 
 def process_pending_trailers(limit: int | None = None) -> int:
     """Download the next batch of pending trailers, isolating per-video failures."""
-    limit = settings.CINEMA_SCAN_BATCH_SIZE if limit is None else limit
-    pending = Video.objects.pending_trailers().filter(trailer_attempts__lt=settings.CINEMA_FETCH_MAX_ATTEMPTS)
+    limit = settings.VIDEO_SCAN_BATCH_SIZE if limit is None else limit
+    pending = Video.objects.pending_trailers().filter(trailer_attempts__lt=settings.VIDEO_FETCH_MAX_ATTEMPTS)
     processed = 0
     for video in pending[:limit]:
         try:
             download_trailer(video)
         except Exception:
-            logger.exception(f"Cinema trailer download failed for {video.path}")
+            logger.exception(f"Video trailer download failed for {video.path}")
             continue
         processed += 1
     return processed

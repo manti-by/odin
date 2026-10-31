@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     "odin.apps.sensors",
     "odin.apps.relays",
     "odin.apps.boiler",
-    "odin.apps.cinema",
+    "odin.apps.video",
     "odin.apps.core",
     "odin.apps.currency",
     "odin.apps.electricity",
@@ -217,29 +217,29 @@ STATIC_URL = "static/"
 MEDIA_ROOT = os.getenv("MEDIA_ROOT", BASE_DIR.parent / "media")
 MEDIA_URL = "media/"
 
-# Home cinema settings — the local video library is streamed by nginx via X-Accel-Redirect.
-# `CINEMA_MEDIA_DIRS` are absolute paths on this host (the Samba share is mounted there);
-# `CINEMA_TRAILERS_DIR` must be writable by the scheduler process.
+# Video library settings — the local video library is streamed by nginx via X-Accel-Redirect.
+# `VIDEO_MEDIA_DIRS` are absolute paths on this host (the Samba share is mounted there);
+# `VIDEO_TRAILERS_DIR` must be writable by the scheduler process and match the nginx alias.
 
-CINEMA_MEDIA_DIRS = tuple(filter(None, (part.strip() for part in os.getenv("CINEMA_MEDIA_DIRS", "").split(","))))
-CINEMA_TRAILERS_DIR = os.getenv("CINEMA_TRAILERS_DIR", str(Path(MEDIA_ROOT) / "cinema" / "trailers"))
+VIDEO_MEDIA_DIRS = tuple(filter(None, (part.strip() for part in os.getenv("VIDEO_MEDIA_DIRS", "").split(","))))
+VIDEO_TRAILERS_DIR = os.getenv("VIDEO_TRAILERS_DIR", "/var/lib/odin/trailers")
 # Internal nginx locations; the Django app never serves the bytes itself.
-CINEMA_NGINX_MEDIA_URL = "/cinema-media/"
-CINEMA_NGINX_TRAILERS_URL = "/cinema-trailers/"
-CINEMA_SCAN_INTERVAL = int(os.getenv("CINEMA_SCAN_INTERVAL", "1"))
-CINEMA_SCAN_BATCH_SIZE = int(os.getenv("CINEMA_SCAN_BATCH_SIZE", "5"))
-CINEMA_FETCH_MAX_ATTEMPTS = int(os.getenv("CINEMA_FETCH_MAX_ATTEMPTS", "3"))
+VIDEO_NGINX_MEDIA_URL = "/video-media/"
+VIDEO_NGINX_TRAILERS_URL = "/video-trailers/"
+VIDEO_SCAN_INTERVAL = int(os.getenv("VIDEO_SCAN_INTERVAL", "1"))
+VIDEO_SCAN_BATCH_SIZE = int(os.getenv("VIDEO_SCAN_BATCH_SIZE", "5"))
+VIDEO_FETCH_MAX_ATTEMPTS = int(os.getenv("VIDEO_FETCH_MAX_ATTEMPTS", "3"))
 
 OMDB_API_KEY = os.getenv("OMDB_API_KEY", "")
 OMDB_API_URL = os.getenv("OMDB_API_URL", "https://www.omdbapi.com/")
 OMDB_TIMEOUT = float(os.getenv("OMDB_TIMEOUT", "10"))
 # OMDb free tier allows 1,000 requests/day; keep a safety margin.
-CINEMA_OMDB_DAILY_LIMIT = int(os.getenv("CINEMA_OMDB_DAILY_LIMIT", "900"))
+VIDEO_OMDB_DAILY_LIMIT = int(os.getenv("VIDEO_OMDB_DAILY_LIMIT", "900"))
 
 YOUTUBE_PROXY = os.getenv("YOUTUBE_PROXY", "")
-CINEMA_YTDLP_BIN = os.getenv("CINEMA_YTDLP_BIN", "yt-dlp")
-CINEMA_TRAILER_TIMEOUT = int(os.getenv("CINEMA_TRAILER_TIMEOUT", "300"))
-CINEMA_TRAILER_MAX_FILESIZE = os.getenv("CINEMA_TRAILER_MAX_FILESIZE", "200M")
+VIDEO_YTDLP_BIN = os.getenv("VIDEO_YTDLP_BIN", "yt-dlp")
+VIDEO_TRAILER_TIMEOUT = int(os.getenv("VIDEO_TRAILER_TIMEOUT", "300"))
+VIDEO_TRAILER_MAX_FILESIZE = os.getenv("VIDEO_TRAILER_MAX_FILESIZE", "200M")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

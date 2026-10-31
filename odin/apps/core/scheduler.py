@@ -37,14 +37,14 @@ def schedule_fetch_traffic():
     call_command("fetch_traffic")
 
 
-@scheduler.scheduled_job("interval", minutes=settings.CINEMA_SCAN_INTERVAL, id="cinema_scan", max_instances=1)
-def schedule_cinema_scan():
+@scheduler.scheduled_job("interval", minutes=settings.VIDEO_SCAN_INTERVAL, id="video_scan", max_instances=1)
+def schedule_video_scan():
     """Reconcile the video library and advance the metadata/trailer pipeline.
 
     `max_instances=1` keeps a slow trailer download from stacking up behind the next tick; the
-    per-run batch size (`CINEMA_SCAN_BATCH_SIZE`) bounds how much work one tick can do.
+    per-run batch size (`VIDEO_SCAN_BATCH_SIZE`) bounds how much work one tick can do.
     """
-    call_command("cinema_scan")
+    call_command("video_scan")
 
 
 # @scheduler.scheduled_job("interval", minutes=5, id="update_boiler_mode", max_instances=1)

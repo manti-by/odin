@@ -8,12 +8,12 @@ from factory.fuzzy import FuzzyDecimal
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from odin.apps.cinema.models import Video
 from odin.apps.core.models import Auth, Device
 from odin.apps.currency.models import Currency, ExchangeRate
 from odin.apps.electricity.models import VoltageLog
 from odin.apps.relays.models import Relay
 from odin.apps.sensors.models import Sensor, SensorLog, SensorType
+from odin.apps.video.models import Video
 from odin.apps.weather.models import Weather
 
 

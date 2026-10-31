@@ -9,7 +9,7 @@ by the plugin.
 
 _Newest first._
 
-- [MNT-275: Home cinema backend in odin](pages/2026-10-31-mnt-275-home-cinema-backend.md) — Added the `cinema` Django app (incremental `cinema_scan` over `CINEMA_MEDIA_DIRS`, OMDb metadata cache capped at the free tier, Russian yt-dlp trailers) and a read API whose `stream/` and `trailer/` endpoints hand off to nginx via `X-Accel-Redirect` with HTTP Range support for Media3 (2026-10-31)
+- [MNT-275: Video library backend in odin](pages/2026-10-31-mnt-275-video-backend.md) — Added the `video` Django app (incremental `video_scan` over `VIDEO_MEDIA_DIRS`, OMDb metadata cache capped at the free tier, Russian yt-dlp trailers in `/var/lib/odin/trailers`) and a read API whose `stream/` and `trailer/` endpoints hand off to nginx via `X-Accel-Redirect` with HTTP Range support for Media3 (2026-10-31)
 
 - [MNT-267: Override schedule admin component](pages/2026-10-27-mnt-267-override-schedule-admin-component.md) — Implementation of MNT-267: Override schedule admin component (2026-10-27)
 - [RelayTargetStateService review — antifreeze fail-safe and rule order](pages/2026-10-26-relay-target-state-antifreeze-review.md) — Reviewed the uncommitted antifreeze fail-safe rewrite: `None` from `get_weather_mode()` swallowed the whole `-8…10 °C` band and force/override were dropped for servos and valves (98 of 205 relay/boiler tests failing); recorded the agreed rule order (fail-safe for missing or >2 h-old weather only, antifreeze beats a forced stop, servos always open in midseason, `>= 10 °C` is midseason) and the change list for the service (2026-10-26)

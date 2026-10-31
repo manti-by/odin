@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from odin.apps.cinema.models import FetchStatus
+from odin.apps.video.models import FetchStatus
 
 
 class VideoSerializer(serializers.Serializer):

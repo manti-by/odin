@@ -6,7 +6,7 @@ from pathlib import Path
 
 from django.conf import settings
 
-from odin.apps.cinema.models import FetchStatus, Video
+from odin.apps.video.models import FetchStatus, Video
 
 
 logger = logging.getLogger(__name__)
@@ -29,14 +29,14 @@ def parse_filename(filename: str) -> tuple[str, int | None]:
 
 
 def get_media_dirs() -> tuple[Path, ...]:
-    return tuple(Path(directory).expanduser().resolve() for directory in settings.CINEMA_MEDIA_DIRS if directory)
+    return tuple(Path(directory).expanduser().resolve() for directory in settings.VIDEO_MEDIA_DIRS if directory)
 
 
 def is_within_media_dirs(path: Path) -> bool:
     """Guard against a symlink in a configured share pointing outside every media root.
 
     The stream endpoint is anonymous and nginx maps the internal URI straight onto the filesystem,
-    so a row is only allowed when its resolved path stays under `CINEMA_MEDIA_DIRS`.
+    so a row is only allowed when its resolved path stays under `VIDEO_MEDIA_DIRS`.
     """
     resolved = path.resolve()
     return any(resolved.is_relative_to(root) for root in get_media_dirs())
@@ -59,7 +59,7 @@ def sync_video(path: Path) -> tuple[Video, bool, bool] | None:
     """
     resolved_path = path.resolve()
     if not is_within_media_dirs(resolved_path):
-        logger.warning(f"Cinema scan skipped {path}: the resolved path is outside CINEMA_MEDIA_DIRS")
+        logger.warning(f"Video scan skipped {path}: the resolved path is outside VIDEO_MEDIA_DIRS")
         return None
 
     stat = path.stat()
@@ -71,7 +71,7 @@ def sync_video(path: Path) -> tuple[Video, bool, bool] | None:
 
     title, year = parse_filename(path.name)
     if year is None:
-        logger.warning(f"Cinema scan could not parse a year from {path.name}")
+        logger.warning(f"Video scan could not parse a year from {path.name}")
 
     created = video is None
     if created:
@@ -85,7 +85,7 @@ def sync_video(path: Path) -> tuple[Video, bool, bool] | None:
         video.title, video.year = title, year
 
     video.save()
-    logger.info(f"{'Added' if created else 'Updated'} cinema video {video.path}")
+    logger.info(f"{'Added' if created else 'Updated'} video {video.path}")
     return video, created, True
 
 
@@ -97,7 +97,7 @@ def mark_missing(root: Path, seen: set[str]) -> int:
     for video in missing:
         video.is_available = False
         video.save(update_fields=("is_available", "updated_at"))
-        logger.info(f"Cinema video is no longer on disk: {video.path}")
+        logger.info(f"Video is no longer on disk: {video.path}")
         count += 1
     return count
 
@@ -112,7 +112,7 @@ def scan_library() -> dict[str, int]:
     stats = {"found": 0, "created": 0, "updated": 0, "missing": 0}
     for root in get_media_dirs():
         if not root.is_dir():
-            logger.warning(f"Cinema media dir is not available: {root}")
+            logger.warning(f"Video media dir is not available: {root}")
             continue
 
         seen: set[str] = set()
@@ -120,10 +120,10 @@ def scan_library() -> dict[str, int]:
             try:
                 result = sync_video(path)
             except OSError as exc:
-                logger.error(f"Cinema scan failed for {path}: {exc}")
+                logger.error(f"Video scan failed for {path}: {exc}")
                 continue
             except Exception:
-                logger.exception(f"Cinema scan failed for {path}")
+                logger.exception(f"Video scan failed for {path}")
                 continue
             if result is None:
                 continue
@@ -136,12 +136,12 @@ def scan_library() -> dict[str, int]:
                 stats["updated"] += 1
 
         if not seen:
-            logger.warning(f"Cinema media dir is empty, skipping missing-file reconciliation: {root}")
+            logger.warning(f"Video media dir is empty, skipping missing-file reconciliation: {root}")
             continue
         stats["missing"] += mark_missing(root, seen)
 
     logger.info(
-        f"Cinema scan finished: {stats['found']} files ({stats['created']} new, "
+        f"Video scan finished: {stats['found']} files ({stats['created']} new, "
         f"{stats['updated']} updated), {stats['missing']} missing"
     )
     return stats
