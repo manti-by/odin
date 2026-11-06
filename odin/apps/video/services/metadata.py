@@ -20,6 +20,12 @@ def is_configured() -> bool:
     return bool(settings.OMDB_API_KEY)
 
 
+def redact_secret(text: str) -> str:
+    """Keep the OMDb API key out of log lines: request exceptions embed the full URL."""
+    key = settings.OMDB_API_KEY
+    return text.replace(key, "***") if key else text
+
+
 def quota_key() -> str:
     return f"{QUOTA_CACHE_KEY}:{timezone.localdate():%Y-%m-%d}"
 
@@ -51,7 +57,7 @@ def parse_year(value: object) -> int | None:
 def parse_rating(value: object) -> Decimal | None:
     try:
         rating = Decimal(str(value))
-    except InvalidOperation, TypeError, ValueError:
+    except (InvalidOperation, TypeError, ValueError):  # fmt: skip
         return None
     return rating if 0 <= rating <= 10 else None
 
@@ -61,7 +67,7 @@ def parse_genres(value: object) -> list[str]:
 
 
 def apply_metadata(video: Video, payload: dict) -> None:
-    video.title = str(payload.get("Title") or video.title).strip()
+    video.title_omdb = str(payload.get("Title") or "").strip()
     video.year = parse_year(payload.get("Year")) or video.year
     video.imdb_rating = parse_rating(payload.get("imdbRating"))
     video.description = "" if payload.get("Plot") in (None, "N/A") else str(payload["Plot"]).strip()
@@ -70,7 +76,7 @@ def apply_metadata(video: Video, payload: dict) -> None:
     video.metadata_attempts += 1
     video.save(
         update_fields=(
-            "title",
+            "title_omdb",
             "year",
             "imdb_rating",
             "description",
@@ -94,50 +100,134 @@ def record_failure(video: Video, message: str) -> FetchStatus:
     else:
         video.metadata_status = FetchStatus.ERROR
     video.save(update_fields=("metadata_status", "metadata_attempts", "updated_at"))
-    logger.warning(f"{video.path}: {message} (attempt {video.metadata_attempts})")
+    logger.warning(f"{video.path}: {redact_secret(message)} (attempt {video.metadata_attempts})")
     return video.metadata_status
 
 
-def fetch_metadata(video: Video) -> FetchStatus:
-    """Look one video up by parsed title + year and cache the result on the row.
+_CYRILLIC = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"  # noqa: RUF001 - transliteration source alphabet
+_LATIN = (
+    "a",
+    "b",
+    "v",
+    "g",
+    "d",
+    "e",
+    "e",
+    "zh",
+    "z",
+    "i",
+    "y",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "f",
+    "kh",
+    "ts",
+    "ch",
+    "sh",
+    "shch",
+    "",
+    "y",
+    "",
+    "e",
+    "yu",
+    "ya",
+)
+CYRILLIC_TO_LATIN = dict(zip(_CYRILLIC, _LATIN, strict=True))
 
-    Never retries a `FETCHED` row; a miss is final, while transient errors stay retryable until
+
+def transliterate(text: str) -> str:
+    """Romanize a Cyrillic title so OMDb can match catalog entries listed in Latin script."""
+    result: list[str] = []
+    for char in text:
+        latin = CYRILLIC_TO_LATIN.get(char.lower(), char)
+        result.append(latin.capitalize() if char.isupper() and latin else latin)
+    return "".join(result)
+
+
+def search_titles(video: Video) -> list[str]:
+    """OMDb candidates: the translation first, then a transliteration of the file title.
+
+    A literal translation is often not the catalog title (`Брат` -> `Brother`, while OMDb lists it
+    as `Brat`), so a translated-title miss falls back to the transliteration instead of retiring the
+    row as `NOT_FOUND`. The raw Cyrillic title is not queried because OMDb matches Latin titles.
+    """
+    candidates = (video.title_en, transliterate(video.title))
+    return list(dict.fromkeys(title.strip() for title in candidates if title and title.strip()))
+
+
+def fetch_metadata(video: Video) -> FetchStatus:
+    """Look one video up by its best English title + year and cache the result on the row.
+
+    Candidates come from `search_titles`: the MyMemory translation when present, otherwise (or after
+    a miss) a transliteration of the file title, so a Latin title (or a translation failure) never
+    blocks enrichment. Never retries a `FETCHED` row; transient errors stay retryable until
     `VIDEO_FETCH_MAX_ATTEMPTS`. A rejected API key is raised as `MetadataAuthError` because every
     further request in the batch would fail the same way and burn the remaining attempts.
     """
     if not is_configured():
         logger.warning("OMDB_API_KEY is not configured, skipping video metadata")
         return video.metadata_status
+    candidates = search_titles(video)
+    if not candidates:
+        logger.info(f"{video.path}: no title to search, skipping OMDb lookup")
+        return video.metadata_status
     if not has_quota():
         logger.warning(f"OMDb daily limit of {settings.VIDEO_OMDB_DAILY_LIMIT} requests reached")
         return video.metadata_status
 
-    params: dict[str, str | int] = {
-        "apikey": settings.OMDB_API_KEY,
-        "t": video.title,
-        "type": "movie",
-        "plot": "short",
-        "r": "json",
-    }
-    if video.year:
-        params["y"] = video.year
+    payload: dict | None = None
+    exhausted_quota = False
+    for title in candidates:
+        if not has_quota():
+            exhausted_quota = True
+            logger.warning(f"OMDb daily limit of {settings.VIDEO_OMDB_DAILY_LIMIT} requests reached")
+            break
 
-    consume_quota()
-    try:
-        response = requests.get(settings.OMDB_API_URL, params=params, timeout=settings.OMDB_TIMEOUT)
-        response.raise_for_status()
-        payload = response.json()
-    except requests.HTTPError as exc:
-        if exc.response is not None and exc.response.status_code in (401, 403):
-            raise MetadataAuthError(f"OMDb rejected the API key: {exc}") from exc
-        return record_failure(video, f"OMDb request failed: {exc}")
-    except (requests.RequestException, ValueError) as exc:
-        return record_failure(video, f"OMDb request failed: {exc}")
+        params: dict[str, str | int] = {
+            "apikey": settings.OMDB_API_KEY,
+            "t": title,
+            "type": "movie",
+            "plot": "short",
+            "r": "json",
+        }
+        if video.year:
+            params["y"] = video.year
 
-    if not isinstance(payload, dict):
-        return record_failure(video, "OMDb returned a non-object JSON body")
+        consume_quota()
+        try:
+            response = requests.get(settings.OMDB_API_URL, params=params, timeout=settings.OMDB_TIMEOUT)
+            response.raise_for_status()
+            body = response.json()
+        except requests.HTTPError as exc:
+            code = exc.response.status_code if exc.response is not None else None
+            if code in (401, 403):
+                raise MetadataAuthError(redact_secret(f"OMDb rejected the API key: {exc}")) from exc
+            if code == 429 or (code is not None and 500 <= code < 600):
+                # A rate-limit or outage is temporary; skip the row without burning an attempt.
+                logger.warning(f"{video.path}: OMDb unavailable ({code}), retrying later")
+                return video.metadata_status
+            return record_failure(video, f"OMDb request failed: {exc}")
+        except (requests.RequestException, ValueError) as exc:
+            return record_failure(video, f"OMDb request failed: {exc}")
 
-    if str(payload.get("Response", "")).lower() != "true":
+        if not isinstance(body, dict):
+            return record_failure(video, "OMDb returned a non-object JSON body")
+        if str(body.get("Response", "")).lower() == "true":
+            payload = body
+            break
+
+    if payload is None:
+        if exhausted_quota:
+            # Quota ran out before every candidate was tried, so a miss is not final.
+            return video.metadata_status
         video.metadata_status = FetchStatus.NOT_FOUND
         video.metadata_attempts += 1
         video.save(update_fields=("metadata_status", "metadata_attempts", "updated_at"))

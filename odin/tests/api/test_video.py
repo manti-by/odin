@@ -62,6 +62,27 @@ class TestVideosAPI:
             "created_at": item["created_at"],
         }
 
+    def test_video__title_prefers_the_omdb_match(self):
+        VideoFactory(title="Брат", title_en="Brother", title_omdb="Brother")
+
+        response = self.client.get(self.url, format="json")
+        item = response.data["results"][0]
+        assert item["title"] == "Brother"
+        assert "title_en" not in item
+        assert "title_omdb" not in item
+
+    def test_video__title_falls_back_to_the_translation(self):
+        VideoFactory(title="Брат", title_en="Brother", title_omdb="")
+
+        response = self.client.get(self.url, format="json")
+        assert response.data["results"][0]["title"] == "Brother"
+
+    def test_video__title_falls_back_to_the_file_title(self):
+        VideoFactory(title="Брат", title_en="", title_omdb="")
+
+        response = self.client.get(self.url, format="json")
+        assert response.data["results"][0]["title"] == "Брат"
+
     def test_video__pagination(self):
         for _ in range(20):
             VideoFactory()
@@ -208,10 +229,38 @@ class TestVideoModel:
         assert Video(trailer="1-heat.mp4").has_trailer is True
         assert Video(trailer="").has_trailer is False
 
+    def test_video__display_title_prefers_the_omdb_match(self):
+        assert Video(title="Брат", title_en="Brother", title_omdb="Brother").display_title == "Brother"
+
+    def test_video__display_title_falls_back_to_the_translation(self):
+        assert Video(title="Брат", title_en="Brother", title_omdb="").display_title == "Brother"
+
+    def test_video__display_title_falls_back_to_the_file_title(self):
+        assert Video(title="Брат", title_en="", title_omdb="").display_title == "Брат"
+
     def test_video__pending_metadata_includes_retryable_errors(self):
         VideoFactory(metadata_status=FetchStatus.PENDING)
         VideoFactory(metadata_status=FetchStatus.ERROR)
         VideoFactory(metadata_status=FetchStatus.FETCHED)
         VideoFactory(metadata_status=FetchStatus.PENDING, is_available=False)
+        VideoFactory(metadata_status=FetchStatus.PENDING, translation_status=FetchStatus.PENDING)
 
         assert Video.objects.pending_metadata().count() == 2
+
+    def test_video__pending_metadata_includes_permanent_translation_failures(self):
+        VideoFactory(
+            metadata_status=FetchStatus.PENDING,
+            translation_status=FetchStatus.ERROR,
+            translation_attempts=3,
+        )
+
+        assert Video.objects.pending_metadata().count() == 1
+
+    def test_video__pending_metadata_excludes_in_flight_translation_failures(self):
+        VideoFactory(
+            metadata_status=FetchStatus.PENDING,
+            translation_status=FetchStatus.ERROR,
+            translation_attempts=0,
+        )
+
+        assert Video.objects.pending_metadata().count() == 0

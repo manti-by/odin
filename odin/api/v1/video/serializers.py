@@ -5,7 +5,7 @@ from odin.apps.video.models import FetchStatus
 
 class VideoSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    title = serializers.CharField()
+    title = serializers.CharField(source="display_title")
     filename = serializers.CharField()
     year = serializers.IntegerField(allow_null=True)
     imdb_rating = serializers.DecimalField(max_digits=3, decimal_places=1, allow_null=True)
