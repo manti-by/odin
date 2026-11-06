@@ -236,6 +236,14 @@ OMDB_TIMEOUT = float(os.getenv("OMDB_TIMEOUT", "10"))
 # OMDb free tier allows 1,000 requests/day; keep a safety margin.
 VIDEO_OMDB_DAILY_LIMIT = int(os.getenv("VIDEO_OMDB_DAILY_LIMIT", "900"))
 
+# MyMemory translates the parsed Russian file title to English before the OMDb lookup.
+# The anonymous tier is rate-limited per IP; `VIDEO_MYMEMORY_EMAIL` raises it, and
+# `VIDEO_MYMEMORY_DAILY_LIMIT` caps the characters the scanner spends per day.
+VIDEO_MYMEMORY_URL = os.getenv("VIDEO_MYMEMORY_URL", "https://api.mymemory.translated.net/get")
+VIDEO_MYMEMORY_EMAIL = os.getenv("VIDEO_MYMEMORY_EMAIL", "")
+VIDEO_MYMEMORY_TIMEOUT = float(os.getenv("VIDEO_MYMEMORY_TIMEOUT", "10"))
+VIDEO_MYMEMORY_DAILY_LIMIT = int(os.getenv("VIDEO_MYMEMORY_DAILY_LIMIT", "5000"))
+
 YOUTUBE_PROXY = os.getenv("YOUTUBE_PROXY", "")
 VIDEO_YTDLP_BIN = os.getenv("VIDEO_YTDLP_BIN", "yt-dlp")
 VIDEO_TRAILER_TIMEOUT = int(os.getenv("VIDEO_TRAILER_TIMEOUT", "300"))

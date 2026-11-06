@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 from unittest.mock import Mock
 
@@ -55,12 +56,65 @@ class TestFetchMetadata:
 
         video.refresh_from_db()
         assert result == FetchStatus.FETCHED
-        assert video.title == "Heat"
+        assert video.title == "heat"
+        assert video.title_omdb == "Heat"
         assert video.year == 1995
         assert video.imdb_rating == Decimal("8.3")
         assert video.description == "A crew of thieves."
         assert video.genres == ["Crime", "Drama"]
         assert get.call_args.kwargs["params"]["t"] == "heat"
+
+    def test_fetch__uses_the_english_title(self, omdb_settings, monkeypatch):
+        get = Mock(return_value=omdb_response())
+        monkeypatch.setattr(metadata.requests, "get", get)
+        video = VideoFactory(title="Брат", title_en="Brother", year=1997)
+
+        metadata.fetch_metadata(video)
+
+        assert get.call_args.kwargs["params"]["t"] == "Brother"
+
+    def test_fetch__falls_back_to_a_transliteration(self, omdb_settings, monkeypatch):
+        miss = omdb_response({"Response": "False", "Error": "Movie not found!"})
+        hit = omdb_response(omdb_payload(Title="Brat"))
+        get = Mock(side_effect=[miss, hit])
+        monkeypatch.setattr(metadata.requests, "get", get)
+        video = VideoFactory(title="Брат", title_en="Brother", year=1997)
+
+        result = metadata.fetch_metadata(video)
+
+        video.refresh_from_db()
+        assert result == FetchStatus.FETCHED
+        assert video.title_omdb == "Brat"
+        assert [call.kwargs["params"]["t"] for call in get.call_args_list] == ["Brother", "Brat"]
+
+    def test_fetch__falls_back_to_the_file_title(self, omdb_settings, monkeypatch):
+        get = Mock(return_value=omdb_response())
+        monkeypatch.setattr(metadata.requests, "get", get)
+        video = VideoFactory(title="Heat", title_en="", year=1995)
+
+        result = metadata.fetch_metadata(video)
+
+        video.refresh_from_db()
+        assert result == FetchStatus.FETCHED
+        assert get.call_args.kwargs["params"]["t"] == "Heat"
+
+    def test_fetch__skips_without_any_title(self, omdb_settings, monkeypatch):
+        get = Mock()
+        monkeypatch.setattr(metadata.requests, "get", get)
+        video = VideoFactory(title="", title_en="")
+
+        assert metadata.fetch_metadata(video) == FetchStatus.PENDING
+        get.assert_not_called()
+
+    def test_apply_metadata__keeps_the_parsed_title(self, omdb_settings):
+        video = VideoFactory(title="Брат", title_en="Brother", year=1997)
+
+        metadata.apply_metadata(video, omdb_payload(Title="Brother"))
+
+        video.refresh_from_db()
+        assert video.title == "Брат"
+        assert video.title_en == "Brother"
+        assert video.title_omdb == "Brother"
 
     def test_fetch__unknown_title_is_not_found(self, omdb_settings, monkeypatch):
         payload = {"Response": "False", "Error": "Movie not found!"}
@@ -110,6 +164,20 @@ class TestFetchMetadata:
         assert result == FetchStatus.NOT_FOUND
         assert video.metadata_attempts == 3
         assert not Video.objects.pending_metadata().filter(pk=video.pk).exists()
+
+    @pytest.mark.parametrize("status_code", (429, 503))
+    def test_fetch__rate_limit_does_not_burn_attempts(self, omdb_settings, monkeypatch, status_code):
+        error = metadata.requests.HTTPError(f"{status_code} error")
+        error.response = Mock(status_code=status_code)
+        monkeypatch.setattr(metadata.requests, "get", Mock(side_effect=error))
+        video = VideoFactory(title_en="Heat")
+
+        result = metadata.fetch_metadata(video)
+
+        video.refresh_from_db()
+        assert result == FetchStatus.PENDING
+        assert video.metadata_attempts == 0
+        assert Video.objects.pending_metadata().filter(pk=video.pk).exists()
 
     def test_fetch__non_object_body_is_retryable(self, omdb_settings, monkeypatch):
         monkeypatch.setattr(metadata.requests, "get", Mock(return_value=omdb_response(["not", "an", "object"])))
@@ -237,6 +305,37 @@ class TestProcessPendingMetadata:
 )
 def test_parse_rating(value, expected):
     assert metadata.parse_rating(value) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    (
+        ("Брат", "Brat"),
+        ("Ирония судьбы", "Ironiya sudby"),
+        ("Heat", "Heat"),
+        ("", ""),
+    ),
+)
+def test_transliterate(value, expected):
+    assert metadata.transliterate(value) == expected
+
+
+def test_redact_secret__removes_the_api_key(settings):
+    settings.OMDB_API_KEY = "secret-key"
+
+    assert metadata.redact_secret("url?apikey=secret-key&t=Heat") == "url?apikey=***&t=Heat"
+
+
+def test_fetch__does_not_log_the_api_key(omdb_settings, monkeypatch, caplog):
+    error = metadata.requests.RequestException("boom for url: https://www.omdbapi.com/?apikey=test-key&t=Heat")
+    monkeypatch.setattr(metadata.requests, "get", Mock(side_effect=error))
+    video = VideoFactory(title_en="Heat")
+
+    caplog.set_level(logging.WARNING)
+    metadata.fetch_metadata(video)
+
+    assert "test-key" not in caplog.text
+    assert "***" in caplog.text
 
 
 @pytest.mark.parametrize(

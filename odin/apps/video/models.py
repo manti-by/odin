@@ -1,6 +1,8 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 
@@ -16,10 +18,26 @@ class VideoQuerySet(models.QuerySet):
         return self.filter(is_available=True)
 
     def pending_metadata(self) -> VideoQuerySet:
-        return self.available().filter(metadata_status__in=(FetchStatus.PENDING, FetchStatus.ERROR))
+        # OMDb is matched on the translated English title, or on a transliteration once the
+        # translation has permanently given up. A translation still in flight is left to the
+        # translation phase so OMDb does not record a premature terminal miss.
+        return (
+            self.available()
+            .filter(metadata_status__in=(FetchStatus.PENDING, FetchStatus.ERROR))
+            .filter(
+                Q(translation_status=FetchStatus.FETCHED)
+                | Q(
+                    translation_status=FetchStatus.ERROR,
+                    translation_attempts__gte=settings.VIDEO_FETCH_MAX_ATTEMPTS,
+                )
+            )
+        )
 
     def pending_trailers(self) -> VideoQuerySet:
         return self.available().filter(trailer_status__in=(FetchStatus.PENDING, FetchStatus.ERROR))
+
+    def pending_translations(self) -> VideoQuerySet:
+        return self.available().filter(translation_status__in=(FetchStatus.PENDING, FetchStatus.ERROR))
 
 
 class VideoManager(models.Manager):
@@ -35,6 +53,9 @@ class VideoManager(models.Manager):
     def pending_trailers(self) -> VideoQuerySet:
         return self.get_queryset().pending_trailers()
 
+    def pending_translations(self) -> VideoQuerySet:
+        return self.get_queryset().pending_translations()
+
 
 class Video(models.Model):
     """One video file on the media share plus its cached OMDb metadata and trailer."""
@@ -42,6 +63,12 @@ class Video(models.Model):
     path: models.CharField[str] = models.CharField(max_length=1024, unique=True, verbose_name=_("Path"))
     filename: models.CharField[str] = models.CharField(max_length=255, verbose_name=_("File name"))
     title: models.CharField[str] = models.CharField(max_length=255, verbose_name=_("Title"))
+    title_en: models.CharField[str] = models.CharField(
+        max_length=255, blank=True, default="", verbose_name=_("Title (EN)")
+    )
+    title_omdb: models.CharField[str] = models.CharField(
+        max_length=255, blank=True, default="", verbose_name=_("Title (OMDb)")
+    )
     year: models.PositiveIntegerField[int] | None = models.PositiveIntegerField(
         null=True, blank=True, verbose_name=_("Year")
     )
@@ -66,11 +93,20 @@ class Video(models.Model):
         default=FetchStatus.PENDING,
         verbose_name=_("Trailer status"),
     )
+    translation_status: models.CharField[str] = models.CharField(
+        max_length=16,
+        choices=FetchStatus.choices,
+        default=FetchStatus.PENDING,
+        verbose_name=_("Translation status"),
+    )
     metadata_attempts: models.PositiveIntegerField[int] = models.PositiveIntegerField(
         default=0, verbose_name=_("Metadata attempts")
     )
     trailer_attempts: models.PositiveIntegerField[int] = models.PositiveIntegerField(
         default=0, verbose_name=_("Trailer attempts")
+    )
+    translation_attempts: models.PositiveIntegerField[int] = models.PositiveIntegerField(
+        default=0, verbose_name=_("Translation attempts")
     )
 
     mtime: models.FloatField[float] = models.FloatField(default=0, verbose_name=_("Modified at"))
@@ -93,6 +129,15 @@ class Video(models.Model):
     @property
     def has_trailer(self) -> bool:
         return bool(self.trailer)
+
+    @property
+    def display_title(self) -> str:
+        """Title for API consumers: the OMDb match, then the translation, then the file stem.
+
+        `title` itself stays the filename-derived (usually Russian) title for logs and lookups;
+        this is the enriched title the TV app should show.
+        """
+        return self.title_omdb or self.title_en or self.title
 
     @property
     def release_label(self) -> str:

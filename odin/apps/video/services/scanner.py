@@ -12,20 +12,28 @@ from odin.apps.video.models import FetchStatus, Video
 logger = logging.getLogger(__name__)
 
 VIDEO_EXTENSIONS = frozenset({".avi", ".flv", ".m2ts", ".m4v", ".mkv", ".mov", ".mp4", ".ts", ".webm", ".wmv"})
-FILENAME_PATTERN = re.compile(r"^(?P<title>.+?)\s*\((?P<year>\d{4})\)")
+FILENAME_PATTERN = re.compile(r"^(?P<title>.+?) - (?P<year>\d{4})(?: - 4K)?$")
+LEGACY_FILENAME_PATTERN = re.compile(r"^(?P<title>.+?)\s*\((?P<year>\d{4})\)")
 
 
 def parse_filename(filename: str) -> tuple[str, int | None]:
-    """Split a `Movie Name (Year).ext` file name into its title and year.
+    """Split a `Movie Name - Year.ext` / `Movie Name - Year - 4K.ext` name into title and year.
 
-    A name without the year suffix keeps the whole stem as the title so the scan never drops a
-    file; the caller decides whether that is worth a warning.
+    The older `Movie Name (Year).ext` convention is still understood so files scanned before the
+    dash form was introduced keep their parsed title and year. A name without the year suffix keeps
+    the whole stem as the title so the scan never drops a file; the caller decides whether that is
+    worth a warning.
     """
     stem = Path(filename).stem.strip()
-    match = FILENAME_PATTERN.match(stem)
+    match = FILENAME_PATTERN.match(stem) or LEGACY_FILENAME_PATTERN.match(stem)
     if not match:
         return stem, None
     return match["title"].strip(), int(match["year"])
+
+
+def has_cyrillic(text: str) -> bool:
+    """True when the title needs the `ru|en` translation; a Latin title does not."""
+    return any("\u0400" <= char <= "\u04ff" for char in text)
 
 
 def get_media_dirs() -> tuple[Path, ...]:
@@ -76,13 +84,35 @@ def sync_video(path: Path) -> tuple[Video, bool, bool] | None:
     created = video is None
     if created:
         video = Video(path=resolved, title=title, year=year)
+        parsed_changed = False
+    else:
+        # Compare the newly parsed name with the one the row was built from, so a re-encode with an
+        # unchanged name keeps its cached OMDb data while a new title/year drops it.
+        parsed_changed = parse_filename(video.filename) != (title, year)
 
     video.filename = path.name
     video.mtime = stat.st_mtime
     video.size = stat.st_size
     video.is_available = True
-    if video.metadata_status == FetchStatus.PENDING:
-        video.title, video.year = title, year
+    video.title, video.year = title, year
+
+    if parsed_changed:
+        # The file now names a different release, so the cached translation and every OMDb-derived
+        # field are stale. A re-encode that keeps the name reuses them.
+        video.title_en = ""
+        video.translation_status = FetchStatus.PENDING
+        video.translation_attempts = 0
+        video.title_omdb = ""
+        video.imdb_rating = None
+        video.description = ""
+        video.genres = []
+        video.metadata_status = FetchStatus.PENDING
+        video.metadata_attempts = 0
+
+    if not has_cyrillic(title):
+        # A Latin title needs no `ru|en` translation; mark it done so OMDb can use it directly.
+        video.title_en = title
+        video.translation_status = FetchStatus.FETCHED
 
     video.save()
     logger.info(f"{'Added' if created else 'Updated'} video {video.path}")

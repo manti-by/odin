@@ -9,6 +9,7 @@ by the plugin.
 
 _Newest first._
 
+- [CH-1: Update video enrichment flow](pages/2026-11-06-ch-1-update-video-enrichment-flow.md) — Implementation of CH-1: Update video enrichment flow (2026-11-06)
 - [MNT-275: Video library backend in odin](pages/2026-10-31-mnt-275-video-backend.md) — Added the `video` Django app (incremental `video_scan` over `VIDEO_MEDIA_DIRS`, OMDb metadata cache capped at the free tier, Russian yt-dlp trailers in `/var/lib/odin/trailers`) and a read API whose `stream/` and `trailer/` endpoints hand off to nginx via `X-Accel-Redirect` with HTTP Range support for Media3 (2026-10-31)
 
 - [MNT-267: Override schedule admin component](pages/2026-10-27-mnt-267-override-schedule-admin-component.md) — Implementation of MNT-267: Override schedule admin component (2026-10-27)
@@ -90,6 +91,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [Codebase search — GitHub/PR webhooks and notifications](pages/2026-07-16-github-pr-webhooks-search.md)
 - [Merge/Rebase PR Comment Handlers — Not Found](pages/2026-07-16-merge-rebase-pr-comment-handlers.md)
 - [PR merge/rebase comment listener marks as read despite errors](pages/2026-07-16-merge-rebase-pr-comment-listener.md)
+- [CH-1: Update video enrichment flow](pages/2026-11-06-ch-1-update-video-enrichment-flow.md) — 2026-11-06
 
 ### Sensor data model
 
