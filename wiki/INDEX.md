@@ -9,6 +9,9 @@ by the plugin.
 
 _Newest first._
 
+- [CH-9: Boiler logging](pages/2026-11-10-ch-9-boiler-logging.md) — Implementation of CH-9: Boiler logging (2026-11-10)
+- [Boiler logging — hourly mode and setpoint snapshots](pages/2026-11-10-boiler-logging.md) — Added the `BoilerLog` model (first model/migration of the boiler app), a `BoilerLogService` + `log_boiler_status` that read the boiler state the way `BoilerStatusView` does, the `boiler_log` command, and an hourly scheduler job that enqueues the callable on the previously unused RQ `default` queue (2026-11-10)
+
 - [MNT-275: Video library backend in odin](pages/2026-10-31-mnt-275-video-backend.md) — Added the `video` Django app (incremental `video_scan` over `VIDEO_MEDIA_DIRS`, OMDb metadata cache capped at the free tier, Russian yt-dlp trailers in `/var/lib/odin/trailers`) and a read API whose `stream/` and `trailer/` endpoints hand off to nginx via `X-Accel-Redirect` with HTTP Range support for Media3 (2026-10-31)
 
 - [MNT-267: Override schedule admin component](pages/2026-10-27-mnt-267-override-schedule-admin-component.md) — Implementation of MNT-267: Override schedule admin component (2026-10-27)
@@ -68,6 +71,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [MNT-255: Override by schedule](pages/2026-10-25-mnt-255-override-by-schedule.md) — 2026-10-25 (also covers MNT-259)
 - [RelayTargetStateService review — antifreeze fail-safe and rule order](pages/2026-10-26-relay-target-state-antifreeze-review.md) — 2026-10-26
 - [MNT-267: Override schedule admin component](pages/2026-10-27-mnt-267-override-schedule-admin-component.md) — 2026-10-27
+- [CH-9: Boiler logging](pages/2026-11-10-ch-9-boiler-logging.md) — 2026-11-10
 
 ### Boiler / eBus control
 
@@ -77,6 +81,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [MNT-207: Wire boiler mode controller into scheduler tick / cron](pages/2026-09-18-mnt-207-wire-boiler-mode-controller-into-scheduler-tick-cron.md)
 - [MNT-208: Boiler dashboard](pages/2026-09-18-mnt-208-boiler-dashboard.md)
 - [Boiler tile shows no temperatures — API returns override, not live status](pages/2026-09-27-boiler-live-status-api.md)
+- [Boiler logging — hourly mode and setpoint snapshots](pages/2026-11-10-boiler-logging.md)
 
 ### Dashboard API & frontend SPA
 

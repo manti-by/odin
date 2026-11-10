@@ -1,7 +1,6 @@
 import logging
 
-from django.db import models
-
+from odin.apps.boiler.models import BoilerMode
 from odin.apps.boiler.services.status import BoilerStatusService
 from odin.apps.relays.models import Relay, RelayState, RelayType
 from odin.apps.relays.services import RelayTargetStateService
@@ -9,14 +8,6 @@ from odin.apps.weather.services import get_latest_weather
 
 
 logger = logging.getLogger(__name__)
-
-
-class BoilerMode(models.TextChoices):
-    HEATING = "heating", "Heating"
-    MIXED = "mixed", "Mixed"
-    OFF = "off", "Off"
-    BOILING = "boiling", "Boiling"
-    CLEAR_OVERRIDE = "clear_override", "Clear override"
 
 
 # The override's first token is the commanded hcmode; it maps 1:1 onto a display mode.

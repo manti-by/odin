@@ -11,9 +11,10 @@ It uses Django 6 with Django REST Framework, PostgreSQL, Redis, and modern Pytho
 - Django apps with models, admin classes, migrations and management commands in `./odin/apps/`
 - eBus boiler control in `./odin/apps/boiler/` — `BoilerStatusService` (+ `BoilerModeService` /
   `BoilerModeController` decision logic) in the `services/` package (`ebusd.py`, `status.py`,
-  `mode.py`, `controller.py`, `schedule.py`), `boiler_set` / `boiler_status` management commands,
-  and a read API in `./odin/api/v1/boiler/` (`GET /api/v1/boiler/status/`); talks to the local
-  `ebusd` daemon
+  `mode.py`, `controller.py`, `schedule.py`, `state.py`, `log.py`), `boiler_set` / `boiler_status` /
+  `boiler_log` management commands, the hourly `BoilerLog` snapshot (model and `BoilerMode` enum in
+  `models.py`), and a read API in `./odin/api/v1/boiler/` (`GET /api/v1/boiler/status/`); talks to
+  the local `ebusd` daemon
 - Video library (home cinema) in `./odin/apps/video/` — `Video` rows reconciled with
   `VIDEO_MEDIA_DIRS` by the `video_scan` command (APScheduler job, incremental by path + mtime,
   OMDb metadata cache capped at the free tier, Russian yt-dlp trailers in `/var/lib/odin/trailers`);
@@ -210,10 +211,14 @@ make frontend-check                 # Frontend lint (Biome) + typecheck (tsc)
 
 ### Background Tasks
 
-- RQ (`django-rq`) is wired in but idle: the admin UI is mounted at `admin/rq/`
-  (`odin/urls.py:29`) and `odin/apps/core/scheduler.py:12` holds a `default` queue handle, yet nothing
-  in the tree calls `enqueue` and there are no `queue_*` jobs. When adding one:
-- Define jobs as additional functions with prefix `queue_`
+- RQ (`django-rq`) is in use: the admin UI is mounted at `admin/rq/` (`odin/urls.py:29`), the worker
+  runs as `manage.py rqworker default` (`configs/worker.service`), and `odin/apps/core/scheduler.py:12`
+  holds the `default` queue handle. The hourly boiler snapshot enqueues the callable
+  `log_boiler_status` (`odin/apps/boiler/services/log.py`) — that job keeps its domain name instead of
+  the `queue_` prefix because it lives with the boiler services rather than next to the queue. When
+  adding one:
+- Define jobs as additional functions with prefix `queue_` (or document the exception, as the boiler
+  log does)
 - Configure queue names for different priority levels
 
 ```python
@@ -236,9 +241,9 @@ def queue_sync_sensor_data(sensor_id: str):
 - Define jobs in `odin/apps/core/scheduler.py` within the app
 - Use `scheduler.scheduled_job` for scheduling
 - Live jobs: `update_weather` (30 min), `update_voltage` (5 min), `update_exchange_rates` (4 h),
-  `fetch_traffic` (15 min), `video_scan` (`VIDEO_SCAN_INTERVAL`, 1 min). `update_boiler_mode` is
-  commented out (disabled 2026-09-22, MNT-216 pending) — the boiler controller does not run
-  periodically.
+  `fetch_traffic` (15 min), `video_scan` (`VIDEO_SCAN_INTERVAL`, 1 min), `log_boiler_status` (1 h,
+  enqueued on the RQ `default` queue). `update_boiler_mode` is commented out (disabled 2026-09-22,
+  MNT-216 pending) — the boiler controller does not run periodically.
 
 ```python
 from apscheduler.schedulers.blocking import BlockingScheduler
