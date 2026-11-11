@@ -24,6 +24,14 @@ def pin_clock_outside_cycle_window(monkeypatch):
 
 
 @pytest.fixture
+def boiler_state(settings, tmp_path):
+    """Point the boiler override file at a temporary path and return the state file."""
+    settings.BOILER_STATE_FILE = str(tmp_path / "state")
+    settings.BOILER_LOCK_FILE = str(tmp_path / "state.lock")
+    return tmp_path / "state"
+
+
+@pytest.fixture
 def client():
     return Client(HTTP_HOST="odin.local")
     return AuthFactory().token

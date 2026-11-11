@@ -47,6 +47,23 @@ def schedule_video_scan():
     call_command("video_scan")
 
 
+@scheduler.scheduled_job("interval", hours=1, id="log_boiler_status", max_instances=1)
+def schedule_log_boiler_status():
+    """Store an hourly snapshot of the boiler's mode and setpoints.
+
+    The snapshot is enqueued on the RQ `default` queue and written by the worker
+    (`manage.py rqworker default`) instead of running inline in the blocking scheduler.
+    `max_instances=1` prevents overlap, and any enqueue failure is logged and swallowed so
+    the scheduler process keeps running; the next tick retries.
+    """
+    from odin.apps.boiler.services.log import log_boiler_status
+
+    try:
+        queue.enqueue(log_boiler_status)
+    except Exception:
+        logger.exception("Boiler log job could not be enqueued")
+
+
 # @scheduler.scheduled_job("interval", minutes=5, id="update_boiler_mode", max_instances=1)
 # def schedule_update_boiler_mode():
 #     """React to pump/weather changes within minutes.

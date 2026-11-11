@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from odin.api.v1.boiler.serializers import BoilerStatusSerializer
-from odin.apps.boiler.services import BoilerModeService, BoilerStatusService, get_next_boil_schedule, parse_override
+from odin.apps.boiler.services import BoilerStatusService, get_current_state, get_next_boil_schedule
 
 
 class BoilerStatusView(APIView):
@@ -14,15 +14,13 @@ class BoilerStatusView(APIView):
     def get(self, request: Request, *args: list, **kwargs: dict) -> Response:
         service = BoilerStatusService()
         override = service.current_override()
-        flow_temp = hwc_temp = None
-        if override:
-            _, flow_temp, hwc_temp = parse_override(override)
+        state = get_current_state()
 
         boil_at, clear_at = get_next_boil_schedule()
         data = {
-            "mode": BoilerModeService().get_current_mode(),
-            "target_temp": flow_temp,
-            "hwc_temp": hwc_temp,
+            "mode": state.mode,
+            "target_temp": state.flow_temp,
+            "hwc_temp": state.hwc_temp,
             "override_active": override is not None,
             "override_updated_at": service.override_updated_at(),
             "ebusd_alive": service.is_alive(),
