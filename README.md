@@ -5,7 +5,7 @@
 [Centax](https://github.com/manti-by/centax/) wireless sensors,
 and features an interactive dashboard with customizable graphs and historical analytics.
 
-[![Python 3.13](https://img.shields.io/badge/python-3.13-green.svg)](https://www.python.org/downloads/release/python-3136/)
+[![Python 3.14](https://img.shields.io/badge/python-3.14-green.svg)](https://www.python.org/downloads/release/python-31410/)
 [![Code style: ruff](https://img.shields.io/badge/ruff-enabled-informational?logo=ruff)](https://astral.sh/ruff)
 [![License](https://img.shields.io/badge/license-BSD-blue.svg)](https://raw.githubusercontent.com/manti-by/pdw/master/LICENSE)
 
@@ -13,15 +13,15 @@ Author: Alexander Chaika <manti.by@gmail.com>
 
 Source link: [https://github.com/manti-by/odin/](https://github.com/manti-by/odin/)
 
-Requirements: Python 3.13, PostgreSQL 18, Redis 7, UV.
+Requirements: Python 3.14, PostgreSQL 18, Redis 7, UV.
 
-Current version: [v1.24.3 Bright Bluejay](https://github.com/manti-by/odin/releases/tag/v1.24.3)
+Current version: [v1.24.4 Silent Owl](https://github.com/manti-by/odin/releases/tag/v1.24.4)
 
-Related Coruscant version: [v4.10.1 Blind Badger](https://github.com/manti-by/coruscant/releases/tag/v4.10.1)
+Related Coruscant version: [v4.11.1 Rogue Marmot](https://github.com/manti-by/coruscant/releases/tag/v4.11.1)
 
 ## Quick Start (Django app)
 
-1. Install [Python 3.13](https://www.python.org/downloads/release/python-3136/) and
+1. Install [Python 3.14](https://www.python.org/downloads/release/python-31410/) and
    [UV tool](https://docs.astral.sh/uv/getting-started/installation/).
 
 2. Clone sources, switch to working directory and setup environment:
