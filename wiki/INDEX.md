@@ -9,7 +9,7 @@ by the plugin.
 
 _Newest first._
 
-- [CH-9: Boiler logging](pages/2026-11-10-ch-9-boiler-logging.md) — Implementation of CH-9: Boiler logging (2026-11-10)
+- [CH-9: Boiler logging](pages/2026-11-10-ch-9-boiler-logging.md) — Added the `BoilerLog` model and its first migration, a shared `get_current_state()` reader used by both the status API and the new `BoilerLogService` / `log_boiler_status` callable, the `boiler_log` command, and an hourly `@scheduler.scheduled_job` that enqueues the callable on the RQ `default` queue (2026-11-10)
 - [Boiler logging — hourly mode and setpoint snapshots](pages/2026-11-10-boiler-logging.md) — Added the `BoilerLog` model (first model/migration of the boiler app), a `BoilerLogService` + `log_boiler_status` that read the boiler state the way `BoilerStatusView` does, the `boiler_log` command, and an hourly scheduler job that enqueues the callable on the previously unused RQ `default` queue (2026-11-10)
 
 - [MNT-275: Video library backend in odin](pages/2026-10-31-mnt-275-video-backend.md) — Added the `video` Django app (incremental `video_scan` over `VIDEO_MEDIA_DIRS`, OMDb metadata cache capped at the free tier, Russian yt-dlp trailers in `/var/lib/odin/trailers`) and a read API whose `stream/` and `trailer/` endpoints hand off to nginx via `X-Accel-Redirect` with HTTP Range support for Media3 (2026-10-31)

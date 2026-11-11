@@ -6,9 +6,9 @@ status: resolved
 session_id: ses_boiler_logging_2026_11_10
 services: [boiler, boiler-models, boiler-services, scheduler, rq]
 branch: ch-9-boiler-logging
-tickets: []
+tickets: [CH-9]
 tags: [boiler, logging, rq, scheduler, models]
-related: [2026-09-27-boiler-live-status-api.md, 2026-09-18-mnt-208-boiler-dashboard.md, 2026-09-17-mnt-206-boiler-mode-controller.md]
+related: [2026-11-10-ch-9-boiler-logging.md, 2026-09-27-boiler-live-status-api.md, 2026-09-18-mnt-208-boiler-dashboard.md, 2026-09-17-mnt-206-boiler-mode-controller.md]
 ---
 # Boiler logging — hourly mode and setpoint snapshots
 
@@ -216,6 +216,7 @@ exception to the background-task convention in `AGENTS.md` (recorded there).
 
 ## References
 
+- Related: [[2026-11-10-ch-9-boiler-logging]] — the CH-9 ticket summary page for the same session
 - Related: [[2026-09-27-boiler-live-status-api]] — the status API the snapshot mirrors
 - Related: [[2026-09-18-mnt-208-boiler-dashboard]] — boiler tile and the status endpoint
 - Related: [[2026-09-17-mnt-206-boiler-mode-controller]] — `BoilerModeService`, the mode decision
