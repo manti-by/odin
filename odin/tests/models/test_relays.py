@@ -828,7 +828,7 @@ class TestRelaysWeatherFreshness:
 
 @pytest.mark.django_db
 class TestRelaysManualControl:
-    """`force_state` and the override schedule reach every type, with the servo inversion."""
+    """`force_state` and the override schedule reach every type, applied verbatim."""
 
     @staticmethod
     def _servo(force_state: str | None = None, related_relay: Relay | None = None) -> Relay:
@@ -840,18 +840,19 @@ class TestRelaysManualControl:
         SensorLogFactory(sensor=sensor, temp=Decimal("27.0"), created_at=timezone.now())
         return relay
 
-    def test_relays__servo_forced_heat_opens_the_circuit(self):
+    def test_relays__servo_forced_on_answers_on(self):
+        """Servo states are physical: force ON answers ON (circuit closed), nothing is flipped."""
         relay = self._servo(force_state=RelayState.ON)
 
         state, mode = relay.get_target_state()
-        assert state == RelayState.OFF
+        assert state == RelayState.ON
         assert mode == RelayMode.FORCED
 
-    def test_relays__servo_forced_stop_closes_the_circuit(self):
+    def test_relays__servo_forced_off_answers_off(self):
         relay = self._servo(force_state=RelayState.OFF)
 
         state, mode = relay.get_target_state()
-        assert state == RelayState.ON
+        assert state == RelayState.OFF
         assert mode == RelayMode.FORCED
 
     def test_relays__servo_ignored_beats_a_forced_stop(self):
@@ -1187,21 +1188,21 @@ class TestRelaysOverrideSchedule:
             assert state == RelayState.ON
             assert mode == RelayMode.BASIC
 
-    def test_relays__servo_override_opens_the_circuit_for_an_on_window(self):
-        """A servo's ON closes the circuit, so an ON heating window must yield the physical OFF."""
+    def test_relays__servo_override_answers_on_inside_an_on_window(self):
+        """Servo states are physical: an ON override window yields ON (circuit closed)."""
         relay = self._servo([{"start_time": "08:00", "end_time": "18:00", "target_state": "ON"}])
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
             state, mode = relay.get_target_state()
-            assert state == RelayState.OFF
+            assert state == RelayState.ON
             assert mode == RelayMode.OVERRIDE
 
-    def test_relays__servo_override_closes_the_circuit_for_an_off_window(self):
+    def test_relays__servo_override_answers_off_inside_an_off_window(self):
         relay = self._servo([{"start_time": "08:00", "end_time": "18:00", "target_state": "OFF"}])
 
         with patch("odin.apps.relays.services.timezone.localtime", return_value=self._at(10, 30)):
             state, mode = relay.get_target_state()
-            assert state == RelayState.ON
+            assert state == RelayState.OFF
             assert mode == RelayMode.OVERRIDE
 
     def test_relays__valve_follows_the_override(self):

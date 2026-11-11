@@ -1,6 +1,6 @@
 [project]
 name = "odin"
-version = "1.25.7"
+version = "1.25.9"
 description = "Django application that provides several IoT dashboards and services for Coruscant and Centax projects."
 readme = "README.md"
 requires-python = ">=3.14,<3.15.0"
@@ -10,29 +10,29 @@ authors = [{ name = "Alexander Chaika", email = "manti.by@gmail.com" }]
 
 dependencies = [
     "asyncpg>=0.32.0",
-    "django>=6.0.9,<6.1.0",
+    "django>=6.0.10,<6.1.0",
     "django-apscheduler>=0.7.0,<1.0.0",
     "django-command-log>=2.3.0,<2.4.0",
     "django-redis>=6.0.0,<7.0.0",
     "django-rq>=4.2.0,<5.0.0",
     "djangorestframework>=3.18.3,<4.0.0",
     "gunicorn>=25.3.0,<26",
-    "ipython>=9.17.1",
+    "ipython>=9.18.1",
     "mcp>=2.3.0",
     "pillow>=12.3.0,<13",
     "pre-commit>=4.7.0",
     "psycopg2-binary>=2.9.13,<3",
-    "pytz>=2026.5",
+    "pytz>=2026.6",
     "pywebpush>=2.5.0,<3",
     "redis>=5.3.1,<6",
     "requests>=2.34.2,<3",
-    "ruff>=0.17.3",
-    "selenium>=4.51.0,<5",
+    "ruff>=0.17.4",
+    "selenium>=4.52.0,<5",
     "setuptools>=84.2.1",
     "tinytag>=2.3.2,<3",
-    "ty>=0.0.93",
+    "ty>=0.0.100",
     "uvicorn[standard]>=0.54.0,<1",
-    "yt-dlp>=2025.9.5",
+    "yt-dlp>=2026.10.26",
 ]
 
 [dependency-groups]
@@ -40,7 +40,7 @@ dev = [
     "debugpy>=1.8.22",
     "django-silk>=5.6.0",
     "pytest>=9.2.0",
-    "pytest-asyncio>=1.4.1",
+    "pytest-asyncio>=1.4.1.post1",
     "pytest-django>=4.14.0",
     "pytest-factoryboy>=2.8.1",
     "uv-bump>=0.6.0",

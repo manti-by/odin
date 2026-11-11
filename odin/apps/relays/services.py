@@ -229,29 +229,23 @@ class RelayTargetStateService:
         )
         return WeatherMode.MIDSEASON if extended_midseason else WeatherMode.SUMMER
 
-    @staticmethod
-    def invert_state(state: RelayState) -> RelayState:
-        """Flip the logical state for a servo circuit, whose `ON` closes the circuit."""
-        return RelayState.OFF if state == RelayState.ON else RelayState.ON
-
-    def get_manual_target_state(self, invert: bool = False) -> tuple[RelayState, RelayMode] | None:
+    def get_manual_target_state(self) -> tuple[RelayState, RelayMode] | None:
         """Return the operator-requested state: `force_state`, else the active override period.
 
         Pumps and servos call this after the antifreeze fail-safe, so a manual stop never wins over
-        the freeze protection. `invert` flips the state for servos: a logical `ON` (heat) opens the
-        circuit, a logical `OFF` (stop) closes it.
+        the freeze protection. The state is applied verbatim, in the same physical vocabulary as the
+        reported `state`: for a servo `ON` means the circuit is closed, nothing is flipped at
+        compute time.
 
         Returns:
             The forced or overridden state and its mode, or None when neither applies.
         """
         if (force_state := self.relay.force_state) in RelayState.active_values():
-            state = RelayState(force_state)
-            return self.invert_state(state) if invert else state, RelayMode.FORCED
+            return RelayState(force_state), RelayMode.FORCED
 
         if period := self.get_current_override_period():
             if (override_state := period.get("target_state")) in RelayState.active_values():
-                state = RelayState(override_state)
-                return self.invert_state(state) if invert else state, RelayMode.OVERRIDE
+                return RelayState(override_state), RelayMode.OVERRIDE
 
         return None
 
@@ -301,7 +295,7 @@ class RelayTargetStateService:
                 return RelayState.OFF, RelayMode.IGNORED
 
         # Forced state and override schedule outrank the weather rules below
-        if manual := self.get_manual_target_state(invert=True):
+        if manual := self.get_manual_target_state():
             return manual
 
         # Do not close servos at Summer or at Midseason

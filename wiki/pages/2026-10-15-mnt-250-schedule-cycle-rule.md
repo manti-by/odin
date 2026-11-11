@@ -125,7 +125,13 @@ The rule itself:
 > `get_weather_mode()` and the pump cadence is `:136-140`; the pump cycle return is `:142-144` and
 > the servo's `:168-170`. Rules unchanged except midseason's 15 °C top edge, which now extends to
 > 20 °C when the Steadman apparent temperature is below 15 —
-> [[2026-10-22-mnt-253-midseason-humidity-wind-research]].
+> ([[2026-10-22-mnt-253-midseason-humidity-wind-research]], merged as PR #44)
+>
+> **Correction 2026-11-09 (Consistency Agent):** the apparent-temperature gate is below **17 °C**,
+> not 15: `SUMMER_TEMP_MIN` moved to 17 with the MNT-255 band re-baseline (`SUMMER_TEMP_MIN` /
+> `MIDSEASON_TEMP_MIN = 10` / `MIDSEASON_EXTENDED_TEMP_MAX = 20` at `services.py:131-134`), and the
+> midseason band itself became `10 <= t < 17` with a `< 20` apparent-temperature extension. The
+> 2026-10-22 note above is preserved as written; see [[2026-10-25-mnt-255-override-by-schedule]].
 
 ## Decisions taken
 

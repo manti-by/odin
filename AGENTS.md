@@ -16,7 +16,7 @@ It uses Django 6 with Django REST Framework, PostgreSQL, Redis, and modern Pytho
   `models.py`), and a read API in `./odin/api/v1/boiler/` (`GET /api/v1/boiler/status/`); talks to
   the local `ebusd` daemon
 - Video library (home cinema) in `./odin/apps/video/` — `Video` rows reconciled with
-  `VIDEO_MEDIA_DIRS` by the `video_scan` command (APScheduler job, incremental by path + mtime,
+  `VIDEO_MEDIA_DIRS` by the `video_scan` command (incremental by path + mtime,
   OMDb metadata cache capped at the free tier, Russian yt-dlp trailers in `/var/lib/odin/trailers`);
   the read API in `./odin/api/v1/video/` serves metadata and answers `stream/` / `trailer/` with
   `X-Accel-Redirect` for nginx
@@ -241,9 +241,11 @@ def queue_sync_sensor_data(sensor_id: str):
 - Define jobs in `odin/apps/core/scheduler.py` within the app
 - Use `scheduler.scheduled_job` for scheduling
 - Live jobs: `update_weather` (30 min), `update_voltage` (5 min), `update_exchange_rates` (4 h),
-  `fetch_traffic` (15 min), `video_scan` (`VIDEO_SCAN_INTERVAL`, 1 min), `log_boiler_status` (1 h,
-  enqueued on the RQ `default` queue). `update_boiler_mode` is commented out (disabled 2026-09-22,
-  MNT-216 pending) — the boiler controller does not run periodically.
+  `fetch_traffic` (15 min), `log_boiler_status` (1 h, enqueued on the RQ `default` queue).
+  `video_scan` (`VIDEO_SCAN_INTERVAL`, 1 min) is commented out at the end of `scheduler.py`
+  (disabled in the working tree as of 2026-11-11) — run `video_scan` manually until it is
+  re-enabled. `update_boiler_mode` is commented out (disabled 2026-09-22, MNT-216 pending) — the
+  boiler controller does not run periodically.
 
 ```python
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -262,12 +264,12 @@ def schedule_update_weather():
 
 - `Relay.state`/`Relay.mode` are persisted columns, but the API computes `mode`/`target_state` on
   read via `Relay.get_target_state()` — never trust the stored `mode` in responses
-  (`odin/api/v1/relays/serializers.py:42`).
+  (`odin/api/v1/relays/serializers.py:17`).
 - `RelayState` is `ON`/`OFF`/`UNKNOWN` only (`IGNORED` was removed); `RelayMode.IGNORED` still
   exists (servo whose related pump is off).
 - `perform_update` recomputes and persists `state`+`mode`, publishes via `RedisBus`, and records a
   `RelayLog` row via `RelayLogService.log_change()` (`odin/api/v1/relays/views.py:52`,
-  `odin/apps/relays/services.py:49`); servos link to their pump via the nullable
+  `odin/apps/relays/services.py:86`); servos link to their pump via the nullable
   `related_relay` self-FK.
 - Antifreeze fail-safe: `RelayTargetStateService.get_target_state()` answers `ANTIFREEZE` **first**,
   but only for missing/unusable weather or `outside_temp < -8` — pump `(ON, ANTIFREEZE)`, servo
@@ -278,7 +280,8 @@ def schedule_update_weather():
   state-only — `start_time`/`end_time`/`target_state` (`ON`/`OFF`, required), no `target_temp`. A
   matching period is applied immediately after `force_state`, before the weather and schedule rules,
   for every relay type including `VALVE`; the reported mode is `RelayMode.OVERRIDE`. `target_state`
-  is logical (`ON` = heat/run) and is inverted for `SERVO`, whose `ON` closes the circuit. `end_time`
+  is **physical** for every type: a servo `ON` means the circuit is closed, and it is applied
+  verbatim — the logical-on-heat servo inversion was removed on 2026-11-09. `end_time`
   is exclusive and overnight spans are supported. Periods with a missing or unknown `target_state`
   are dropped before the active period is selected, so a later overlapping valid period still
   applies (and only when none matches do the regular rules apply), while a period missing a time is
@@ -287,18 +290,18 @@ def schedule_update_weather():
   raising. `RelayMode.OVERRIDE` needs migration
   `0012_alter_relay_mode_alter_relaylog_new_mode_and_more` (MNT-255, MNT-259).
 - Force and override share one helper, `RelayTargetStateService.get_manual_target_state()`
-  (`odin/apps/relays/services.py:183`), which returns `(state, mode)` or `None` and applies the servo
-  inversion. Every type calls it in the same position, so an unsupported force/override never
-  silently disappears from the API. The heat direction (pump `ON`, servo open) is also the fail-safe
-  answer; the stop direction only lands when the fail-safe did not fire and, for a servo, the linked
-  pump is on — `IGNORED` beats a forced or overridden close.
+  (`odin/apps/relays/services.py:232`), which returns `(state, mode)` or `None` and applies the
+  state verbatim (no servo inversion). Every type calls it in the same position, so an unsupported
+  force/override never silently disappears from the API. The heat direction (pump `ON`, servo open)
+  is also the fail-safe answer; the stop direction only lands when the fail-safe did not fire and,
+  for a servo, the linked pump is on — `IGNORED` beats a forced or overridden close.
 - Weather bands come from `RelayTargetStateService.get_weather_mode()`
-  (`odin/apps/relays/services.py:149`), which returns the private `WeatherMode` enum
+  (`odin/apps/relays/services.py:203`), which returns the private `WeatherMode` enum
   (`NONE`/`ANTIFREEZE`/`DEFAULT`/`MIDSEASON`/`SUMMER`) rather than a `RelayMode`: "no usable weather"
   and the `-8 … 10 °C` default band must stay distinguishable, and only the reported mode is mapped
   back to `RelayMode`. `ANTIFREEZE` (`outside_temp < -8`) and the midseason edges stay on the
   **raw** temperature, so the fail-safe heat answer never depends on fetched humidity/wind.
-- A weather row counts only through `get_latest_weather()` (`odin/apps/weather/services.py:17`):
+- A weather row counts only through `get_latest_weather()` (`odin/apps/weather/services.py:18`):
   it needs a temperature, a `period` within two hours of now in either direction, and a `synced_at`
   within the last two hours (`WEATHER_MAX_AGE`). `Weather.objects.current()` is ageless and, having
   no ordering, falls back to the highest pk — which can be a _future_ forecast slot — so relay and
@@ -314,17 +317,17 @@ hour % 2 == 0 and minute < 30`); servos stay open (`OFF, MIDSEASON`) for the who
 - Schedule cycle: when none of the higher-priority rules applies (`FORCED`, `OVERRIDE`, servo `UNKNOWN`,
   servo `IGNORED`, `SUMMER`, `ANTIFREEZE`, `MIDSEASON`), the relay is forced open for 30 minutes
   every 2 hours — `hour % 2 == 0 and minute < 30`, **no night guard**, so 00:00–00:30 runs too
-  (`odin/apps/relays/services.py:87`). Pump `(ON, CYCLE)`, servo `(OFF, CYCLE)`. Outside the
+  (`odin/apps/relays/services.py:141`). Pump `(ON, CYCLE)`, servo `(OFF, CYCLE)`. Outside the
   window the schedule applies as usual (`BASIC`, or `FALLBACK` with no matching period). Midseason
   keeps its own, _different_ night guard — do not merge the two rules.
 - `RedisBus.publish_relay_control(relay_id, state, mode, user)` requires `mode` and puts it in the
   envelope. Both call sites publish the **freshly computed** pair, not the stored column: the API
   view recomputes it in `perform_update` and passes the acting user
   (`odin/api/v1/relays/views.py:78`); `RelayAdmin.save_model` publishes
-  `obj.get_target_state()` (`odin/apps/relays/admin.py:127`). Passing `obj.mode` there would send a
+  `obj.get_target_state()` (`odin/apps/relays/admin.py:209`). Passing `obj.mode` there would send a
   stale mode next to a fresh state.
 - The `consumer` command applies both `state` and `mode` from a `RELAY_STATE_UPDATE` envelope
-  (`odin/apps/core/management/commands/consumer.py:140-145`); coruscant echoes the mode it read from
+  (`odin/apps/core/management/commands/consumer.py:140-149`); coruscant echoes the mode it read from
   `GET /api/v1/relays/<relay_id>/`. A missing, `null` or unknown mode leaves the stored column
   untouched, so valve updates from an older coruscant never clobber it. `Relay.refresh_state()`
   applies `mode` from `relays:state:<relay_id>` on the same terms.
@@ -563,7 +566,7 @@ class SensorConnectionError(SensorError):
 
 ### Database
 
-- **Development/Production/Testing**: PostgreSQL (`odin/settings/base.py:98`, inherited by `test.py`)
+- **Development/Production/Testing**: PostgreSQL (`odin/settings/base.py:104`, inherited by `test.py`)
 - **SQLite** only in `odin/settings/sqlite.py` (`:memory:`) for `make django-checks`, never pytest
 
 ## Security Guidelines

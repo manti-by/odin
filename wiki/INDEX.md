@@ -16,7 +16,7 @@ _Newest first._
 
 - [MNT-267: Override schedule admin component](pages/2026-10-27-mnt-267-override-schedule-admin-component.md) — Implementation of MNT-267: Override schedule admin component (2026-10-27)
 - [RelayTargetStateService review — antifreeze fail-safe and rule order](pages/2026-10-26-relay-target-state-antifreeze-review.md) — Reviewed the uncommitted antifreeze fail-safe rewrite: `None` from `get_weather_mode()` swallowed the whole `-8…10 °C` band and force/override were dropped for servos and valves (98 of 205 relay/boiler tests failing); recorded the agreed rule order (fail-safe for missing or >2 h-old weather only, antifreeze beats a forced stop, servos always open in midseason, `>= 10 °C` is midseason) and the change list for the service (2026-10-26)
-- [MNT-255: Override by schedule](pages/2026-10-25-mnt-255-override-by-schedule.md) — Added a time-based `context["override_schedule"]` applied right after `force_state` for pumps, servos and valves, reporting the new `RelayMode.OVERRIDE` (migration 0012); also re-baselined the midseason tests to the already-merged 10/17 band, and added an antifreeze fail-safe for missing or unusable weather that outranks `force_state` and the override, while usable weather in the `-8 … 10 °C` default band still reaches the cycle, the schedule and servo regulation — 210 relay tests pass, 539 full-suite tests on PostgreSQL (MNT-255 and MNT-259, merged 2026-10-26) (2026-10-25)
+- [MNT-255: Override by schedule](pages/2026-10-25-mnt-255-override-by-schedule.md) — Added a time-based `context["override_schedule"]` applied right after `force_state` for pumps, servos and valves, reporting the new `RelayMode.OVERRIDE` (migration 0012); also re-baselined the midseason tests to the already-merged 10/17 band, and added an antifreeze fail-safe for missing or unusable weather that outranks `force_state` and the override, while usable weather in the `-8 … 10 °C` default band still reaches the cycle, the schedule and servo regulation — 210 relay tests pass, 539 full-suite tests on PostgreSQL (MNT-255 and MNT-259, merged 2026-10-26). Manual `force_state`/override `target_state` applied verbatim for every type since 2026-11-09 — the servo inversion was removed (2026-10-25)
 
 - [MNT-253 — Midseason humidity & wind research](pages/2026-10-22-mnt-253-midseason-humidity-wind-research.md) — Researched how outside temp/humidity/wind act on the house; the band should gate on the Steadman apparent temperature `AT = Ta + 0.33e − 0.70ws − 4.00`, asymmetrically (raw bottom edge, feels-like top edge); validated on 16 months of production data — wind adds only ~3%/m·s⁻¹ to the indoor fall rate, the band would gain 618 short windy spells/lose 41 h, and macOS TCC was found blocking psql from the LAN (2026-10-22)
 
@@ -56,6 +56,10 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 
 ### Relay control (state, mode, schedules, midseason/weather gate, indicators)
 
+> Manual force/override `target_state` is applied verbatim for every relay type since 2026-11-09 —
+> the servo inversion from MNT-255 was removed; see the 2026-11-09 notes in the MNT-255 and
+> antifreeze-review pages below.
+
 - [Add self-referential related_relay field to Relay](pages/2026-09-11-add-related-relay-field.md)
 - [Relay state sync — admin refresh and Redis consumer](pages/2026-09-11-relay-state-redis-consumer.md)
 - [Relay state/mode refactor — review, test sync, and fixes](pages/2026-09-18-relay-state-mode-refactor.md)
@@ -71,7 +75,6 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [MNT-255: Override by schedule](pages/2026-10-25-mnt-255-override-by-schedule.md) — 2026-10-25 (also covers MNT-259)
 - [RelayTargetStateService review — antifreeze fail-safe and rule order](pages/2026-10-26-relay-target-state-antifreeze-review.md) — 2026-10-26
 - [MNT-267: Override schedule admin component](pages/2026-10-27-mnt-267-override-schedule-admin-component.md) — 2026-10-27
-- [CH-9: Boiler logging](pages/2026-11-10-ch-9-boiler-logging.md) — 2026-11-10
 
 ### Boiler / eBus control
 
@@ -82,6 +85,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 - [MNT-208: Boiler dashboard](pages/2026-09-18-mnt-208-boiler-dashboard.md)
 - [Boiler tile shows no temperatures — API returns override, not live status](pages/2026-09-27-boiler-live-status-api.md)
 - [Boiler logging — hourly mode and setpoint snapshots](pages/2026-11-10-boiler-logging.md)
+- [CH-9: Boiler logging](pages/2026-11-10-ch-9-boiler-logging.md)
 
 ### Dashboard API & frontend SPA
 
@@ -109,3 +113,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 ### MCP server & agent tooling
 
 - [MCP server review and project-agnostic refactor](pages/2026-10-11-mcp-server-review-agnostic-refactor.md)
+
+### Video & media
+
+- [MNT-275: Video library backend in odin](pages/2026-10-31-mnt-275-video-backend.md) — absorbed MNT-274 (scanner + OMDb + trailer fetcher)

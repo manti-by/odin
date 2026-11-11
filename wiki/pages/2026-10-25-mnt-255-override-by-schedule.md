@@ -49,6 +49,12 @@ Decision order in `RelayTargetStateService.get_target_state()`, band by band:
 0. no usable weather, or `outside_temp < -8` → `(ON, ANTIFREEZE)`, `(OFF, ANTIFREEZE)` for a servo
 1. `force_state` → `(force_state, FORCED)`, inverted for a servo
 2. **`override_schedule` → `(target_state, OVERRIDE)`** ← new, inverted for a servo
+
+> **Note 2026-11-09:** steps 1–2 are obsolete. The servo inversion was removed from
+> `get_manual_target_state()` — both `force_state` and the override `target_state` now map every
+> relay type (including `SERVO`) verbatim to its physical state (`SERVO` `ON` = circuit closed). This
+> fixed SERVO-GR reporting `(ON, FORCED)` while the real state was `OFF`.
+
 3. `SUMMER` → `OFF`; `MIDSEASON` → pump cadence / servo open; servo `UNKNOWN`/`IGNORED` before the
    manual helper
 4. schedule cycle window → `CYCLE`
@@ -97,8 +103,13 @@ def get_current_override_period(self) -> dict | None:
 ```
 
 The rule used to sit before the `RelayType` dispatch, which is what made valves work. Since
-2026-10-26 it lives in `get_manual_target_state()` and every type branch calls it in the same place,
-so a servo gets the inversion and a valve still honours the override:
+2026-10-26 it lives in `get_manual_target_state()` and every type branch calls it in the same place.
+
+> **Superseded 2026-11-09:** the helper applied the servo inversion to the override (and to
+> `force_state`). It no longer takes an `invert` flag at all — `RelayTargetStateService`
+> `get_manual_target_state()` returns the manual input verbatim for every type, servo included. The
+> snippet below is the 2026-10-26 code, kept for history:
+
 
 ```python
 def get_manual_target_state(self, invert: bool = False) -> tuple[RelayState, RelayMode] | None:
@@ -143,6 +154,11 @@ dict holding a list of period dicts, and skips entries whose `start_time`/`end_t
 (`KeyError`, `TypeError` from `None`/non-string values, `ValueError`). Before this guard a
 `{"start_time": null}` in the admin JSON field raised out of every relay read, turning the list and
 retrieve endpoints into 500s. This applies to both `schedule` and `override_schedule`.
+
+> **Superseded 2026-11-09:** `target_state` is no longer logical — it is **physical** for every
+> type and applied verbatim, like `force_state`. For a servo, `ON` means the circuit is closed,
+> which is the same value the reported `state` column and the operator-entered override carry. The
+> paragraph below records the 2026-10-25 rationale for the since-removed inversion.
 
 `target_state` is **logical** — `ON` means "heat/run" — because pump and servo states are inverted
 in this domain: a pump `ON` starts the pump, while a servo `ON` closes the circuit (disables the
@@ -214,8 +230,9 @@ was red before the feature work started:
 `TestRelaysOverrideSchedule` in `odin/tests/models/test_relays.py` covers: ON and OFF periods,
 exclusive `end_time`, overnight spans, `force_state` still winning, the override beating `SUMMER`
 weather, the cycle window and a regular schedule period, the schedule applying again outside the
-override window, the servo physical outcome (an `ON` heating window yields `OFF`, an `OFF` window
-yields `ON`), valve relays, invalid `target_state` being skipped, malformed/unusable context data
+override window, the servo override outcome (an `ON` window yields physical `ON`, an `OFF` window
+`OFF` — since the 2026-11-09 removal the periods are applied verbatim), valve relays, invalid
+`target_state` being skipped, malformed/unusable context data
 being skipped, and a two-period schedule picking the matching one.
 
 `TestRelaysUpdateAPI` gained `_override(*periods)` plus PATCH tests for persistence, recompute and
@@ -251,8 +268,8 @@ lookup lets a JSON `null` through.
 Consequences worth knowing before touching this code:
 
 - `force_state` and the override reach every type again through one `get_manual_target_state()`
-  helper. Servos invert the logical state; a forced or overridden close still loses to `IGNORED`
-  (related pump off) and to the fail-safe.
+  helper, applied verbatim (the servo inversion was removed on 2026-11-09). A forced or overridden
+  close still loses to `IGNORED` (related pump off) and to the fail-safe.
 - Boiler mode follows the computed pump state. With no fresh weather every active pump reports `ON`,
   so `BoilerModeService` sees `MIXED`; a pump that is forced `OFF` inside the default band now
   aggregates to `OFF` again.
@@ -260,8 +277,8 @@ Consequences worth knowing before touching this code:
 `TestRelaysAntifreezeFailSafe` covers the pump/servo/valve answers without weather, `temp < -8`,
 the fail-safe beating `force_state` and the override, and a servo with a dead sensor reporting
 `UNKNOWN`. `TestRelaysWeatherFreshness` pins the two-hour window (old `period`, dead `synced_at`,
-future forecast slot, and a row just inside it). `TestRelaysManualControl` covers the servo
-inversion, `IGNORED` beating a forced close and valve force handling. Everything else that relies
+future forecast slot, and a row just inside it). `TestRelaysManualControl` covers the verbatim force handling (formerly the servo inversion, removed
+2026-11-09), `IGNORED` beating a forced close and valve force handling. Everything else that relies
 on the default band creates a fresh `0.0 °C` row through `create_weather()` in
 `odin/tests/factories.py`.
 

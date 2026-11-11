@@ -98,6 +98,9 @@ Answers from the author during the review:
   possible anyway. The stop direction (pump `OFF`, servo `ON`) applies only with data and not in antifreeze.
   "Data" for a servo means weather **and** a live sensor.
 - The override schedule sits right after `force_state` and follows the same asymmetry.
+  (> **Note 2026-11-09:** the force/override servo inversion behind this asymmetry was removed —
+  both manual inputs are now applied verbatim; the heat/stop asymmetry survives only in the
+  fail-safe and automatic branches.)
 - A forced or overridden servo close does **not** beat `IGNORED` (related pump off).
 - Servo with no weather and a dead sensor reports `UNKNOWN`.
 - When a force coincides with or is outranked by the fail-safe the label is `ANTIFREEZE`.
@@ -125,7 +128,11 @@ Servo:
 2. No usable weather, or `temp < -8` → `(OFF, ANTIFREEZE)`.
 3. Related pump off → `(OFF, IGNORED)`; beats a forced or overridden close.
 4. `force_state` → `(force_state, FORCED)`.
-5. Override period → inverted, `(OFF|ON, OVERRIDE)`.
+5. Override period → `(target_state, OVERRIDE)`, applied verbatim.
+   (> **Note 2026-11-09:** this step originally read "inverted, `(OFF|ON, OVERRIDE)`" — the servo
+   inversion was removed from `get_manual_target_state()` on 2026-11-09, so the force and override
+   answers map every type verbatim to its physical state. See the 2026-11-09 note in
+   [[2026-10-25-mnt-255-override-by-schedule]].)
 6. `SUMMER` and `MIDSEASON` → `(OFF, band)`.
 7. Default band → cycle window `(OFF, CYCLE)`, then sensor regulation `BASIC`, else `(OFF, FALLBACK)`.
 

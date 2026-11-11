@@ -24,8 +24,8 @@ and wind into one number — while the bottom edge stays on the raw temperature.
 Fallback rule: any missing input → fall back to today's temp band (fail-safe = current behavior).
 
 > **Note 2026-10-22 (Consistency Agent):** the *revised* asymmetric proposal below is now implemented
-> on branch `opencode/feature/mnt-253-midseason-updates` (PR #44, In Review, not merged as of
-> 2026-10-22). `apparent_temp()` lives in `odin/apps/weather/services.py`; the band classification
+> on branch `opencode/feature/mnt-253-midseason-updates` (PR #44, merged — see `d78a5ff`;
+> was In Review as of 2026-10-22). `apparent_temp()` lives in `odin/apps/weather/services.py`; the band classification
 > moved into a shared `RelayTargetStateService.get_weather_mode()`; missing humidity/wind still
 > degrade to the exact pre-MNT-253 behaviour. The `Weather.apparent_temp` *property* from the
 > original proposal was dropped to avoid a circular import with `services.py`.

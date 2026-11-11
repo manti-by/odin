@@ -8,7 +8,7 @@ services: [boiler, boiler-models, boiler-services, scheduler, rq, api-boiler, te
 branch: ch-9-boiler-logging
 tickets: [CH-9]
 tags: [boiler, logging, rq, scheduler, models]
-related: [2026-11-10-boiler-logging.md, 2026-09-27-boiler-live-status-api.md, 2026-09-18-mnt-208-boiler-dashboard.md]
+related: [2026-11-10-boiler-logging.md, 2026-09-27-boiler-live-status-api.md, 2026-09-18-mnt-208-boiler-dashboard.md, 2026-09-17-mnt-206-boiler-mode-controller.md]
 ---
 
 # CH-9: Boiler logging
