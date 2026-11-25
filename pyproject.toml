@@ -1,6 +1,6 @@
 [project]
 name = "odin"
-version = "1.24.4"
+version = "1.24.5"
 description = "Django application that provides several IoT dashboards and services for Coruscant and Centax projects."
 readme = "README.md"
 requires-python = ">=3.14,<3.15.0"
@@ -17,7 +17,7 @@ dependencies = [
     "django-rq>=4.2.0,<5.0.0",
     "djangorestframework>=3.18.3,<4.0.0",
     "gunicorn>=25.3.0,<26",
-    "ipython>=9.18.1",
+    "ipython>=9.19.1",
     "mcp>=2.3.0",
     "pillow>=12.3.0,<13",
     "pre-commit>=4.7.0",
@@ -26,13 +26,13 @@ dependencies = [
     "pywebpush>=2.5.0,<3",
     "redis>=5.3.1,<6",
     "requests>=2.34.2,<3",
-    "ruff>=0.17.4",
-    "selenium>=4.52.0,<5",
+    "ruff>=0.17.6",
+    "selenium>=4.54.0,<5",
     "setuptools>=84.2.1",
     "tinytag>=2.3.2,<3",
-    "ty>=0.0.100",
+    "ty>=0.0.110",
     "uvicorn[standard]>=0.54.0,<1",
-    "yt-dlp>=2026.10.26",
+    "yt-dlp>=2026.11.23",
 ]
 
 [dependency-groups]
@@ -40,7 +40,7 @@ dev = [
     "debugpy>=1.8.22",
     "django-silk>=5.6.0",
     "pytest>=9.2.0",
-    "pytest-asyncio>=1.4.1.post1",
+    "pytest-asyncio>=1.5.0",
     "pytest-django>=4.14.0",
     "pytest-factoryboy>=2.8.1",
     "uv-bump>=0.6.0",
