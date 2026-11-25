@@ -5,6 +5,7 @@ import pytest
 from django.test.client import Client
 from rest_framework.test import APIClient
 
+from odin.apps.boiler.services.status import BoilerStatusService
 from odin.tests.factories import AuthFactory
 
 
@@ -29,6 +30,27 @@ def boiler_state(settings, tmp_path):
     settings.BOILER_STATE_FILE = str(tmp_path / "state")
     settings.BOILER_LOCK_FILE = str(tmp_path / "state.lock")
     return tmp_path / "state"
+
+
+@pytest.fixture
+def boiler_live_status(monkeypatch):
+    """Stub the full live eBus status dict so log tests never talk to the daemon."""
+    values = {name: "-" for name, _note in BoilerStatusService.STATUS_FIELDS}
+    values.update(
+        {
+            "FlowTempDesired": "35.00",
+            "HwcTempDesired": "45.00",
+            "StorageTempDesired": "45.00",
+            "FlowTemp": "37.12;ok",
+            "ReturnTemp": "32.06;65022;ok",
+            "StorageTemp": "39.44;ok",
+            "ModulationDesired": "20.0",
+            "Status01": "37.0;32.0;-;-;39.0;on",
+            "Status02": "auto;20;75.0;90;60.0",
+        }
+    )
+    monkeypatch.setattr(BoilerStatusService, "status", lambda self: values)
+    return values
 
 
 @pytest.fixture

@@ -3,97 +3,85 @@ title: 'Boiler logging — hourly mode and setpoint snapshots'
 date: '2026-11-10'
 type: implementation
 status: resolved
-session_id: ses_boiler_logging_2026_11_10
-services: [boiler, boiler-models, boiler-services, scheduler, rq]
+session_id: ses_e391db859ffe3C5XRczuMAHjcQ
+services: [boiler, boiler-models, boiler-services, scheduler, rq, api-boiler, django-admin]
 branch: ch-9-boiler-logging
 tickets: [CH-9]
-tags: [boiler, logging, rq, scheduler, models]
+tags: [boiler, logging, rq, scheduler, models, django-admin]
 related: [2026-11-10-ch-9-boiler-logging.md, 2026-09-27-boiler-live-status-api.md, 2026-09-18-mnt-208-boiler-dashboard.md, 2026-09-17-mnt-206-boiler-mode-controller.md]
 ---
+
 # Boiler logging — hourly mode and setpoint snapshots
+
+> Rewritten 2026-11-25: the original implementation stored only override-file setpoints, which left
+> `flow_temp` / `hwc_temp` NULL in panel mode. The log now falls back to the live eBus setpoints shown
+> on the dashboard, stores every readable eBus field in a JSON `context`, has an admin page, and the
+> old NULL-only rows were deleted.
 
 ## TL;DR
 
-Added a `BoilerLog` model to the boiler app and an hourly job that stores the boiler's mode and
-setpoints, so the heating history becomes queryable from the database instead of being visible only
-in the live status API. The snapshot is read exactly the way `GET /api/v1/boiler/status/` reads it —
-the mode in effect plus the setpoints from the saved override file — and is written by the RQ worker,
-the first real job on the queue handle that had been sitting unused in `odin/apps/core/scheduler.py`.
+CH-9 added an hourly `BoilerLog` row with the mode in effect plus the active setpoints, written by
+`BoilerLogService` through the RQ `default` queue. A later fix made the setpoints useful in panel
+mode: override values win when present, otherwise the service reads the same live eBus fields the
+dashboard tile displays (`FlowTempDesired`, `StorageTempDesired`). Each row also carries a JSON
+`context` with every field from `BoilerStatusService.status()` — the complete set of eBus values the
+daemon currently exposes. `BoilerLog` is registered in Django admin, and the 44 historical rows with
+NULL setpoints were removed because that data could not be backfilled.
 
 ---
 
-## Overview
+## Symptom (2026-11-25)
 
-The ticket asked for an hourly `BoilerLog` row carrying `hcmode`, `flow_temp`, `hwc_temp` and
-`created_at`, produced by a service, a management command and a "rq schedule" driven from
-`odin/apps/core/scheduler.py`.
+The new admin page listed `mixed` rows with empty `flow_temp` / `hwc_temp`, while the dashboard tile
+showed real numbers (`Flow 35°C`, `Tank 45°C`).
 
-Three decisions came from the ticket questions:
+Evidence:
 
-- `flow_temp`/`hwc_temp` are read from the override file, the way `BoilerStatusView.target_temp` /
-  `hwc_temp` are derived — not from the live eBus fields.
-- `hcmode` stores the display mode (`BoilerMode`: `heating` / `mixed` / `off` / `boiling`), not the
-  raw SetMode token.
-- The hourly job enqueues the callable `log_boiler_status` on the existing `default` queue handle
-  instead of calling a management command inline.
+- `SELECT count(*) FROM boiler_boilerlog` → 44 rows, all with both setpoint columns NULL.
+- `/var/lib/boiler-set/state` did not exist: the boiler was running on its panel settings, with no
+  SetMode override.
+- `GET /api/v1/boiler/status/` also returned `target_temp: null` / `hwc_temp: null` in panel mode —
+  those fields are override-derived too.
+- `ebusctl read -f -c bai FlowTempDesired` → `35.00`, `StorageTempDesired` → `45.00`, and the tile
+  renders exactly those two live fields (`frontend/src/components/tile/BoilerTile.tsx:79,83`).
 
-One consequence worth remembering: because the setpoints come from the override file, a snapshot taken
-while the boiler runs on its panel settings (no override) stores `NULL` for `flow_temp` and
-`hwc_temp`. The mode is still recorded, because `BoilerModeService.get_current_mode()` falls back to
-the mode decided from the weather and the pumps.
+Root cause: `get_current_state()` reads setpoints only from the override file. The original ticket
+explicitly chose that source, so a snapshot without an override stored NULL even though the panel
+setpoints were available on the bus.
 
-## Step 1 — `BoilerLog` model and the `BoilerMode` enum move
+## Overview of the feature
 
-**File:** `odin/apps/boiler/models.py` (new), `odin/apps/boiler/migrations/0001_initial.py` (new)
+- `BoilerLog` is the boiler app's first model (`odin/apps/boiler/models.py`), with `hcmode`
+  (`BoilerMode`), nullable `flow_temp` / `hwc_temp`, a JSON `context`, and indexed `created_at`;
+  ordering is newest first.
+- `get_current_state()` (`odin/apps/boiler/services/state.py`) still supplies the mode in effect and
+  the override setpoints to `GET /api/v1/boiler/status/`. The API is deliberately unchanged.
+- `BoilerLogService` (`odin/apps/boiler/services/log.py`) is the only place that augments those
+  override setpoints with live eBus values. It takes an optional `BoilerStatusService` for injection,
+  reads `status()` once per snapshot, and reuses that dict for both the fallback setpoints and the
+  stored `context`. `status()` catches `EbusdError` per field, so an outage records `error: ...`
+  strings in the context rather than losing the whole row.
+- `log_boiler_status()` is a module-level function (RQ serializes jobs by import path), exposed via
+  `manage.py boiler_log` and scheduled hourly in `odin/apps/core/scheduler.py` on the `default` queue.
+- `BoilerLogAdmin` (`odin/apps/boiler/admin.py`) registers the model with `list_display`,
+  `search_fields` and `list_filter`, mirroring `SensorLogAdmin`.
 
-The boiler app had no `models.py` at all. `BoilerMode` moved here from `services/mode.py`:
+## Step 1 — model and enum
 
-```python
-class BoilerMode(models.TextChoices):
-    HEATING = "heating", "Heating"
-    MIXED = "mixed", "Mixed"
-    OFF = "off", "Off"
-    BOILING = "boiling", "Boiling"
-    CLEAR_OVERRIDE = "clear_override", "Clear override"
+**File:** `odin/apps/boiler/models.py`, `odin/apps/boiler/migrations/0001_initial.py`,
+`odin/apps/boiler/migrations/0002_boilerlog_context.py`
 
+`BoilerMode` moved here from `services/mode.py` (and is re-exported there), because every other enum
+in the repo lives in its app's `models.py`. The fields are nullable integers on purpose: the log can
+still record the mode when eBus is unreachable. `context` is a `JSONField(default=dict, blank=True)`
+added by `0002_boilerlog_context` and filled with the live status dict. `objects = models.Manager()`
+is explicit so `ty` does not complain about a missing manager.
 
-class BoilerLog(models.Model):
-    """One snapshot of the boiler's mode and setpoints."""
+## Step 2 — shared state reader (unchanged)
 
-    hcmode: models.CharField[BoilerMode] = models.CharField(
-        max_length=16, choices=BoilerMode.choices, verbose_name=_("Mode")
-    )
-    flow_temp: models.IntegerField[int] | None = models.IntegerField(...)
-    hwc_temp: models.IntegerField[int] | None = models.IntegerField(...)
-    created_at: models.DateTimeField[datetime] = models.DateTimeField(auto_now_add=True, db_index=True, ...)
-```
-
-Why the enum moved:
-
-- The model needs `BoilerMode.choices`, and a models → services import is the direction this codebase
-  avoids (`odin/apps/relays/models.py:128` keeps its service import inside the method for exactly that
-  reason).
-- Every other enum in the repo already lives in its app's `models.py` — `SensorType`, `RelayType` /
-  `RelayState` / `RelayMode`, `FetchStatus`, `WeatherProvider`.
-- `services/mode.py` now re-exports it (`from odin.apps.boiler.models import BoilerMode`), so
-  `from odin.apps.boiler.services.mode import BoilerMode` and
-  `from odin.apps.boiler.services import BoilerMode` keep working unchanged.
-
-`objects = models.Manager()` is declared explicitly, matching `RelayLog`; `ty` otherwise reports
-`Class BoilerLog has no attribute objects`.
-
-## Step 2 — the shared state reader
-
-**File:** `odin/apps/boiler/services/state.py` (new)
+**File:** `odin/apps/boiler/services/state.py`
 
 ```python
-@dataclass(frozen=True)
-class BoilerState:
-    mode: BoilerMode
-    flow_temp: int | None
-    hwc_temp: int | None
-
-
 def get_current_state() -> BoilerState:
     override = BoilerStatusService().current_override()
     flow_temp = hwc_temp = None
@@ -103,120 +91,111 @@ def get_current_state() -> BoilerState:
     return BoilerState(mode=BoilerModeService().get_current_mode(), flow_temp=flow_temp, hwc_temp=hwc_temp)
 ```
 
-The API view now calls the same helper, so "the same way as `BoilerStatusView`" is structural rather
-than a comment: if the view's derivation changes, the log follows.
+`BoilerStatusView` still builds `mode` / `target_temp` / `hwc_temp` from this helper. Leaving it
+alone keeps the API contract stable; only the log needs live values.
 
-**File:** `odin/api/v1/boiler/views.py`
+## Step 3 — live setpoint fallback and the eBus context
 
-```python
-service = BoilerStatusService()
-override = service.current_override()
-state = get_current_state()
-
-data = {
-    "mode": state.mode,
-    "target_temp": state.flow_temp,
-    "hwc_temp": state.hwc_temp,
-    ...
-```
-
-The view still reads `current_override()` itself for `override_active` / `override_updated_at`, so the
-override file is read twice per request. The pair is written atomically by
-`BoilerStatusService._save_state`, so the only exposure is a stale `override_active` flag if the
-override is cleared between the two reads.
-
-## Step 3 — the logging service
-
-**File:** `odin/apps/boiler/services/log.py` (new)
+**File:** `odin/apps/boiler/services/log.py`
 
 ```python
 class BoilerLogService:
-    """Persist the boiler's current state as ``BoilerLog`` rows."""
+    def __init__(self, status: BoilerStatusService | None = None):
+        self.status = status or BoilerStatusService()
 
-    def get_state(self) -> BoilerState:
-        return get_current_state()
+    def get_state(self, status: dict[str, str] | None = None) -> BoilerState:
+        status = self.status.status() if status is None else status
+        state = get_current_state()
+        return BoilerState(
+            mode=state.mode,
+            flow_temp=state.flow_temp if state.flow_temp is not None else parse_temp(status.get("FlowTempDesired", "")),
+            hwc_temp=state.hwc_temp if state.hwc_temp is not None else parse_temp(status.get("StorageTempDesired", "")),
+        )
 
     def log(self) -> BoilerLog:
-        state = self.get_state()
-        entry = BoilerLog.objects.create(hcmode=state.mode, flow_temp=state.flow_temp, hwc_temp=state.hwc_temp)
-        logger.info(f"Boiler state logged: {entry}")
-        return entry
-
-
-def log_boiler_status() -> BoilerLog:
-    """Scheduler entry point: store one snapshot of the current boiler state."""
-    return BoilerLogService().log()
+        status = self.status.status()
+        state = self.get_state(status)
+        return BoilerLog.objects.create(
+            hcmode=state.mode,
+            flow_temp=state.flow_temp,
+            hwc_temp=state.hwc_temp,
+            context=status,
+        )
 ```
 
-`log_boiler_status` is a module-level function on purpose: RQ serializes the job by import path
-(`odin.apps.boiler.services.log.log_boiler_status`), which a bound method would not give it.
+Rules to remember:
 
-## Step 4 — management command
+- `log()` calls `status()` once per snapshot and reuses that dict for both the fallback setpoints and
+  `context`, so the columns and the JSON describe the same eBus read.
+- **File:** `odin/apps/boiler/services/status.py` — `status()` iterates `STATUS_FIELDS`:
+  `FlowTempDesired`, `HwcTempDesired`, `StorageTempDesired`, `FlowTemp`, `ReturnTemp`, `StorageTemp`,
+  `ModulationDesired`, `Status01`, `Status02`. These are the nine bai fields that currently return
+  data; `ebusctl find -c bai` reports the rest as "no data stored". Values stay raw strings (e.g.
+  `"37.12;ok"`), and a failed read is stored as `"error: ..."` by `status()`.
+- The saved override wins per field. A field written as `-` (not controlled) falls back to the live
+  value, which is what the boiler actually uses from its panel.
+- `StorageTempDesired` is the tank field the dashboard labels "Tank"; `HwcTempDesired` is not used
+  for the `hwc_temp` column, but it is preserved in `context`.
+- **File:** `odin/apps/boiler/services/status.py` — `parse_temp()` (formerly private `_parse_temp`)
+  now accepts both override integers (`45`) and eBus decimals (`45.00`), and maps `-` or garbage to
+  `None`. `parse_override()` uses the same helper.
+- The mode still comes from `BoilerModeService`, which needs no eBus connection, so the job records
+  a useful row even when the daemon is down.
 
-**File:** `odin/apps/boiler/management/commands/boiler_log.py` (new)
+## Step 4 — management command and hourly job
 
-A plain `BaseCommand` (the other boiler commands use `BaseCommand`, while `update_voltage` /
-`video_scan` use `command_log`'s `LoggedCommand`) that calls `log_boiler_status()` and prints the
-stored row.
+**File:** `odin/apps/boiler/management/commands/boiler_log.py`, `odin/apps/core/scheduler.py`
 
-## Step 5 — hourly RQ job
+`manage.py boiler_log` calls `log_boiler_status()` and prints the row. APScheduler enqueues the same
+callable on the `default` queue hourly (`id="log_boiler_status"`, `max_instances=1`); the function is
+not `queue_`-prefixed, a documented exception because it lives with the boiler services. RQ's worker
+(`configs/worker.service`) already consumes that queue.
 
-**File:** `odin/apps/core/scheduler.py`
+## Step 5 — Django admin
+
+**File:** `odin/apps/boiler/admin.py` (new 2026-11-25)
 
 ```python
-@scheduler.scheduled_job("interval", hours=1, id="log_boiler_status", max_instances=1)
-def schedule_log_boiler_status():
-    """Store an hourly snapshot of the boiler's mode and setpoints. ..."""
-    from odin.apps.boiler.services.log import log_boiler_status
-
-    try:
-        queue.enqueue(log_boiler_status)
-    except Exception:
-        logger.exception("Boiler log job could not be enqueued")
+@admin.register(BoilerLog)
+class BoilerLogAdmin(admin.ModelAdmin):
+    list_display = ("hcmode", "flow_temp", "hwc_temp", "created_at")
+    search_fields = ("hcmode",)
+    list_filter = ("hcmode", "created_at")
 ```
 
-- The job function imports the callable locally, mirroring the commented-out `update_boiler_mode` job
-  below it, so the core app has no module-level dependency on the boiler app.
-- The `except Exception` guard keeps a Redis outage from surfacing as an unhandled APScheduler job
-  error; the next tick retries.
-- `max_instances=1` matches `video_scan` and prevents a slow run from stacking up.
+Mirrors `SensorLogAdmin`. No read API for the rows was requested.
 
-This is the first job that actually uses the `queue` handle declared at
-`odin/apps/core/scheduler.py:12`; `configs/worker.service` already runs `manage.py rqworker default`,
-so no new service unit is needed. The callable is not `queue_`-prefixed, which is a deliberate
-exception to the background-task convention in `AGENTS.md` (recorded there).
+## Step 6 — data cleanup
 
-## Test Results
+All 44 existing rows had both setpoints NULL. They could not be backfilled: the historical panel
+setpoints were never written anywhere, so they were deleted with
+`DELETE FROM boiler_boilerlog WHERE flow_temp IS NULL OR hwc_temp IS NULL;`. New rows created after
+the fix carry real values (except when eBus itself is unreachable). Migration
+`0002_boilerlog_context` was applied to the live database; the row written before the migration had
+`context = {}` and was removed, so the remaining sample row has all nine eBus fields in `context`.
 
-- New: `odin/tests/services/test_boiler_log.py` — 7 tests (heating / boiling / mixed overrides,
-  panel mode with and without weather, the `log_boiler_status` entry point, and the scheduler
-  enqueue wiring).
-- New: `odin/tests/commands/test_boiler_log.py` — 2 tests (row created, row printed).
-- Shared `boiler_state` fixture added to `odin/tests/conftest.py`; the two older boiler test modules
-  keep their local copies.
-- `9 passed` for the two new modules on the in-memory SQLite settings.
-- `odin/tests/api/test_boiler.py` (8) and `odin/tests/services/test_boiler_mode_controller.py` (24)
-  pass, so the view refactor and the enum move are behaviour-preserving.
-- `ruff check` / `ruff format --check` clean, `ty check` clean, `makemigrations --check` reports no
-  changes, `manage.py check` clean.
-- The PostgreSQL-backed full run could not be executed in the build sandbox (no PostgreSQL or Redis
-  server); the full `odin/` suite on SQLite reported `594 passed`, with the remaining failures being
-  Redis connection errors and SQLite's missing `DISTINCT ON` — none in boiler, scheduler or the new
-  modules.
+## Tests
+
+- `odin/tests/services/test_boiler_log.py`: override precedence (heating/boiling/mixed), live
+  fallback in panel mode with and without weather, context equals the full `STATUS_FIELDS` dict,
+  `EbusdError` per field → `error: ...` strings in context and NULL setpoints, entry point,
+  scheduler wiring.
+- `odin/tests/commands/test_boiler_log.py`: command creates and prints the row, including context.
+- `boiler_live_status` in `odin/tests/conftest.py` stubs `BoilerStatusService.status` with a full
+  nine-field dict so no test talks to the eBus daemon.
+- 10/10 log tests pass; 646 tests pass on PostgreSQL; `ruff check`, `ruff format --check`, `ty check`
+  and targeted `pre-commit run` are clean.
 
 ## Follow-ups
 
-- Run `make test` (PostgreSQL) before merging; the new migration is `boiler/0001_initial`.
-- `BoilerLog` rows are never pruned. If the table grows, add a retention job alongside the other
-  scheduled jobs.
-- No admin registration and no read API for the log rows — the ticket did not ask for them.
-- The `hcmode` column stores a `BoilerMode` value while the name still suggests the raw eBus token
-  (`auto`/`heat`/`water`/`off`); the field name follows the ticket, the value follows the ticket
-  answer.
+- `BoilerLog` rows are never pruned — 24 rows/day; add a retention job if the table needs bounding.
+- The API's `target_temp` / `hwc_temp` remain override-only; clients wanting live setpoints should
+  read `status.FlowTempDesired` / `status.StorageTempDesired`, as the tile does.
+- `hcmode` keeps the ticket's column name while storing a `BoilerMode` value, not the raw eBus token.
 
 ## References
 
-- Related: [[2026-11-10-ch-9-boiler-logging]] — the CH-9 ticket summary page for the same session
-- Related: [[2026-09-27-boiler-live-status-api]] — the status API the snapshot mirrors
+- Related: [[2026-11-10-ch-9-boiler-logging]] — ticket-level write-up of the original implementation
+- Related: [[2026-09-27-boiler-live-status-api]] — the fix that added live eBus fields to the status API
 - Related: [[2026-09-18-mnt-208-boiler-dashboard]] — boiler tile and the status endpoint
 - Related: [[2026-09-17-mnt-206-boiler-mode-controller]] — `BoilerModeService`, the mode decision

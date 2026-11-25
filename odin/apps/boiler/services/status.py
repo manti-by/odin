@@ -47,11 +47,13 @@ NOT_CONTROLLED = "-"
 MAX_TEMP = 80
 
 
-def _parse_temp(value: str) -> int | None:
+def parse_temp(value: str) -> int | None:
+    """Parse a setpoint into whole degrees; ``-`` and unreadable values become None."""
+    value = value.strip()
     if value == NOT_CONTROLLED:
         return None
     try:
-        return int(value)
+        return int(float(value))
     except ValueError:
         return None
 
@@ -60,8 +62,8 @@ def parse_override(values: str) -> tuple[str, int | None, int | None]:
     """Split a saved override into (hcmode, flow_temp, hwc_temp); missing/not-controlled temps become None."""
     parts = values.split(";")
     hcmode = parts[0] if parts else ""
-    flow_temp = _parse_temp(parts[1]) if len(parts) > 1 else None
-    hwc_temp = _parse_temp(parts[2]) if len(parts) > 2 else None
+    flow_temp = parse_temp(parts[1]) if len(parts) > 1 else None
+    hwc_temp = parse_temp(parts[2]) if len(parts) > 2 else None
     return hcmode, flow_temp, hwc_temp
 
 

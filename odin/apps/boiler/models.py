@@ -24,6 +24,7 @@ class BoilerLog(models.Model):
     hwc_temp: models.IntegerField[int] | None = models.IntegerField(
         null=True, blank=True, verbose_name=_("Hot-water temperature")
     )
+    context: models.JSONField[dict] = models.JSONField(default=dict, blank=True, verbose_name=_("Context"))
 
     created_at: models.DateTimeField[datetime] = models.DateTimeField(
         auto_now_add=True, db_index=True, verbose_name=_("Created at")

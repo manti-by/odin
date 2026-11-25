@@ -7,7 +7,7 @@ from odin.apps.boiler.models import BoilerLog, BoilerMode
 
 @pytest.mark.django_db
 class TestBoilerLogCommand:
-    def test__creates_a_row(self, boiler_state):
+    def test__creates_a_row(self, boiler_state, boiler_live_status):
         boiler_state.write_text("water;0;55;-;0;0;0;0;0;0\n")
 
         call_command("boiler_log")
@@ -15,8 +15,9 @@ class TestBoilerLogCommand:
         entry = BoilerLog.objects.get()
         assert entry.hcmode == BoilerMode.BOILING
         assert entry.hwc_temp == 55
+        assert entry.context == boiler_live_status
 
-    def test__prints_the_stored_row(self, boiler_state, capsys):
+    def test__prints_the_stored_row(self, boiler_state, boiler_live_status, capsys):
         call_command("boiler_log")
 
         assert "BoilerLog" in capsys.readouterr().out
