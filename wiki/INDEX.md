@@ -9,6 +9,8 @@ by the plugin.
 
 _Newest first._
 
+- [MNT-254: Spin up MCP server in a local network](pages/2026-11-26-mnt-254-mcp-network-server.md) — Implementation of MNT-254: Spin up MCP server in a local network (2026-11-27)
+
 - [CH-9: Boiler logging](pages/2026-11-10-ch-9-boiler-logging.md) — Added the `BoilerLog` model and its first migration, a shared `get_current_state()` reader used by both the status API and the new `BoilerLogService` / `log_boiler_status` callable, the `boiler_log` command, and an hourly `@scheduler.scheduled_job` that enqueues the callable on the RQ `default` queue; updated 2026-11-25 with live setpoint fallback, a JSON eBus `context` field, and admin registration (2026-11-10)
 - [Boiler logging — hourly mode and setpoint snapshots](pages/2026-11-10-boiler-logging.md) — Rewritten 2026-11-25: `BoilerLogService` keeps override setpoints but falls back to the live eBus fields the dashboard shows and stores all nine eBus status fields in JSON `context`; `BoilerLog` is in Django admin and the 44 NULL-only rows were deleted (2026-11-10)
 
@@ -112,6 +114,7 @@ _Topic clusters maintained by the Consistency Agent; topics with the most pages 
 
 ### MCP server & agent tooling
 
+- [MNT-254: MCP server on the local network](pages/2026-11-26-mnt-254-mcp-network-server.md) — 2026-11-26
 - [MCP server review and project-agnostic refactor](pages/2026-10-11-mcp-server-review-agnostic-refactor.md)
 
 ### Video & media

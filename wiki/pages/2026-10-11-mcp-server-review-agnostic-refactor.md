@@ -8,7 +8,7 @@ services: [mcp-server, tools]
 branch: master
 tickets: []
 tags: [mcp, review, refactor, caching, paths, project-agnostic, tests]
-related: [2026-09-23-relay-mode-compute-on-read.md]
+related: [2026-09-23-relay-mode-compute-on-read.md, 2026-11-26-mnt-254-mcp-network-server.md]
 ---
 
 # MCP server review and project-agnostic refactor
@@ -369,3 +369,4 @@ commit, no push; the orchestrator handles that.
 ## References
 
 - Related: [[2026-09-23-relay-mode-compute-on-read]]
+- Related: [[2026-11-26-mnt-254-mcp-network-server]] — MNT-254 later moved this server onto the LAN as a systemd service with Streamable HTTP (2026-11-26)

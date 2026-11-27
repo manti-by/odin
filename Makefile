@@ -40,11 +40,14 @@ static: frontend
 	uv run manage.py collectstatic --no-input
 
 restart:
+	sudo install -m 644 configs/mcp.service /etc/systemd/system/mcp.service
 	sudo systemctl daemon-reload
+	sudo systemctl enable mcp.service
 	sudo systemctl restart worker.service
 	sudo systemctl restart gunicorn.service
 	sudo systemctl restart scheduler.service
 	sudo systemctl restart consumer.service
+	sudo systemctl restart mcp.service
 	sudo service nginx reload
 
 deploy:
