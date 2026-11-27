@@ -35,20 +35,28 @@ The MCP server now supports both stdio (for debugging) and network transports, w
 
 Added network transport using uvicorn while preserving stdio functionality:
 
+Every request's bearer token is checked by `StaticTokenVerifier`; copying a bare
+`add_route` handler would leave the network endpoint unauthenticated:
+
 ```python
-async def run_network(host: str, port: int):
-    if not os.getenv("MCP_AUTH_TOKEN"):
-        raise RuntimeError("Refusing to start network transport without MCP_AUTH_TOKEN")
-    
-    app = FastAPI()
-    app.add_route("/mcp", MCPStreamableHTTP())
-    server = uvicorn.Server(config=uvicorn.Config(
-        app,
+async def run_network(host: str, port: int) -> None:
+    if not MCP_AUTH_TOKEN:
+        raise RuntimeError("MCP_AUTH_TOKEN must be set to serve the MCP server over the network")
+
+    auth = AuthSettings(issuer_url=MCP_URL, resource_server_url=None, validate_token_resource=False)
+    transport_security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
+    app = mcp_server.streamable_http_app(
+        streamable_http_path=MCP_PATH,
         host=host,
-        port=port,
-        log_level="warning"
-    ))
-    await server.serve()
+        transport_security=transport_security,
+        auth=auth,
+        token_verifier=StaticTokenVerifier(MCP_AUTH_TOKEN),
+    )
+    server = uvicorn.Server(uvicorn.Config(app, host=host, port=port))
+    try:
+        await server.serve()
+    finally:
+        await close_db_pool()
 ```
 
 ## Step 2 — Systemd service configuration
@@ -69,6 +77,15 @@ Restart=always
 WorkingDirectory=/home/manti/www/odin
 EnvironmentFile=/home/manti/www/odin/.env
 ExecStart=/home/manti/www/odin/.venv/bin/python -m mcp_server.main --transport network --host 127.0.0.1 --port 7750
+```
+
+A unit file in the checkout is not registered with systemd on an existing host.
+`make restart` installs it first, so the later restart of `mcp.service` succeeds:
+
+```sh
+sudo install -m 644 configs/mcp.service /etc/systemd/system/mcp.service
+sudo systemctl daemon-reload
+sudo systemctl enable mcp.service
 ```
 
 ## Step 3 — Nginx TLS termination
@@ -106,7 +123,7 @@ Updated to use remote endpoint with bearer token:
 ```json
 "ODIN": {
     "type": "remote",
-    "url": "http://192.168.1.100:7750/mcp",
+    "url": "https://192.168.1.100/mcp",
     "oauth": false,
     "headers": {
         "Authorization": "Bearer {env:MCP_AUTH_TOKEN}"

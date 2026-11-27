@@ -11,7 +11,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from mcp_server.config import (
-    DEFAULT_TRANSPORT,
     MCP_HOST,
     MCP_PATH,
     MCP_PORT,
@@ -61,12 +60,21 @@ class TestServerMetadata:
 
 
 class TestParseArgs:
-    def test_parse_args__defaults_to_network_on_the_configured_endpoint(self):
+    def test_parse_args__defaults_to_the_controlled_network_endpoint(self, monkeypatch):
+        monkeypatch.setattr("mcp_server.main.DEFAULT_TRANSPORT", "network")
+        monkeypatch.setattr("mcp_server.main.MCP_HOST", "127.0.0.1")
+        monkeypatch.setattr("mcp_server.main.MCP_PORT", 7750)
+
         args = parse_args([])
-        assert args.transport == DEFAULT_TRANSPORT
-        assert DEFAULT_TRANSPORT == "network"
-        assert (args.host, args.port) == (MCP_HOST, MCP_PORT)
-        assert MCP_HOST == "127.0.0.1"
+        assert (args.transport, args.host, args.port) == ("network", "127.0.0.1", 7750)
+
+    def test_parse_args__honors_environment_overrides(self, monkeypatch):
+        monkeypatch.setattr("mcp_server.main.DEFAULT_TRANSPORT", "stdio")
+        monkeypatch.setattr("mcp_server.main.MCP_HOST", "0.0.0.0")
+        monkeypatch.setattr("mcp_server.main.MCP_PORT", 9001)
+
+        args = parse_args([])
+        assert (args.transport, args.host, args.port) == ("stdio", "0.0.0.0", 9001)
 
     def test_parse_args__keeps_stdio_as_an_option(self):
         assert parse_args(["--transport", "stdio"]).transport == "stdio"
@@ -95,6 +103,7 @@ class TestMainDispatch:
         network, stdio = AsyncMock(), AsyncMock()
         monkeypatch.setattr("mcp_server.main.run_network", network)
         monkeypatch.setattr("mcp_server.main.run_stdio", stdio)
+        monkeypatch.setattr("mcp_server.main.DEFAULT_TRANSPORT", "network")
 
         await main([])
 
@@ -111,13 +120,26 @@ class TestMainDispatch:
         stdio.assert_awaited_once_with()
         network.assert_not_awaited()
 
-    async def test_main__passes_a_custom_endpoint_to_the_network_transport(self, monkeypatch):
-        network = AsyncMock()
+    async def test_main__uses_stdio_when_the_environment_selects_it(self, monkeypatch):
+        network, stdio = AsyncMock(), AsyncMock()
         monkeypatch.setattr("mcp_server.main.run_network", network)
+        monkeypatch.setattr("mcp_server.main.run_stdio", stdio)
+        monkeypatch.setattr("mcp_server.main.DEFAULT_TRANSPORT", "stdio")
 
-        await main(["--host", "127.0.0.1", "--port", "9000"])
+        await main([])
+
+        stdio.assert_awaited_once_with()
+        network.assert_not_awaited()
+
+    async def test_main__passes_a_custom_endpoint_to_the_network_transport(self, monkeypatch):
+        network, stdio = AsyncMock(), AsyncMock()
+        monkeypatch.setattr("mcp_server.main.run_network", network)
+        monkeypatch.setattr("mcp_server.main.run_stdio", stdio)
+
+        await main(["--transport", "network", "--host", "127.0.0.1", "--port", "9000"])
 
         network.assert_awaited_once_with("127.0.0.1", 9000)
+        stdio.assert_not_awaited()
 
 
 class TestNetworkTransport:
