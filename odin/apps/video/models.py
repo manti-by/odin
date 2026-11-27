@@ -45,6 +45,7 @@ class Video(models.Model):
     year: models.PositiveIntegerField[int] | None = models.PositiveIntegerField(
         null=True, blank=True, verbose_name=_("Year")
     )
+    is_4k = models.BooleanField(default=False, verbose_name=_("Is 4K"))
     imdb_rating: models.DecimalField[Decimal] | None = models.DecimalField(
         max_digits=3, decimal_places=1, null=True, blank=True, verbose_name=_("IMDb rating")
     )

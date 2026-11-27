@@ -30,7 +30,7 @@ class TestVideosAPI:
         assert response.data["count"] == 1
 
     def test_video__list_does_not_expose_the_library_path(self):
-        VideoFactory(path="/mnt/data/Movies/Heat (1995).mkv", filename="Heat (1995).mkv")
+        VideoFactory(path="/mnt/data/Movies/Heat - 1995.mkv", filename="Heat - 1995.mkv")
 
         response = self.client.get(self.url, format="json")
         assert "path" not in response.data["results"][0]
@@ -101,7 +101,7 @@ class TestVideoStreamAPI:
 
     def test_stream__returns_accel_redirect(self, tmp_path, settings):
         settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
-        path = tmp_path / "Heat (1995).mkv"
+        path = tmp_path / "Heat - 1995.mkv"
         path.write_bytes(b"video")
         video = VideoFactory(path=str(path), filename=path.name)
 
@@ -134,7 +134,7 @@ class TestVideoStreamAPI:
         media_dir.mkdir()
         outside = tmp_path / "secret.mkv"
         outside.write_bytes(b"secret")
-        link = media_dir / "Heat (1995).mkv"
+        link = media_dir / "Heat - 1995.mkv"
         link.symlink_to(outside)
         settings.VIDEO_MEDIA_DIRS = (str(media_dir),)
         video = VideoFactory(path=str(link.resolve()), filename=link.name)
@@ -144,7 +144,7 @@ class TestVideoStreamAPI:
 
     def test_stream__unavailable_video(self, tmp_path, settings):
         settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
-        path = tmp_path / "Heat (1995).mkv"
+        path = tmp_path / "Heat - 1995.mkv"
         path.write_bytes(b"video")
         video = VideoFactory(path=str(path), is_available=False)
 
@@ -153,7 +153,7 @@ class TestVideoStreamAPI:
 
     def test_stream__no_authentication_required(self, tmp_path, settings):
         settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
-        path = tmp_path / "Heat (1995).mkv"
+        path = tmp_path / "Heat - 1995.mkv"
         path.write_bytes(b"video")
         video = VideoFactory(path=str(path))
 

@@ -10,8 +10,8 @@ from odin.apps.video.models import Video
 class TestVideoScanCommand:
     def test_scan__creates_rows_without_fetch_phases(self, tmp_path, settings):
         settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
-        (tmp_path / "Heat (1995).mkv").write_bytes(b"video")
-        (tmp_path / "Брат (1997).avi").write_bytes(b"video")
+        (tmp_path / "Heat - 1995.mkv").write_bytes(b"video")
+        (tmp_path / "Брат - 1997.avi").write_bytes(b"video")
 
         call_command("video_scan", "--no-metadata", "--no-trailers")
 
@@ -21,7 +21,7 @@ class TestVideoScanCommand:
     def test_scan__runs_both_fetch_phases(self, tmp_path, settings, monkeypatch):
         settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
         settings.VIDEO_SCAN_BATCH_SIZE = 4
-        (tmp_path / "Heat (1995).mkv").write_bytes(b"video")
+        (tmp_path / "Heat - 1995.mkv").write_bytes(b"video")
         calls = []
 
         def phase(name):
@@ -47,7 +47,7 @@ class TestVideoScanCommand:
 
     def test_scan__respects_the_limit_option(self, tmp_path, settings, monkeypatch):
         settings.VIDEO_MEDIA_DIRS = (str(tmp_path),)
-        (tmp_path / "Heat (1995).mkv").write_bytes(b"video")
+        (tmp_path / "Heat - 1995.mkv").write_bytes(b"video")
         limits = []
 
         monkeypatch.setattr(video_scan, "process_pending_metadata", lambda limit: limits.append(limit))

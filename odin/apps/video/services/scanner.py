@@ -12,10 +12,10 @@ from odin.apps.video.models import FetchStatus, Video
 logger = logging.getLogger(__name__)
 
 VIDEO_EXTENSIONS = frozenset({".avi", ".flv", ".m2ts", ".m4v", ".mkv", ".mov", ".mp4", ".ts", ".webm", ".wmv"})
-FILENAME_PATTERN = re.compile(r"^(?P<title>.+?)\s*\((?P<year>\d{4})\)")
+FILENAME_PATTERN = re.compile(r"^(?P<title>.+?)\s+-\s+(?P<year>\d{4})(?:\s+-\s+(?P<fk>4[Kk\u041a\u043a]))?$")
 
 
-def parse_filename(filename: str) -> tuple[str, int | None]:
+def parse_filename(filename: str) -> tuple[str, int | None, bool]:
     """Split a `Movie Name (Year).ext` file name into its title and year.
 
     A name without the year suffix keeps the whole stem as the title so the scan never drops a
@@ -24,8 +24,8 @@ def parse_filename(filename: str) -> tuple[str, int | None]:
     stem = Path(filename).stem.strip()
     match = FILENAME_PATTERN.match(stem)
     if not match:
-        return stem, None
-    return match["title"].strip(), int(match["year"])
+        return stem, None, False
+    return match["title"].strip(), int(match["year"]), match["fk"] is not None
 
 
 def get_media_dirs() -> tuple[Path, ...]:
@@ -69,13 +69,13 @@ def sync_video(path: Path) -> tuple[Video, bool, bool] | None:
     if video and video.mtime == stat.st_mtime and video.is_available:
         return video, False, False
 
-    title, year = parse_filename(path.name)
+    title, year, is_4k = parse_filename(path.name)
     if year is None:
         logger.warning(f"Video scan could not parse a year from {path.name}")
 
     created = video is None
     if created:
-        video = Video(path=resolved, title=title, year=year)
+        video = Video(path=resolved, title=title, year=year, is_4k=is_4k)
 
     video.filename = path.name
     video.mtime = stat.st_mtime
