@@ -21,7 +21,8 @@ allowed_tables: set[str] | None = None
 # be outpaced by new columns, a denylist can.
 APPROVED_COLUMNS: frozenset[str] = frozenset(
     (
-        # Django auth / sessions
+        # Django auth (never session keys, expiry or session blobs from
+        # django_session: those are live credentials, not diagnostics).
         "id",
         "is_superuser",
         "username",
@@ -33,9 +34,6 @@ APPROVED_COLUMNS: frozenset[str] = frozenset(
         "date_joined",
         "last_login",
         "is_authenticated",
-        "session_key",
-        "expire_date",
-        "data",
         "user_id",
         # Content types
         "app_label",

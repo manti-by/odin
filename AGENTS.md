@@ -21,9 +21,10 @@ It uses Django 6 with Django REST Framework, PostgreSQL, Redis, and modern Pytho
   the read API in `./odin/api/v1/video/` serves metadata and answers `stream/` / `trailer/` with
   `X-Accel-Redirect` for nginx
 - Tests in `./odin/tests/`
-- Standalone MCP server in `./mcp_server/` — stdio server exposing read tools over the database,
-  source docstrings, the wiki and the log directory. Project-specific values (roots, server name,
-  Django settings module) live in `mcp_server/config.py`; the rest of the package is
+- Standalone MCP server in `./mcp_server/` — bearer-token-authenticated Streamable HTTP server (network
+  by default, `--transport stdio` for local use) exposing read tools over the database, source
+  docstrings, the wiki and the log directory. Project-specific values (roots, server name, Django
+  settings module, bind address, auth token) live in `mcp_server/config.py`; the rest of the package is
   project-agnostic. Its tests are in `./mcp_server/tests/`
 - React + TypeScript SPA (Vite + Bun + Biome) in `./frontend/` — dashboard UI, built to `frontend/dist/`
 - Public-facing Django templates/static JS/CSS are no longer rendered (orphans still on disk
@@ -602,8 +603,14 @@ Frontend checks are not part of pre-commit; they run via `make frontend-check`
 - Use systemd for service management
 - `make deploy` builds the SPA (`make frontend`) before `collectstatic` and
   reloads nginx, so the React build artifacts are always served fresh
-- The MCP server is launched by the agent client, not by systemd: `uv run python -m mcp_server.main`
-  (registered in `opencode.json`). It reads only, so it needs no separate service unit
+- The MCP server runs on the ODIN host as the `mcp.service` systemd unit (`configs/mcp.service`), bound to
+  `127.0.0.1:7750`; nginx terminates TLS on the existing 443 vhost and proxies `/mcp` to it, so the
+  bearer token never crosses the LAN in cleartext. The public `https://192.168.1.100/mcp` endpoint is
+  registered in `opencode.json`. The network transport refuses to start without `MCP_AUTH_TOKEN` (from
+  the unit's `.env`); the client sends the same value as `Authorization: Bearer …` via
+  `{env:MCP_AUTH_TOKEN}`. Do not expose port 7750 outside the host — nginx is the only LAN ingress.
+  The database tool's column allow-list deliberately excludes Django session keys/expiry/blobs.
+  For local debugging use `uv run python -m mcp_server.main --transport stdio`
 
 ## Common Issues
 

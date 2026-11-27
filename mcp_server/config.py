@@ -8,6 +8,17 @@ from mcp_server.models import SearchConfig
 PROJECT_NAME = os.getenv("MCP_PROJECT_NAME", "odin")
 SERVER_NAME = os.getenv("MCP_SERVER_NAME", f"{PROJECT_NAME.upper()} MCP Server")
 
+# Network listener defaults; ``--transport stdio`` keeps the old local mode.
+# The listener is loopback-only: nginx terminates TLS and proxies the LAN-facing
+# endpoint, so the bearer token never crosses the network in cleartext.
+MCP_HOST = os.getenv("MCP_HOST", "127.0.0.1")
+MCP_PORT = int(os.getenv("MCP_PORT", "7750"))
+MCP_PATH = os.getenv("MCP_PATH", "/mcp")
+MCP_URL = os.getenv("MCP_URL", f"https://192.168.1.100{MCP_PATH}")
+DEFAULT_TRANSPORT = os.getenv("MCP_TRANSPORT", "network")
+# Required for the network transport; stdio stays local and needs no token.
+MCP_AUTH_TOKEN = os.getenv("MCP_AUTH_TOKEN", "")
+
 # Django settings module consulted for database credentials. Importing it here,
 # rather than in the database tool, keeps every project-specific import in this
 # one module.

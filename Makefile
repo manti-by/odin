@@ -45,6 +45,7 @@ restart:
 	sudo systemctl restart gunicorn.service
 	sudo systemctl restart scheduler.service
 	sudo systemctl restart consumer.service
+	sudo systemctl restart mcp.service
 	sudo service nginx reload
 
 deploy:

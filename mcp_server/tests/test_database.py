@@ -99,11 +99,31 @@ class TestFilterSensitiveColumns:
 
     @pytest.mark.parametrize(
         "column",
-        ["password", "token", "session_data", "raw_body", "encoded_headers", "client_secret", "password_hash"],
+        [
+            "password",
+            "token",
+            "session_data",
+            "session_key",
+            "expire_date",
+            "data",
+            "raw_body",
+            "encoded_headers",
+            "client_secret",
+            "password_hash",
+        ],
     )
     def test_approved_columns__withhold_credential_channels(self, column):
-        """Session blobs and raw request payloads can carry cookies or headers."""
+        """Session rows and raw request payloads can carry live credentials."""
         assert column not in APPROVED_COLUMNS, column
+
+    @pytest.mark.parametrize("column", ["session_key", "expire_date", "data"])
+    def test_validate_column_name__rejects_session_columns(self, column):
+        with pytest.raises(ValueError, match="not approved"):
+            _validate_column_name(column, {column, "id"})
+
+    def test_filter_sensitive_columns__drops_a_django_session_row(self):
+        row = {"id": 1, "session_key": "live-session-key", "expire_date": 1760000000, "data": '{"_auth_user_id": "1"}'}
+        assert _filter_sensitive_columns(row) == {"id": 1}
 
 
 class TestCallToolValidation:
